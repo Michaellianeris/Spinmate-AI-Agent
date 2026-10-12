@@ -1,3 +1,4 @@
+<img src="web/logo.svg" alt="SpinMate logo" width="96">
 
 # SpinMate
 

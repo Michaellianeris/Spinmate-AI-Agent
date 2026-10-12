@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SpinMate</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='-15%20-15%2030%2030'%3E%3Ccircle%20cx='-4.5'%20r='10'%20fill='%23F6E9F8'%20stroke='%23B56FC9'%20stroke-width='1.6'/%3E%3Ccircle%20cx='4.5'%20r='10'%20fill='%23F6E9F8'%20fill-opacity='.8'%20stroke='%23B56FC9'%20stroke-width='1.6'/%3E%3Cline%20x1='-5.5'%20y1='3'%20x2='-3.5'%20y2='-7'%20stroke='%23E5341B'%20stroke-width='3'%20stroke-linecap='round'/%3E%3Ccircle%20cx='-5.5'%20cy='3'%20r='3.2'%20fill='%23E5341B'/%3E%3Cline%20x1='5.5'%20y1='3'%20x2='3.5'%20y2='-7'%20stroke='%231D1DD8'%20stroke-width='3'%20stroke-linecap='round'/%3E%3Ccircle%20cx='5.5'%20cy='3'%20r='3.2'%20fill='%231D1DD8'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3ClinearGradient id=%22fv%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%220%22%3E%3Cstop offset=%220%22 stop-color=%22%23FF5A42%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23B24BD0%22/%3E%3Cstop offset=%221%22 stop-color=%22%235A73FF%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x=%2210%22 y=%2210%22 width=%22180%22 height=%22180%22 rx=%2244%22 fill=%22%2314183A%22/%3E%3Ccircle cx=%2272%22 cy=%22100%22 r=%2248%22 fill=%22%234A2540%22 stroke=%22%23FF5A42%22 stroke-opacity=%22.55%22 stroke-width=%222%22/%3E%3Ccircle cx=%22128%22 cy=%22100%22 r=%2248%22 fill=%22%2326306A%22 stroke=%22%235A73FF%22 stroke-opacity=%22.55%22 stroke-width=%222%22/%3E%3Cpath d=%22M100 61.01 A48 48 0 0 1 100 138.99 A48 48 0 0 1 100 61.01 Z%22 fill=%22url(%23fv)%22/%3E%3Cline x1=%2255.35%22 y1=%22134.37%22 x2=%2264.85%22 y2=%2285.27%22 stroke=%22%23FF5A42%22 stroke-width=%229%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M68.65 65.63 L74.67 87.17 L55.03 83.37 Z%22 fill=%22%23FF5A42%22/%3E%3Ccircle cx=%2260.1%22 cy=%22109.82%22 r=%2211%22 fill=%22%23FF5A42%22/%3E%3Cline x1=%22144.65%22 y1=%2265.63%22 x2=%22135.15%22 y2=%22114.73%22 stroke=%22%235A73FF%22 stroke-width=%229%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M131.35 134.37 L125.33 112.83 L144.97 116.63 Z%22 fill=%22%235A73FF%22/%3E%3Ccircle cx=%22139.9%22 cy=%2290.18%22 r=%2211%22 fill=%22%235A73FF%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -203,10 +203,10 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .thinking{font-style:normal}
 
 .empty{max-width:640px;margin:4vh auto 0;text-align:center}
-.empty .hero{width:min(300px,70%);height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 8px 14px rgba(160,90,190,.12))}
-.empty .hero .s1{animation:sway 8s ease-in-out infinite;transform-origin:100px 112px}
-.empty .hero .s2{animation:sway 8s ease-in-out infinite reverse;transform-origin:242px 112px}
-@keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.empty .hero{width:116px;height:116px;display:block;margin:0 auto 6px;filter:drop-shadow(0 8px 14px rgba(160,90,190,.12))}
+.empty .hero .s1{animation:sway 8s ease-in-out infinite;transform-origin:60.1px 109.82px}
+.empty .hero .s2{animation:sway 8s ease-in-out infinite reverse;transform-origin:139.9px 90.18px}
+@keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
 .brand{font-size:2.1rem;font-weight:700;letter-spacing:-.03em;margin:0 0 2px;background:linear-gradient(90deg,#E5341B,#8A3FB5 55%,#1D1DD8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .empty h2{font-size:1.7rem;font-weight:600;letter-spacing:-.02em;margin:4px 0 8px}
 .empty p{max-width:52ch;margin:0 auto}
@@ -365,7 +365,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .chat.is-empty{justify-content:center;align-items:center;overflow-y:auto}
 .chat.is-empty .log,.chat.is-empty .empty{display:contents}
 .chat.is-empty .empty>*{order:1;width:min(720px,calc(100% - 48px))}
-.chat.is-empty .empty>.hero{width:min(300px,60%)}
+.chat.is-empty .empty>.hero{width:116px;height:116px;flex:none}
 .chat.is-empty .empty>.brand{width:auto}
 .chat.is-empty .composer{order:2;width:min(720px,100%);flex:none}
 .chat.is-empty .empty>.skills-title,.chat.is-empty .empty>.starters{order:3}
@@ -432,12 +432,8 @@ main{grid-template-columns:minmax(0,1fr)}
 <body>
 <header class="rail">
   <div class="mark" title="SpinMate">
-    <svg width="30" height="30" viewBox="-15 -15 30 30" aria-hidden="true">
-      <circle cx="-4" r="10" fill="#F6E9F8" stroke="#D9A6E6" stroke-dasharray="2 2"/>
-      <circle cx="4" r="10" fill="#F6E9F8" fill-opacity=".7" stroke="#D9A6E6" stroke-dasharray="2 2"/>
-      <circle cx="-5" cy="1" r="2.6" fill="#E5341B"/><line x1="-5" y1="1" x2="-3" y2="-6" stroke="#E5341B" stroke-width="1.8" stroke-linecap="round"/>
-      <circle cx="5" cy="1" r="2.6" fill="#1D1DD8"/><line x1="5" y1="1" x2="3" y2="-6" stroke="#1D1DD8" stroke-width="1.8" stroke-linecap="round" transform="rotate(0)"/>
-    </svg>
+    <svg width="30" height="30" aria-hidden="true" viewBox="0 0 200 200"><defs><linearGradient id="rl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF5A42"/><stop offset=".5" stop-color="#B24BD0"/><stop offset="1" stop-color="#5A73FF"/></linearGradient></defs><rect x="10" y="10" width="180" height="180" rx="44" fill="#14183A"/><circle cx="72" cy="100" r="48" fill="#4A2540" stroke="#FF5A42" stroke-opacity=".55" stroke-width="2"/><circle cx="128" cy="100" r="48" fill="#26306A" stroke="#5A73FF" stroke-opacity=".55" stroke-width="2"/><path d="M100 61.01 A48 48 0 0 1 100 138.99 A48 48 0 0 1 100 61.01 Z" fill="url(#rl)"/><line x1="55.35" y1="134.37" x2="64.85" y2="85.27" stroke="#FF5A42" stroke-width="9" stroke-linecap="round"/><path d="M68.65 65.63 L74.67 87.17 L55.03 83.37 Z" fill="#FF5A42"/><circle cx="60.1" cy="109.82" r="11" fill="#FF5A42"/><line x1="144.65" y1="65.63" x2="135.15" y2="114.73" stroke="#5A73FF" stroke-width="9" stroke-linecap="round"/><path d="M131.35 134.37 L125.33 112.83 L144.97 116.63 Z" fill="#5A73FF"/><circle cx="139.9" cy="90.18" r="11" fill="#5A73FF"/></svg>
+
   </div>
   <button class="rail-btn" id="newchat" type="button" title="New conversation" aria-label="New conversation">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
@@ -792,20 +788,8 @@ const getName = () => { try { return localStorage.getItem("sublattice.name") || 
 function emptyState() {
   const d = document.createElement("div"); d.className = "empty";
   const name = getName();
-  d.innerHTML = `<div class="brand">SpinMate</div><svg class="hero" viewBox="0 0 340 200" aria-hidden="true">
-      <defs>
-        <radialGradient id="gr" cx="35%" cy="30%"><stop offset="0" stop-color="#FF7A5C"/><stop offset="1" stop-color="#C21B00"/></radialGradient>
-        <radialGradient id="gb" cx="35%" cy="30%"><stop offset="0" stop-color="#6A6AFF"/><stop offset="1" stop-color="#0A0A9E"/></radialGradient>
-        <clipPath id="lens"><circle cx="115" cy="100" r="92"/></clipPath>
-      </defs>
-      <circle cx="115" cy="100" r="92" fill="#F6E9F8" fill-opacity=".8" stroke="#D9A6E6" stroke-dasharray="5 4"/>
-      <circle cx="225" cy="100" r="92" fill="#F6E9F8" fill-opacity=".8" stroke="#D9A6E6" stroke-dasharray="5 4"/>
-      <circle cx="225" cy="100" r="92" fill="#E9C9F0" fill-opacity=".85" clip-path="url(#lens)"/>
-      <text x="108" y="38" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#2A2A33">S<tspan font-size="13" dy="4">1</tspan></text>
-      <text x="232" y="38" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#2A2A33">S<tspan font-size="13" dy="4">2</tspan></text>
-      <g class="s1"><line x1="102" y1="120" x2="116" y2="68" stroke="#E5341B" stroke-width="7" stroke-linecap="round"/><path d="M122 52 L103 70 L128 74Z" fill="#E5341B"/><circle cx="100" cy="112" r="14" fill="url(#gr)"/></g>
-      <g class="s2"><line x1="240" y1="120" x2="226" y2="68" stroke="#1D1DD8" stroke-width="7" stroke-linecap="round"/><path d="M220 52 L212 74 L238 70Z" fill="#1D1DD8"/><circle cx="242" cy="112" r="14" fill="url(#gb)"/></g>
-    </svg>
+  d.innerHTML = `<div class="brand">SpinMate</div><svg class="hero" viewBox="0 0 200 200" aria-hidden="true"><defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF5A42"/><stop offset=".5" stop-color="#B24BD0"/><stop offset="1" stop-color="#5A73FF"/></linearGradient></defs><rect x="10" y="10" width="180" height="180" rx="44" fill="#14183A"/><circle cx="72" cy="100" r="48" fill="#4A2540" stroke="#FF5A42" stroke-opacity=".55" stroke-width="2"/><circle cx="128" cy="100" r="48" fill="#26306A" stroke="#5A73FF" stroke-opacity=".55" stroke-width="2"/><path d="M100 61.01 A48 48 0 0 1 100 138.99 A48 48 0 0 1 100 61.01 Z" fill="url(#smg)"/><g class="s1"><line x1="55.35" y1="134.37" x2="64.85" y2="85.27" stroke="#FF5A42" stroke-width="9" stroke-linecap="round"/><path d="M68.65 65.63 L74.67 87.17 L55.03 83.37 Z" fill="#FF5A42"/><circle cx="60.1" cy="109.82" r="11" fill="#FF5A42"/></g><g class="s2"><line x1="144.65" y1="65.63" x2="135.15" y2="114.73" stroke="#5A73FF" stroke-width="9" stroke-linecap="round"/><path d="M131.35 134.37 L125.33 112.83 L144.97 116.63 Z" fill="#5A73FF"/><circle cx="139.9" cy="90.18" r="11" fill="#5A73FF"/></g></svg>
+
     <h2>Hi${name ? " " + esc(name) : ""}, what shall we simulate?</h2>
     <p>Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model, and explains the result from the real dynamics.</p>
     <div class="skills-title"><span>Find a skill</span></div>
@@ -1056,8 +1040,8 @@ const dialSVG = () => `<svg viewBox="-90 -90 180 180" role="img" aria-label="Sub
   <path data-v="trail1" d="" fill="none" stroke="#1F4FD1" stroke-opacity=".4" stroke-width="1"/>
   <path data-v="trail2" d="" fill="none" stroke="#B0127F" stroke-opacity=".4" stroke-width="1"/>
   <line data-v="nl" x1="0" y1="0" x2="0" y2="0" style="stroke:var(--ink)" stroke-width="1.2" stroke-dasharray="4 4"/>
-  <line data-v="l1" x1="0" y1="0" x2="0" y2="0" stroke="#1F4FD1" stroke-width="3.2" stroke-linecap="round"/><circle data-v="d1" r="4.7" fill="#1F4FD1"/>
-  <line data-v="l2" x1="0" y1="0" x2="0" y2="0" stroke="#B0127F" stroke-width="3.2" stroke-linecap="round"/><circle data-v="d2" r="4.7" fill="#B0127F"/></svg>`;
+  <line data-v="l1" x1="0" y1="0" x2="0" y2="0" stroke="#1F4FD1" stroke-width="3.2" stroke-linecap="round"/><path data-v="d1" d="" fill="#1F4FD1"/>
+  <line data-v="l2" x1="0" y1="0" x2="0" y2="0" stroke="#B0127F" stroke-width="3.2" stroke-linecap="round"/><path data-v="d2" d="" fill="#B0127F"/></svg>`;
 
 const sg = v => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(3);
 const vecs = (a, b, c) => `(${sg(a)}, ${sg(b)}, ${sg(c)})`;
@@ -1126,8 +1110,16 @@ class RunView {
   }
   dialSet(m1, m2) {
     const D = this.dial, a = (el, x, y, p, q) => { el.setAttribute(p, x); el.setAttribute(q, y); };
-    a(D.l1, m1[0] * R, -m1[2] * R, "x2", "y2"); a(D.d1, m1[0] * R, -m1[2] * R, "cx", "cy");
-    a(D.l2, m2[0] * R, -m2[2] * R, "x2", "y2"); a(D.d2, m2[0] * R, -m2[2] * R, "cx", "cy");
+    // shaft to the base of the head, then a triangle head at the tip
+    const arrow = (line, head, m) => {
+      const x = m[0] * R, y = -m[2] * R, L = Math.hypot(x, y);
+      if (L < 1e-6) { a(line, 0, 0, "x2", "y2"); head.setAttribute("d", ""); return; }
+      const ux = x / L, uy = y / L, h = Math.min(11, L * 0.6), w = h * 0.55;
+      const bx = x - ux * h, by = y - uy * h;
+      a(line, bx, by, "x2", "y2");
+      head.setAttribute("d", `M${x.toFixed(2)} ${y.toFixed(2)} L${(bx - uy * w).toFixed(2)} ${(by + ux * w).toFixed(2)} L${(bx + uy * w).toFixed(2)} ${(by - ux * w).toFixed(2)} Z`);
+    };
+    arrow(D.l1, D.d1, m1); arrow(D.l2, D.d2, m2);
     a(D.nl, (m1[0] - m2[0]) / 2 * R, -(m1[2] - m2[2]) / 2 * R, "x2", "y2");
   }
   readout(i, label) {
