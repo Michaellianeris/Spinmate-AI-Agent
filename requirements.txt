@@ -8,3 +8,5 @@ fastapi==0.142.2
 uvicorn[standard]==0.54.0
 python-multipart==0.0.32
 anthropic==1.11.0
+# run catalog
+psycopg[binary]==3.2.13

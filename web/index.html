@@ -367,6 +367,14 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .chat.is-empty .empty>*{order:1;width:min(720px,calc(100% - 48px))}
 .chat.is-empty .empty>.hero{width:300px;height:220px;flex:none}
 .chat.is-empty .empty>.brand{width:auto}
+.qtable{border:1px solid var(--line);border-radius:12px;background:var(--panel,#fff);margin:6px 0 12px;overflow:hidden}
+.qtable .qscroll{max-height:420px;overflow:auto}
+.qtable table{border-collapse:collapse;width:100%;font-size:.84rem}
+.qtable th,.qtable td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums}
+.qtable th{position:sticky;top:0;background:var(--soft);font-weight:600}
+.qtable .qfoot{display:flex;align-items:center;gap:12px;padding:8px 10px;font-size:.82rem;color:var(--muted);flex-wrap:wrap}
+.qtable details{flex-basis:100%}
+.qtable pre{margin:6px 0 0;white-space:pre-wrap;font-family:var(--mono);font-size:.8rem}
 [data-theme=dark] .brand{background:linear-gradient(90deg,#FF6A52,#C07BE8 55%,#7A8CFF);-webkit-background-clip:text;background-clip:text}
 .chat.is-empty .composer{order:2;width:min(720px,100%);flex:none}
 .chat.is-empty .empty>.skills-title,.chat.is-empty .empty>.starters{order:3}
@@ -689,7 +697,27 @@ const TOOL_UI = {
   wait_for_sweep: {run: a => `Waiting for ${a.sweep_id}`, done: a => `Finished waiting for ${a.sweep_id}`},
   continue_run: {run: a => `Continuing ${a.run_id}`, done: (a, r) => r.run_id ? `Continued ${a.run_id} as ${r.run_id}` : `Continued ${a.run_id}`},
   combine_runs: {run: () => "Combining runs", done: (a, r) => r.run_id ? `Combined ${(r.chain || []).join(" + ")} into ${r.run_id}` : "Combined runs"},
+  query_runs: {run: () => "Querying the run catalog", done: (a, r) => r.columns ? `Queried the catalog: ${r.row_count}${r.truncated ? "+" : ""} rows` : "Queried the catalog"},
 };
+
+// result table of a catalog query, with CSV export
+function queryTable(res) {
+  const box = document.createElement("div"); box.className = "qtable";
+  const cell = v => v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v)
+    : typeof v === "number" && !Number.isInteger(v) ? Number(v.toPrecision(6)).toString() : String(v);
+  const head = res.columns.map(c => `<th>${esc(c)}</th>`).join("");
+  const body = res.rows.map(r => `<tr>${r.map(v => `<td>${esc(cell(v))}</td>`).join("")}</tr>`).join("");
+  box.innerHTML = `<div class="qscroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <div class="qfoot"><span>${res.row_count}${res.truncated ? "+" : ""} rows</span><button type="button" class="btn small">Export CSV</button>
+    <details><summary>SQL</summary><pre>${esc(res.sql || "")}</pre></details></div>`;
+  box.querySelector("button").onclick = () => {
+    const q = v => { const t = cell(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const csv = [res.columns.map(q).join(","), ...res.rows.map(r => r.map(q).join(","))].join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv"}));
+    a.download = "spinmate-query.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  return box;
+}
 
 function toolResults(messages) {
   const map = {};
@@ -752,7 +780,8 @@ function render() {
         if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
         const res = results[b.id] || {};
         chips.appendChild(chipFor(b.name, b.input || {}, res, false));
-        if (place(b.name, res)) chips = null;
+        if (b.name === "query_runs" && res.columns) { log.appendChild(queryTable(res)); chips = null; }
+        else if (place(b.name, res)) chips = null;
       }
     }
     if (state.usages[mi]) add("usage mono", fmtUsage(state.usages[mi]));

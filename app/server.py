@@ -8,7 +8,10 @@ from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
+import threading
+
 from . import agent
+from . import catalog
 from . import guide
 from . import openai_provider
 from . import params as P
@@ -20,6 +23,8 @@ MAX_UPLOAD = 200_000
 
 app = FastAPI(title="Sublattice Agent")
 S.recover_interrupted()
+# fill the catalog with runs already on disk, without delaying startup
+threading.Thread(target=catalog.backfill, args=(S.RUNS, S.SWEEPS), daemon=True).start()
 
 
 class ChatIn(BaseModel):
@@ -85,7 +90,8 @@ def config():
             "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
-            "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS}
+            "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
+            "catalog": catalog.status()}
 
 
 @app.post("/api/guide")

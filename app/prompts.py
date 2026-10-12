@@ -83,6 +83,11 @@ Agent workflow
   Next rounds: a finer sweep inside that bracket. At most 4 rounds and 10 runs per round, with short runs.
   Stop when the bracket is narrower than about 10 % of its centre value or nothing changes, then report the
   bracket, the values you used and the number of rounds. Say in one line what you do before each round.
+- Questions across earlier runs ("which runs ended FM", "the fastest switching with A0 > 0", "a table of all
+  FeRh runs", "how many runs failed this week"): if the query_runs tool is available, answer with one SQL query
+  instead of reading runs one by one, then explain the table in a few lines (the user already sees the rows).
+  Use status='done' unless the user asks about other states. If the query fails, fix the SQL once and retry.
+  Without query_runs, use list_runs and get_run.
 - Never start a run the user did not ask for, and keep the total under about 40 runs per request.
 - A message allows a limited number of tool steps; the page shows the tokens used after each answer.
 

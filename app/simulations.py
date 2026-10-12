@@ -9,6 +9,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from . import catalog
 from . import params as P
 
 REPO = Path(__file__).resolve().parent.parent
@@ -66,7 +67,8 @@ def _update(run_id, **kw):
         m = _meta(run_id) or {}
         m.update(kw)
         _write(RUNS / run_id / "meta.json", m)
-        return m
+    catalog.sync_run(RUNS / run_id)
+    return m
 
 
 def sec_per_step():
@@ -89,6 +91,7 @@ def recover_interrupted():
         if m and m.get("status") in ("queued", "running"):
             m["status"] = "interrupted"
             _write(d / "meta.json", m)
+            catalog.sync_run(d)
 
 
 # ---------- single runs
@@ -127,6 +130,7 @@ def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent
         "sweep_id": sweep_id, "sweep_value": sweep_value,
         "parent_run": parent_run, "t_offset_s": t_offset,
     })
+    catalog.sync_run(run_dir)
     _pool.submit(_execute, run_id)
     return {"ok": True, "run_id": run_id, "steps": check["steps"],
             "estimated_runtime_s": check["estimated_runtime_s"], "warnings": check["warnings"]}
@@ -305,6 +309,7 @@ def combine_runs(run_ids=None, run_id=None, label=""):
         "chain": ids, "created": time.time(), "finished": time.time(), "steps": int(len(A)),
         "t_end_s": t_end, "warnings": warnings,
     })
+    catalog.sync_run(d)
     return {"ok": True, "run_id": new_id, "chain": ids, "points": int(len(A)),
             "t_start_ns": round(float(A[0, 0]) * 1e9, 6), "t_end_ns": round(t_end * 1e9, 6),
             "order_initial": summary["order_initial"], "order_final": summary["order_final"],
@@ -406,6 +411,7 @@ def start_sweep(parameters_text, parameter, values, label=""):
         "id": sweep_id, "label": label, "parameter": parameter, "values": values,
         "run_ids": run_ids, "created": time.time(),
     })
+    catalog.sync_sweep(SWEEPS / sweep_id)
     total = base["estimated_runtime_s"] * len(values) / MAX_PARALLEL
     return {"ok": True, "sweep_id": sweep_id, "runs": len(run_ids), "parallel": MAX_PARALLEL,
             "estimated_wall_time_s": round(total, 1)}

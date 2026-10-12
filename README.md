@@ -20,6 +20,8 @@ named `sublattice-agent`.
 - [Quick start](#quick-start)
 - [Using the app](#using-the-app)
 - [Simple scenarios to try](#simple-scenarios-to-try)
+- [Continuing a run](#continuing-a-run)
+- [Run catalog (Postgres)](#run-catalog-postgres)
 - [Parameter files](#parameter-files)
 - [Behaviour of the original code](#behaviour-of-the-original-code)
 - [Configuration](#configuration)
@@ -160,6 +162,27 @@ one run with one trajectory, plot, CSV and summary; segment joins are dotted lin
 A FeRh run of 0-2 ns + 2-4 ns matches a single 4 ns run to about 1e-14. With thermal noise (`flag0`)
 the random sequence differs from one long run, and `--gaussian` values are drawn again per segment.
 
+## Run catalog (Postgres)
+
+`docker compose up` also starts Postgres. Every run and sweep gets a row in the catalog when it starts and
+is updated when it finishes; runs made before the catalog existed are added at startup. Trajectories stay in
+the run folders, the catalog holds the parameters (all of them, as JSON), the summary and the links between
+runs (`parent_run`, sweeps, combined chains).
+
+Ask questions across runs in the chat, for example "a table of all finished runs with A0 > 0 and the time of
+the first switch" or "which FeRh runs ended FM". The assistant writes one SQL query (`query_runs`), the
+result appears as a table with **Export CSV**, and the SQL is shown under it. Queries are read-only: one
+`SELECT` per call, in a read-only transaction, with a time limit (`QUERY_TIMEOUT_MS`) and at most 500 rows.
+
+To look at the data yourself:
+
+```bash
+docker compose exec postgres psql -U spinmate -c "select run_id, params->>'A0' as a0, order_final from runs order by run_id"
+```
+
+Without a database (for example when running with plain `uvicorn`) the catalog is off and the assistant
+falls back to reading runs one by one.
+
 ## Parameter files
 
 The format is that of `main.py --input-file`: command-line options, one or several per line. Lines starting
@@ -219,6 +242,9 @@ Set these in `.env`.
 | `AGENT_MAX_STEPS` | `24` | tool steps the assistant may take for one message |
 | `WORKSPACE` | `/data` in Docker | where runs, sweeps and files are stored |
 | `SSL_CERT_FILE` | system bundle | CA bundle used for HTTPS, see below |
+| `POSTGRES_PASSWORD` | `spinmate` | password of the bundled catalog database (not exposed outside Docker) |
+| `DATABASE_URL` | bundled Postgres | catalog connection; set it empty to switch the catalog off |
+| `QUERY_TIMEOUT_MS` | `5000` | longest time one catalog query may run |
 
 One Heun step takes roughly 0.6 to 1 ms on one core, so the default 10 ns (100 000 steps) takes one to two
 minutes. The runtime estimate is recalibrated from finished runs.
@@ -253,7 +279,9 @@ FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/ag
    |                                   |  validate, start, sweep, get_run, cancel
    v                                   v
 run queue (app/simulations.py) --> python -m app.runner   (one process per run)
-                                       imports macrospin/main.py unchanged
+   |                                   imports macrospin/main.py unchanged
+   v
+run catalog (app/catalog.py) --> Postgres: runs and sweeps, read-only SQL for query_runs
 ```
 
 `app/runner.py` wraps the original code without changing its equations. It counts Heun steps for the

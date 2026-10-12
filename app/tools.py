@@ -2,6 +2,7 @@
 import base64
 import json
 
+from . import catalog
 from . import params as P
 from . import simulations as S
 
@@ -119,6 +120,34 @@ TOOLS = [
 ]
 
 
+QUERY_TOOL = {
+    "name": "query_runs",
+    "description": (
+        "Read-only SQL (PostgreSQL) over the catalog of all runs and sweeps, for questions across many runs: "
+        "filters, counts, rankings, comparisons. One SELECT (or WITH ... SELECT). The result is shown to the "
+        "user as a table, so select clear columns, order the rows and alias long expressions.\n"
+        "Table runs: run_id, label, kind ('run' or 'combined'), status ('queued','running','done','failed',"
+        "'cancelled','interrupted'), created, started, finished (timestamptz), steps, sweep_id, sweep_value, "
+        "parent_run, t_offset_s, chain (text[] of a combined run), params (jsonb: every parameter of the run, "
+        "defaults included, e.g. params->>'A0'; vectors are arrays, e.g. params->'m1'->>2), changed (jsonb: "
+        "only the values that differ from the defaults), t_start_s, t_end_s, runtime_s, order_initial, "
+        "order_final ('AFM','FM','canted'), m1_dot_m2_initial, m1_dot_m2_final, neel_z_sign_changes, "
+        "first_neel_z_sign_change_s, neel_z_abs_mean_second_half, freq_m1x_ghz, freq_neel_z_ghz, "
+        "summary (jsonb, the full summary.json).\n"
+        "Table sweeps: sweep_id, label, parameter, sweep_values (float8[]), run_ids (text[]), created.\n"
+        "Cast numbers from jsonb: (params->>'A0')::float8. Times are in seconds; multiply by 1e9 for ns. "
+        "Example: SELECT run_id, (params->>'A0')::float8 AS a0, order_final, "
+        "first_neel_z_sign_change_s*1e12 AS first_flip_ps FROM runs WHERE status='done' AND "
+        "(params->>'A0')::float8 > 0 ORDER BY first_flip_ps"),
+    "input_schema": {"type": "object",
+                     "properties": {"sql": TEXT,
+                                    "limit": {"type": "integer", "description": "max rows returned, default 200"}},
+                     "required": ["sql"]},
+}
+if catalog.enabled():
+    TOOLS.append(QUERY_TOOL)
+
+
 def _image(path):
     data = base64.standard_b64encode(path.read_bytes()).decode()
     return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": data}}
@@ -183,6 +212,8 @@ def call(name, args):
                         for r in S.list_runs(int(args.get("limit") or 20))]}
     elif name == "cancel_run":
         out = S.cancel(args["run_id"])
+    elif name == "query_runs":
+        out = catalog.query(args.get("sql", ""), args.get("limit") or 200)
     else:
         out = {"error": f"unknown tool {name}"}
 
