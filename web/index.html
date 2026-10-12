@@ -203,7 +203,7 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .thinking{font-style:normal}
 
 .empty{max-width:640px;margin:4vh auto 0;text-align:center}
-.empty .hero{width:116px;height:116px;display:block;margin:0 auto 6px;filter:drop-shadow(0 8px 14px rgba(160,90,190,.12))}
+.empty .hero{width:200px;height:200px;display:block;margin:0 auto 6px;filter:drop-shadow(0 8px 14px rgba(160,90,190,.12))}
 .empty .hero .s1{animation:sway 8s ease-in-out infinite;transform-origin:60.1px 109.82px}
 .empty .hero .s2{animation:sway 8s ease-in-out infinite reverse;transform-origin:139.9px 90.18px}
 @keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
@@ -365,7 +365,7 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .chat.is-empty{justify-content:center;align-items:center;overflow-y:auto}
 .chat.is-empty .log,.chat.is-empty .empty{display:contents}
 .chat.is-empty .empty>*{order:1;width:min(720px,calc(100% - 48px))}
-.chat.is-empty .empty>.hero{width:116px;height:116px;flex:none}
+.chat.is-empty .empty>.hero{width:200px;height:200px;flex:none}
 .chat.is-empty .empty>.brand{width:auto}
 .chat.is-empty .composer{order:2;width:min(720px,100%);flex:none}
 .chat.is-empty .empty>.skills-title,.chat.is-empty .empty>.starters{order:3}
@@ -788,7 +788,7 @@ const getName = () => { try { return localStorage.getItem("sublattice.name") || 
 function emptyState() {
   const d = document.createElement("div"); d.className = "empty";
   const name = getName();
-  d.innerHTML = `<div class="brand">SpinMate</div><svg class="hero" viewBox="0 0 200 200" aria-hidden="true"><defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF5A42"/><stop offset=".5" stop-color="#B24BD0"/><stop offset="1" stop-color="#5A73FF"/></linearGradient></defs><rect x="10" y="10" width="180" height="180" rx="44" fill="#14183A"/><circle cx="72" cy="100" r="48" fill="#4A2540" stroke="#FF5A42" stroke-opacity=".55" stroke-width="2"/><circle cx="128" cy="100" r="48" fill="#26306A" stroke="#5A73FF" stroke-opacity=".55" stroke-width="2"/><path d="M100 61.01 A48 48 0 0 1 100 138.99 A48 48 0 0 1 100 61.01 Z" fill="url(#smg)"/><g class="s1"><line x1="55.35" y1="134.37" x2="64.85" y2="85.27" stroke="#FF5A42" stroke-width="9" stroke-linecap="round"/><path d="M68.65 65.63 L74.67 87.17 L55.03 83.37 Z" fill="#FF5A42"/><circle cx="60.1" cy="109.82" r="11" fill="#FF5A42"/></g><g class="s2"><line x1="144.65" y1="65.63" x2="135.15" y2="114.73" stroke="#5A73FF" stroke-width="9" stroke-linecap="round"/><path d="M131.35 134.37 L125.33 112.83 L144.97 116.63 Z" fill="#5A73FF"/><circle cx="139.9" cy="90.18" r="11" fill="#5A73FF"/></g></svg>
+  d.innerHTML = `<div class="brand">SpinMate</div><svg class="hero" viewBox="10 10 180 180" aria-hidden="true"><defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF5A42"/><stop offset=".5" stop-color="#B24BD0"/><stop offset="1" stop-color="#5A73FF"/></linearGradient></defs><circle cx="72" cy="100" r="48" fill="#4A2540" stroke="#FF5A42" stroke-opacity=".55" stroke-width="2"/><circle cx="128" cy="100" r="48" fill="#26306A" stroke="#5A73FF" stroke-opacity=".55" stroke-width="2"/><path d="M100 61.01 A48 48 0 0 1 100 138.99 A48 48 0 0 1 100 61.01 Z" fill="url(#smg)"/><g class="s1"><line x1="55.35" y1="134.37" x2="64.85" y2="85.27" stroke="#FF5A42" stroke-width="9" stroke-linecap="round"/><path d="M68.65 65.63 L74.67 87.17 L55.03 83.37 Z" fill="#FF5A42"/><circle cx="60.1" cy="109.82" r="11" fill="#FF5A42"/></g><g class="s2"><line x1="144.65" y1="65.63" x2="135.15" y2="114.73" stroke="#5A73FF" stroke-width="9" stroke-linecap="round"/><path d="M131.35 134.37 L125.33 112.83 L144.97 116.63 Z" fill="#5A73FF"/><circle cx="139.9" cy="90.18" r="11" fill="#5A73FF"/></g></svg>
 
     <h2>Hi${name ? " " + esc(name) : ""}, what shall we simulate?</h2>
     <p>Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model, and explains the result from the real dynamics.</p>
