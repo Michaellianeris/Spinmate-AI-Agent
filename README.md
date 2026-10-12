@@ -18,6 +18,7 @@ named `sublattice-agent`.
 ## Contents
 
 - [Quick start](#quick-start)
+- [Desktop app for Windows](#desktop-app-for-windows)
 - [Using the app](#using-the-app)
 - [Simple scenarios to try](#simple-scenarios-to-try)
 - [Continuing a run](#continuing-a-run)
@@ -53,6 +54,27 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export ANTHROPIC_API_KEY=sk-ant-...
 uvicorn app.server:app --port 8000
+```
+
+## Desktop app for Windows
+
+No Docker or Python needed. Download **SpinMate-windows.zip** from the
+[Releases](../../releases) page, unzip it, open the `SpinMate` folder and double-click `SpinMate.exe`.
+A small window shows the address and the browser opens on the app; close the window to stop SpinMate.
+
+- Windows may warn the first time because the app is not signed: **More info**, then **Run anyway**.
+- API keys: paste them in Settings, or write them in `%LOCALAPPDATA%\SpinMate\.env` and restart.
+- Runs are stored in `%LOCALAPPDATA%\SpinMate\data`; the run catalog is SQLite (`catalog.db` in the
+  same folder) instead of Postgres, and the assistant queries it the same way.
+
+To publish a new version, push a tag: `git tag v1.0 && git push origin v1.0`. The workflow
+`.github/workflows/windows-app.yml` builds the exe on Windows, runs a self-test (one real simulation and a
+catalog query) and attaches the zip to the release. To build it yourself on Windows:
+
+```bat
+pip install -r requirements.txt pyinstaller==6.21.0
+pyinstaller desktop/spinmate.spec --noconfirm
+dist\SpinMate\SpinMate.exe --selftest
 ```
 
 ## Using the app

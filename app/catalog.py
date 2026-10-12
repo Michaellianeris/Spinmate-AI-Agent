@@ -1,12 +1,15 @@
-"""Run catalog in Postgres: one row per run and per sweep, for SQL questions across runs.
+"""Run catalog: one row per run and per sweep, for SQL questions across runs.
 
-Optional. Without DATABASE_URL every function is a no-op and query() says the catalog is off.
+Postgres in Docker (DATABASE_URL=postgresql://...), SQLite in the desktop app (DATABASE_URL=sqlite:///path).
+Optional: without DATABASE_URL every function is a no-op and query() says the catalog is off.
 Trajectories stay in the run folders; the catalog keeps parameters, summaries and links.
 """
+import contextlib
 import json
 import logging
 import os
 import re
+import sqlite3
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -19,7 +22,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 QUERY_TIMEOUT_MS = int(os.environ.get("QUERY_TIMEOUT_MS") or 5000)
 MAX_ROWS = 500
 
-SCHEMA = """
+SCHEMA_PG = """
 CREATE TABLE IF NOT EXISTS runs (
   run_id text PRIMARY KEY,
   label text,
@@ -64,6 +67,25 @@ CREATE TABLE IF NOT EXISTS sweeps (
 );
 """
 
+SCHEMA_SQLITE = """
+PRAGMA journal_mode = WAL;
+CREATE TABLE IF NOT EXISTS runs (
+  run_id TEXT PRIMARY KEY, label TEXT, kind TEXT NOT NULL DEFAULT 'run', status TEXT,
+  created TEXT, started TEXT, finished TEXT, steps INTEGER, sweep_id TEXT, sweep_value REAL,
+  parent_run TEXT, t_offset_s REAL, chain TEXT, params TEXT, changed TEXT,
+  t_start_s REAL, t_end_s REAL, runtime_s REAL, order_initial TEXT, order_final TEXT,
+  m1_dot_m2_initial REAL, m1_dot_m2_final REAL, neel_z_sign_changes INTEGER,
+  first_neel_z_sign_change_s REAL, neel_z_abs_mean_second_half REAL,
+  freq_m1x_ghz REAL, freq_neel_z_ghz REAL, summary TEXT,
+  updated TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS runs_sweep_idx ON runs (sweep_id);
+CREATE INDEX IF NOT EXISTS runs_parent_idx ON runs (parent_run);
+CREATE TABLE IF NOT EXISTS sweeps (
+  sweep_id TEXT PRIMARY KEY, label TEXT, parameter TEXT, sweep_values TEXT, run_ids TEXT, created TEXT
+);
+"""
+
 RUN_COLS = ["run_id", "label", "kind", "status", "created", "started", "finished", "steps",
             "sweep_id", "sweep_value", "parent_run", "t_offset_s", "chain", "params", "changed",
             "t_start_s", "t_end_s", "runtime_s", "order_initial", "order_final",
@@ -82,9 +104,30 @@ def enabled():
     return bool(DATABASE_URL)
 
 
+def _sqlite_path():
+    return DATABASE_URL[len("sqlite:///"):] if DATABASE_URL.startswith("sqlite:///") else None
+
+
+def dialect():
+    return "sqlite" if _sqlite_path() else "postgres"
+
+
 def _connect(autocommit=True):
+    path = _sqlite_path()
+    if path:
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        return contextlib.closing(sqlite3.connect(path, timeout=10, isolation_level=None))
     import psycopg
     return psycopg.connect(DATABASE_URL, connect_timeout=3, autocommit=autocommit)
+
+
+def _execute(sql, params=None):
+    """One write statement (or the schema script) with autocommit."""
+    with _connect() as c:
+        if params is None:
+            c.executescript(sql) if _sqlite_path() else c.execute(sql)
+        else:
+            c.execute(sql, params)
 
 
 def _available():
@@ -98,8 +141,7 @@ def _available():
         if _ready:
             return True
         try:
-            with _connect() as c:
-                c.execute(SCHEMA)
+            _execute(SCHEMA_SQLITE if _sqlite_path() else SCHEMA_PG)
             _ready = True
         except Exception as e:
             _down_until = time.time() + 30
@@ -163,18 +205,27 @@ def _run_row(run_dir):
     }
 
 
-_UPSERT_RUN = (
-    f"INSERT INTO runs ({', '.join(RUN_COLS)}) VALUES ({', '.join('%(' + c + ')s' for c in RUN_COLS)}) "
-    f"ON CONFLICT (run_id) DO UPDATE SET "
-    + ", ".join(f"{c} = EXCLUDED.{c}" for c in RUN_COLS if c != "run_id") + ", updated = now()"
-)
+def _upsert(table, key, cols):
+    ph = (lambda c: f":{c}") if _sqlite_path() else (lambda c: f"%({c})s")
+    return (f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join(ph(c) for c in cols)}) "
+            f"ON CONFLICT ({key}) DO UPDATE SET "
+            + ", ".join(f"{c} = excluded.{c}" for c in cols if c != key)
+            + (", updated = CURRENT_TIMESTAMP" if table == "runs" else ""))
 
-_UPSERT_SWEEP = (
-    "INSERT INTO sweeps (sweep_id, label, parameter, sweep_values, run_ids, created) "
-    "VALUES (%(sweep_id)s, %(label)s, %(parameter)s, %(values)s, %(run_ids)s, %(created)s) "
-    "ON CONFLICT (sweep_id) DO UPDATE SET label = EXCLUDED.label, parameter = EXCLUDED.parameter, "
-    "sweep_values = EXCLUDED.sweep_values, run_ids = EXCLUDED.run_ids, created = EXCLUDED.created"
-)
+
+SWEEP_COLS = ["sweep_id", "label", "parameter", "sweep_values", "run_ids", "created"]
+
+
+def _for_sqlite(row):
+    """SQLite has no timestamptz or arrays: ISO text and JSON text instead."""
+    out = {}
+    for k, v in row.items():
+        if isinstance(v, datetime):
+            v = v.isoformat(timespec="seconds")
+        elif isinstance(v, list):
+            v = json.dumps(v)
+        out[k] = v
+    return out
 
 
 def sync_run_now(run_dir):
@@ -183,8 +234,7 @@ def sync_run_now(run_dir):
     row = _run_row(Path(run_dir))
     if not row:
         return False
-    with _connect() as c:
-        c.execute(_UPSERT_RUN, row)
+    _execute(_upsert("runs", "run_id", RUN_COLS), _for_sqlite(row) if _sqlite_path() else row)
     return True
 
 
@@ -194,10 +244,9 @@ def sync_sweep_now(sweep_dir):
     m = _read(Path(sweep_dir) / "meta.json")
     if not m:
         return False
-    with _connect() as c:
-        c.execute(_UPSERT_SWEEP, {"sweep_id": m["id"], "label": m.get("label") or "",
-                                  "parameter": m.get("parameter"), "values": m.get("values") or [],
-                                  "run_ids": m.get("run_ids") or [], "created": _ts(m.get("created"))})
+    row = {"sweep_id": m["id"], "label": m.get("label") or "", "parameter": m.get("parameter"),
+           "sweep_values": m.get("values") or [], "run_ids": m.get("run_ids") or [], "created": _ts(m.get("created"))}
+    _execute(_upsert("sweeps", "sweep_id", SWEEP_COLS), _for_sqlite(row) if _sqlite_path() else row)
     return True
 
 
@@ -281,6 +330,13 @@ def query(sql, limit=200):
         return {"ok": False, "error": err}
     limit = max(1, min(int(limit or 200), MAX_ROWS))
     wait_idle(10)                      # include runs that finished a moment ago
+    if _sqlite_path():
+        cols, rows, err = _query_sqlite(sql, limit)
+        if err:
+            return {"ok": False, "error": f"SQL error: {err}"}
+        truncated = len(rows) > limit
+        return {"ok": True, "columns": cols, "rows": rows[:limit], "row_count": min(len(rows), limit),
+                "truncated": truncated, "sql": sql}
     import psycopg
     try:
         with _connect(autocommit=False) as c:
@@ -298,7 +354,26 @@ def query(sql, limit=200):
             "truncated": truncated, "sql": sql}
 
 
+def _query_sqlite(sql, limit):
+    """Read-only connection (mode=ro, query_only) with a time limit through the progress handler."""
+    uri = Path(_sqlite_path()).resolve().as_uri() + "?mode=ro"
+    deadline = time.monotonic() + QUERY_TIMEOUT_MS / 1000
+    try:
+        with contextlib.closing(sqlite3.connect(uri, uri=True, timeout=5)) as c:
+            c.execute("PRAGMA query_only = ON")
+            c.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 10_000)
+            cur = c.execute(sql)
+            cols = [d[0] for d in cur.description or []]
+            rows = [list(r) for r in cur.fetchmany(limit + 1)]
+        return cols, rows, None
+    except sqlite3.Error as e:
+        msg = str(e)
+        if "interrupted" in msg:
+            msg = f"query took longer than {QUERY_TIMEOUT_MS} ms"
+        return None, None, msg
+
+
 def status():
     if not enabled():
         return {"enabled": False}
-    return {"enabled": True, "reachable": _available()}
+    return {"enabled": True, "dialect": dialect(), "reachable": _available()}

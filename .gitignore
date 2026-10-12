@@ -6,3 +6,7 @@ __pycache__/
 
 certs/*
 !certs/.gitkeep
+
+# desktop build
+build/
+dist/

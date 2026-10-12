@@ -30,13 +30,19 @@ def test_query_says_when_catalog_is_off(monkeypatch):
     assert out["ok"] is False and "DATABASE_URL" in out["error"]
 
 
-@pytest.mark.skipif(not os.environ.get("TEST_DATABASE_URL"), reason="needs TEST_DATABASE_URL")
-def test_runs_are_catalogued_and_queryable(monkeypatch, tmp_path):
-    monkeypatch.setenv("WORKSPACE", str(tmp_path))  # only used if simulations is not imported yet
-    import psycopg
-    url = os.environ["TEST_DATABASE_URL"]
-    with psycopg.connect(url, autocommit=True) as c:
-        c.execute("DROP TABLE IF EXISTS runs, sweeps")
+BACKENDS = ["sqlite"] + (["postgres"] if os.environ.get("TEST_DATABASE_URL") else [])
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_runs_are_catalogued_and_queryable(backend, monkeypatch, tmp_path):
+    monkeypatch.setenv("WORKSPACE", str(tmp_path / "ws"))  # only used if simulations is not imported yet
+    if backend == "postgres":
+        import psycopg
+        url = os.environ["TEST_DATABASE_URL"]
+        with psycopg.connect(url, autocommit=True) as c:
+            c.execute("DROP TABLE IF EXISTS runs, sweeps")
+    else:
+        url = "sqlite:///" + str(tmp_path / "catalog.db")
     monkeypatch.setattr(catalog, "DATABASE_URL", url)
     monkeypatch.setattr(catalog, "_ready", False)
     monkeypatch.setattr(catalog, "_down_until", 0.0)
@@ -50,8 +56,11 @@ def test_runs_are_catalogued_and_queryable(monkeypatch, tmp_path):
         ids[r["run_id"]] = a0
     for rid in ids:
         assert S.wait_for_run(rid, 60)["status"] == "done"
+    sw = S.start_sweep("--t=1e-10\n", "A0", [0.1e-12, 0.2e-12], label="catalog sweep")
+    assert sw["ok"], sw
+    S.wait_for_sweep(sw["sweep_id"], 60)
 
-    sql = ("SELECT run_id, (params->>'A0')::float8 AS a0, order_initial, order_final, status "
+    sql = ("SELECT run_id, CAST(params->>'A0' AS DOUBLE PRECISION) AS a0, order_initial, order_final, status "
            f"FROM runs WHERE run_id IN ({', '.join(repr(i) for i in ids)}) ORDER BY a0")
     content, event = tools.call("query_runs", {"sql": sql})
     out = json.loads(content)
@@ -63,6 +72,10 @@ def test_runs_are_catalogued_and_queryable(monkeypatch, tmp_path):
         assert rows[rid][1] == pytest.approx(a0)
         assert rows[rid][4] == "done"
         assert rows[rid][3] == ("FM" if a0 > 0 else "AFM")
+
+    swq = catalog.query(f"SELECT parameter, COUNT(*) AS n FROM sweeps s JOIN runs r ON r.sweep_id = s.sweep_id "
+                        f"WHERE s.sweep_id = '{sw['sweep_id']}' GROUP BY parameter")
+    assert swq["ok"] and swq["rows"] == [["A0", 2]], swq
 
     # the database itself refuses writes inside a query
     bad = catalog.query("SELECT * FROM runs FOR UPDATE")

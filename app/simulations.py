@@ -31,6 +31,9 @@ _neel_cache = {}      # (run_id, discard) -> mean |n_z|; finished runs do not ch
 _plot_key = {}        # sweep_id -> (done count, discard) of the last plot drawn
 _series_cache = {}    # run_id -> (mtime key, array); newest few only
 _procs = {}
+# the desktop .exe has no python -m: it starts runs as "SpinMate.exe --runner"
+RUNNER_CMD = [sys.executable, "--runner"] if getattr(sys, "frozen", False) else [sys.executable, "-m", "app.runner"]
+NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)  # no console window per run on Windows
 _pool = ThreadPoolExecutor(max_workers=MAX_PARALLEL)
 
 
@@ -103,8 +106,8 @@ def _execute(run_id):
     env = dict(os.environ, PYTHONPATH=str(REPO), MPLBACKEND="Agg")
     _update(run_id, status="running", started=time.time())
     with open(run_dir / "stdout.log", "w") as out, open(run_dir / "stderr.log", "w") as err:
-        proc = subprocess.Popen([sys.executable, "-m", "app.runner"], cwd=run_dir,
-                                stdout=out, stderr=err, env=env)
+        proc = subprocess.Popen(RUNNER_CMD, cwd=run_dir, stdout=out, stderr=err, env=env,
+                                creationflags=NO_WINDOW)
         _procs[run_id] = proc
         code = proc.wait()
     _procs.pop(run_id, None)

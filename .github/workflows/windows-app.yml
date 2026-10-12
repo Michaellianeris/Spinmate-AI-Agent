@@ -1,0 +1,53 @@
+# Builds SpinMate.exe on Windows. Push a tag (git tag v1.0 && git push origin v1.0) to publish
+# SpinMate-windows.zip on the Releases page; "Run workflow" in the Actions tab builds it without a release.
+name: Windows app
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller==6.21.0
+
+      - name: Build
+        run: pyinstaller desktop/spinmate.spec --noconfirm
+
+      - name: Self-test the exe (one real run and a catalog query)
+        run: dist\SpinMate\SpinMate.exe --selftest
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path dist\SpinMate -DestinationPath SpinMate-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpinMate-windows
+          path: SpinMate-windows.zip
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SpinMate-windows.zip
+          body: |
+            **SpinMate for Windows.** Download SpinMate-windows.zip, unzip it, open the SpinMate folder and double-click SpinMate.exe. The browser opens on the app.
+
+            Windows may warn the first time because the app is not signed: click "More info", then "Run anyway".
+            API keys: paste them in Settings, or put them in %LOCALAPPDATA%\SpinMate\.env. Runs and the run catalog are stored in the same folder.

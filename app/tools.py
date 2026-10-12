@@ -120,25 +120,32 @@ TOOLS = [
 ]
 
 
-QUERY_TOOL = {
-    "name": "query_runs",
-    "description": (
-        "Read-only SQL (PostgreSQL) over the catalog of all runs and sweeps, for questions across many runs: "
+def _query_description(dialect):
+    pg = dialect == "postgres"
+    db = "PostgreSQL" if pg else "SQLite"
+    json_t, arr_t, time_t = ("jsonb", "text[]", "timestamptz") if pg else ("JSON text", "JSON array text", "ISO text, UTC")
+    return (
+        f"Read-only SQL ({db}) over the catalog of all runs and sweeps, for questions across many runs: "
         "filters, counts, rankings, comparisons. One SELECT (or WITH ... SELECT). The result is shown to the "
         "user as a table, so select clear columns, order the rows and alias long expressions.\n"
         "Table runs: run_id, label, kind ('run' or 'combined'), status ('queued','running','done','failed',"
-        "'cancelled','interrupted'), created, started, finished (timestamptz), steps, sweep_id, sweep_value, "
-        "parent_run, t_offset_s, chain (text[] of a combined run), params (jsonb: every parameter of the run, "
-        "defaults included, e.g. params->>'A0'; vectors are arrays, e.g. params->'m1'->>2), changed (jsonb: "
-        "only the values that differ from the defaults), t_start_s, t_end_s, runtime_s, order_initial, "
-        "order_final ('AFM','FM','canted'), m1_dot_m2_initial, m1_dot_m2_final, neel_z_sign_changes, "
-        "first_neel_z_sign_change_s, neel_z_abs_mean_second_half, freq_m1x_ghz, freq_neel_z_ghz, "
-        "summary (jsonb, the full summary.json).\n"
-        "Table sweeps: sweep_id, label, parameter, sweep_values (float8[]), run_ids (text[]), created.\n"
-        "Cast numbers from jsonb: (params->>'A0')::float8. Times are in seconds; multiply by 1e9 for ns. "
-        "Example: SELECT run_id, (params->>'A0')::float8 AS a0, order_final, "
+        f"'cancelled','interrupted'), created, started, finished ({time_t}), steps, sweep_id, sweep_value, "
+        f"parent_run, t_offset_s, chain ({arr_t} of a combined run), params ({json_t}: every parameter of the "
+        "run, defaults included, e.g. params->>'A0'; vectors are arrays, e.g. params->'m1'->>2), changed "
+        f"({json_t}: only the values that differ from the defaults), t_start_s, t_end_s, runtime_s, "
+        "order_initial, order_final ('AFM','FM','canted'), m1_dot_m2_initial, m1_dot_m2_final, "
+        "neel_z_sign_changes, first_neel_z_sign_change_s, neel_z_abs_mean_second_half, freq_m1x_ghz, "
+        f"freq_neel_z_ghz, summary ({json_t}, the full summary.json).\n"
+        f"Table sweeps: sweep_id, label, parameter, sweep_values ({arr_t}), run_ids ({arr_t}), created.\n"
+        "Cast numbers from JSON with CAST(params->>'A0' AS DOUBLE PRECISION). Times are in seconds; multiply "
+        "by 1e9 for ns. Example: SELECT run_id, CAST(params->>'A0' AS DOUBLE PRECISION) AS a0, order_final, "
         "first_neel_z_sign_change_s*1e12 AS first_flip_ps FROM runs WHERE status='done' AND "
-        "(params->>'A0')::float8 > 0 ORDER BY first_flip_ps"),
+        "CAST(params->>'A0' AS DOUBLE PRECISION) > 0 ORDER BY first_flip_ps")
+
+
+QUERY_TOOL = {
+    "name": "query_runs",
+    "description": _query_description(catalog.dialect()),
     "input_schema": {"type": "object",
                      "properties": {"sql": TEXT,
                                     "limit": {"type": "integer", "description": "max rows returned, default 200"}},
