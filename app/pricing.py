@@ -3,7 +3,7 @@
 USD per million tokens: input, output, cache write (5 min), cache read. Anthropic prices from
 platform.claude.com/docs/en/about-claude/pricing (October 2026); OpenAI from its public price list.
 Override with PRICES_JSON='{"model-prefix": [in, out, cache_write, cache_read], ...}' and the
-exchange rate with EUR_PER_USD. Haiku 5.5 costs 5x more above 100k prompt tokens; not modelled here.
+exchange rate with EUR_PER_USD (default: the daily ECB rate, see fx.py). Haiku 5.5 costs 5x more above 100k prompt tokens; not modelled here.
 """
 import json
 import os
@@ -44,7 +44,6 @@ try:
     PRICES.update({k: tuple(v) for k, v in json.loads(os.environ.get("PRICES_JSON") or "{}").items()})
 except (ValueError, TypeError):
     pass
-EUR_PER_USD = float(os.environ.get("EUR_PER_USD") or 0.89)
 
 
 def exact_price(model):

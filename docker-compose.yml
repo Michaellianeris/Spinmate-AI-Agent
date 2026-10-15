@@ -19,7 +19,7 @@ services:
       - QUERY_TIMEOUT_MS=${QUERY_TIMEOUT_MS:-5000}
       - CONFIRM_MINUTES=${CONFIRM_MINUTES:-10}
       - CONFIRM_RUNS=${CONFIRM_RUNS:-40}
-      - EUR_PER_USD=${EUR_PER_USD:-0.89}
+      - EUR_PER_USD=${EUR_PER_USD:-}
       - PRICES_JSON=${PRICES_JSON:-}
     volumes:
       - sublattice-data:/data

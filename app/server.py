@@ -12,6 +12,7 @@ import threading
 
 from . import agent
 from . import figures
+from . import fx
 from . import pricing
 from . import reports
 from . import tools
@@ -30,6 +31,7 @@ app = FastAPI(title="Sublattice Agent")
 S.recover_interrupted()
 # newer summary fields for old runs, then the catalog, without delaying startup
 def _startup_jobs():
+    fx.refresh()
     S.upgrade_summaries()
     catalog.backfill(S.RUNS, S.SWEEPS)
 
@@ -134,7 +136,7 @@ def config():
             "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
-            "catalog": catalog.status(), "eur_per_usd": pricing.EUR_PER_USD,
+            "catalog": catalog.status(), **fx.info(),
             "confirm": {"minutes": tools.CONFIRM_MINUTES, "runs": tools.CONFIRM_RUNS}}
 
 
