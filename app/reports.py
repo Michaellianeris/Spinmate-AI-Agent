@@ -25,6 +25,18 @@ METHOD = (r"Two-sublattice macrospin model of the original SpinMate code: the co
           r"below $-0.5$ to above $+0.5$ or back.")
 
 
+LOGO = S.REPO / "web" / "spinmate-lockup.png"
+
+
+def _logo_html():
+    """SpinMate logo and wordmark at the top of the first page, embedded so the page stays one file."""
+    try:
+        b64 = base64.b64encode(LOGO.read_bytes()).decode()
+    except OSError:
+        return ""
+    return f"<header class='brandbar'><img src='data:image/png;base64,{b64}' alt='SpinMate'><span>Simulation report</span></header>"
+
+
 def _num(v, d=3):
     if v is None:
         return "–"
@@ -138,7 +150,7 @@ def build(run_ids, title="", notes="", author=""):
                 "".join("<tr>" + "".join(f"<td>{cell(x, k)}</td>" for k, x in enumerate(r)) + "</tr>" for r in rs) +
                 "</table>")
 
-    parts = [f"<h1>{tex(title)}</h1>",
+    parts = [_logo_html(), f"<h1>{tex(title)}</h1>",
              f"<p class='meta'>{date}{' · ' + html.escape(author) if author else ''} · runs {', '.join(ids)}</p>",
              "<h2>Method</h2>", f"<p>{tex(METHOD)}</p>",
              "<h2>Results</h2>", table(head, rows)]
@@ -161,17 +173,19 @@ def build(run_ids, title="", notes="", author=""):
     page = (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>{html.escape(re.sub(r"[$\\{}]", "", title))}</title>"
             "<meta name='viewport' content='width=device-width,initial-scale=1'><style>"
             "body{font:15px/1.55 Georgia,'Times New Roman',serif;color:#1A1530;max-width:820px;margin:32px auto;padding:0 18px}"
+            ".brandbar{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E6DFF0;padding-bottom:10px;margin-bottom:22px}"
+            ".brandbar img{height:34px;width:auto}.brandbar span{font:12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6B5A86}"
             "h1{font-size:1.7rem;margin:0 0 4px}h2{font-size:1.15rem;margin:26px 0 8px;border-bottom:1px solid #E6DFF0;padding-bottom:4px}"
             "h3{font-size:1rem;margin:16px 0 6px}.meta{color:#6B5A86;margin:0 0 18px}"
             "table{border-collapse:collapse;width:100%;font:13px/1.4 system-ui,sans-serif;margin:6px 0}"
             "th,td{border:1px solid #E6DFF0;padding:5px 7px;text-align:left}th{background:#F8F4FB}"
             "figure{margin:18px 0;text-align:center}img{max-width:100%}figcaption{font-size:.9rem;color:#4A3D60;margin-top:4px}"
             "pre{background:#F8F4FB;padding:10px;border-radius:6px;font:12px/1.45 ui-monospace,monospace;white-space:pre-wrap}"
-            "code{font-family:ui-monospace,monospace}math{font-size:1.05em}math[display=block]{margin:10px 0}@media print{body{margin:0 auto}h2{break-after:avoid}figure{break-inside:avoid}}"
+            "code{font-family:ui-monospace,monospace}math{font-size:1.05em}math[display=block]{margin:10px 0}@media print{body{margin:0 auto}.brandbar img{height:30px}h2{break-after:avoid}figure{break-inside:avoid}}"
             "</style></head><body>" + "\n".join(parts) + "</body></html>")
 
     # ---- Markdown + figures
-    md = [f"# {title}", "", f"{date}{' · ' + author if author else ''} · runs {', '.join(ids)}", "",
+    md = ["![SpinMate](spinmate-logo.png)", "", f"# {title}", "", f"{date}{' · ' + author if author else ''} · runs {', '.join(ids)}", "",
           "## Method", "", METHOD, "", "## Results", "", md_table(head, rows), ""]
     if common:
         md += ["## Parameters shared by all runs (differing from the defaults)", "",
@@ -191,6 +205,8 @@ def build(run_ids, title="", notes="", author=""):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("report.md", "\n".join(md))
+        if LOGO.exists():
+            z.write(LOGO, "spinmate-logo.png")
         z.writestr("report.html", page)
         for n, (_, png) in enumerate(figs, 1):
             z.writestr(f"figure{n}.png", png)
