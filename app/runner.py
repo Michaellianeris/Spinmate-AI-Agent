@@ -86,6 +86,29 @@ def dominant_frequency(t, y):
     return float(freqs[k])
 
 
+def switches(t, nz, level=0.5):
+    """Real reversals of n_z: the sign counts only once |n_z| > level, so ringing around 0 is ignored."""
+    state, times = 0, []
+    for ti, v in zip(t, nz):
+        s = 1 if v > level else -1 if v < -level else 0
+        if s and state and s != state:
+            times.append(float(ti))
+        if s:
+            state = s
+    return times
+
+
+def settle_time(t, m1, m2, tol=0.02):
+    """Time after which m1 and m2 stay within tol of their final values; None if not settled by 90 % of the run."""
+    import numpy as np
+    dev = np.maximum(np.linalg.norm(m1 - m1[-1], axis=1), np.linalg.norm(m2 - m2[-1], axis=1))
+    out = np.where(dev > tol)[0]
+    if not len(out):
+        return float(t[0])
+    k = int(out[-1]) + 1
+    return float(t[k]) if k < 0.9 * len(t) else None
+
+
 def summarise(runtime, folder=".", extra=None):
     import numpy as np
     folder = Path(folder)
@@ -108,6 +131,8 @@ def summarise(runtime, folder=".", extra=None):
     sign = np.sign(neel[:, 2])
     flips = np.where(np.diff(sign) != 0)[0]
     half = len(t) // 2
+    sw = switches(t, neel[:, 2])
+    settled = settle_time(t, m1, m2)
 
     def vec(a):
         return [round(float(x), 6) for x in a]
@@ -126,15 +151,29 @@ def summarise(runtime, folder=".", extra=None):
         "neel_z_abs_mean": float(np.mean(neel_z)),
         "neel_z_abs_mean_second_half": float(np.mean(neel_z[half:])),
         "net_m_z_mean": float(np.mean(mnet[:, 2])),
-        "neel_z_sign_changes": int(len(flips)),
+        "neel_z_switches": len(sw),
+        "first_neel_z_switch_s": sw[0] if sw else None,
+        "neel_z_sign_changes": int(len(flips)),          # every zero crossing, ringing included
         "first_neel_z_sign_change_s": float(t[flips[0] + 1]) if len(flips) else None,
+        "settle_time_s": settled,
         "dominant_freq_m1x_GHz": None,
         "dominant_freq_neel_z_GHz": None,
     }
+    # FFT of the second half: kept only with >= 5 periods in the window and a real oscillation
+    window = float(t[-1] - t[half]) if len(t) > 1 else 0.0
+    notes = []
     for key, series in (("dominant_freq_m1x_GHz", m1[half:, 0]),
                         ("dominant_freq_neel_z_GHz", neel[half:, 2])):
+        if float(np.std(series)) < 1e-4:
+            notes.append(f"{key}: no oscillation left in the second half")
+            continue
         f = dominant_frequency(t[half:], series)
-        summary[key] = round(f / 1e9, 4) if f else None
+        if f and f * window >= 5:
+            summary[key] = round(f / 1e9, 4)
+        elif f:
+            notes.append(f"{key}: fewer than 5 periods in the second half, not reliable")
+    if notes:
+        summary["freq_note"] = "; ".join(notes)
     summary.update(extra or {})
     write_json(folder / "summary.json", summary)
     return summary

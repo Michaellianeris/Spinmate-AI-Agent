@@ -10,3 +10,5 @@ certs/*
 # desktop build
 build/
 dist/
+.venv-build/
+SpinMate-windows.zip

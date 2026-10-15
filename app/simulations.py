@@ -97,6 +97,20 @@ def recover_interrupted():
             catalog.sync_run(d)
 
 
+def upgrade_summaries():
+    """Recompute summaries written before neel_z_switches / settle_time_s existed (once, at startup)."""
+    from . import runner
+    for d in sorted(RUNS.iterdir()):
+        s = _read(d / "summary.json")
+        if not s or "neel_z_switches" in s or not (d / "output1.dat").exists():
+            continue
+        keep = {k: s[k] for k in ("t_offset_s", "chain", "segment_starts_ns") if k in s}
+        try:
+            runner.summarise(s.get("runtime_s") or 0.0, folder=d, extra=keep)
+        except Exception:
+            pass
+
+
 # ---------- single runs
 
 def _execute(run_id):
@@ -436,6 +450,7 @@ def sweep_info(sweep_id, discard_fraction=0.0):
             s = r.get("summary") or {}
             row["dominant_freq_neel_z_GHz"] = s.get("dominant_freq_neel_z_GHz")
             row["neel_z_sign_changes"] = s.get("neel_z_sign_changes")
+            row["neel_z_switches"] = s.get("neel_z_switches")
             row["order_final"] = s.get("order_final")
             row["neel_z_final"] = (s.get("neel_final") or [None, None, None])[2]
         rows.append(row)

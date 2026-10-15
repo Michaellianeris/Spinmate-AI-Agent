@@ -51,6 +51,9 @@ CREATE TABLE IF NOT EXISTS runs (
   neel_z_abs_mean_second_half double precision,
   freq_m1x_ghz double precision,
   freq_neel_z_ghz double precision,
+  neel_z_switches integer,
+  first_neel_z_switch_s double precision,
+  settle_time_s double precision,
   summary jsonb,
   updated timestamptz NOT NULL DEFAULT now()
 );
@@ -76,7 +79,8 @@ CREATE TABLE IF NOT EXISTS runs (
   t_start_s REAL, t_end_s REAL, runtime_s REAL, order_initial TEXT, order_final TEXT,
   m1_dot_m2_initial REAL, m1_dot_m2_final REAL, neel_z_sign_changes INTEGER,
   first_neel_z_sign_change_s REAL, neel_z_abs_mean_second_half REAL,
-  freq_m1x_ghz REAL, freq_neel_z_ghz REAL, summary TEXT,
+  freq_m1x_ghz REAL, freq_neel_z_ghz REAL, neel_z_switches INTEGER, first_neel_z_switch_s REAL,
+  settle_time_s REAL, summary TEXT,
   updated TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS runs_sweep_idx ON runs (sweep_id);
@@ -91,7 +95,12 @@ RUN_COLS = ["run_id", "label", "kind", "status", "created", "started", "finished
             "t_start_s", "t_end_s", "runtime_s", "order_initial", "order_final",
             "m1_dot_m2_initial", "m1_dot_m2_final", "neel_z_sign_changes",
             "first_neel_z_sign_change_s", "neel_z_abs_mean_second_half",
-            "freq_m1x_ghz", "freq_neel_z_ghz", "summary"]
+            "freq_m1x_ghz", "freq_neel_z_ghz", "neel_z_switches", "first_neel_z_switch_s",
+            "settle_time_s", "summary"]
+
+# columns added after the first release: (name, postgres type, sqlite type)
+ADDED_COLS = [("neel_z_switches", "integer", "INTEGER"), ("first_neel_z_switch_s", "double precision", "REAL"),
+              ("settle_time_s", "double precision", "REAL")]
 
 _bg = ThreadPoolExecutor(max_workers=1)   # one writer keeps updates in order
 _ready = False
@@ -142,6 +151,7 @@ def _available():
             return True
         try:
             _execute(SCHEMA_SQLITE if _sqlite_path() else SCHEMA_PG)
+            _migrate()
             _ready = True
         except Exception as e:
             _down_until = time.time() + 30
@@ -201,8 +211,23 @@ def _run_row(run_dir):
         "first_neel_z_sign_change_s": s.get("first_neel_z_sign_change_s"),
         "neel_z_abs_mean_second_half": s.get("neel_z_abs_mean_second_half"),
         "freq_m1x_ghz": s.get("dominant_freq_m1x_GHz"), "freq_neel_z_ghz": s.get("dominant_freq_neel_z_GHz"),
+        "neel_z_switches": s.get("neel_z_switches"), "first_neel_z_switch_s": s.get("first_neel_z_switch_s"),
+        "settle_time_s": s.get("settle_time_s"),
         "summary": json.dumps(s) if s else None,
     }
+
+
+def _migrate():
+    """Add columns that older catalogs do not have yet."""
+    if _sqlite_path():
+        with _connect() as c:
+            have = {r[1] for r in c.execute("PRAGMA table_info(runs)")}
+            for name, _, lite in ADDED_COLS:
+                if name not in have:
+                    c.execute(f"ALTER TABLE runs ADD COLUMN {name} {lite}")
+    else:
+        for name, pg, _ in ADDED_COLS:
+            _execute(f"ALTER TABLE runs ADD COLUMN IF NOT EXISTS {name} {pg}")
 
 
 def _upsert(table, key, cols):

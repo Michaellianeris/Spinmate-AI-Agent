@@ -7,7 +7,7 @@ import anthropic
 
 from . import openai_provider
 from . import tools
-from .prompts import SYSTEM_PROMPT
+from . import prompts
 
 DEFAULT_MODEL = os.environ.get("CLAUDE_MODEL") or "claude-sonnet-5"
 KNOWN_MODELS = ("claude-sonnet-5,claude-opus-5-5,claude-opus-4-5-20251101,claude-opus-4-1-20250805,"
@@ -34,14 +34,6 @@ def list_models(api_key=None):
     return [{"id": m, "name": m, "provider": "anthropic"} for m in MODELS], "configured", err
 
 
-MODE_NOTES = {
-    "fast": ("Mode: FAST. Use the default parameters and change only what the user names (typically exchange A0, "
-             "anisotropy Ku, Ms, damping, duration, SOT current). Do not ask clarifying questions you can answer "
-             "with defaults; state the few values you chose, start the run and give a short result."),
-    "deep": ("Mode: DEEP. Work from the full parameter set or an attached txt file. Check every parameter, "
-             "mention the known caveats that apply, consider sweeps when they answer the question, and give a "
-             "thorough, quantitative explanation of the dynamics."),
-}
 MAX_TOKENS = int(os.environ.get("CLAUDE_MAX_TOKENS", "4096"))
 MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "24"))
 TOKEN_BUDGET = int(os.environ.get("TOKEN_BUDGET") or 0)
@@ -106,16 +98,10 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
     client = anthropic.Anthropic(api_key=key)
     model = model or DEFAULT_MODEL
     messages = list(messages)
-    system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
-    if mode in MODE_NOTES:
-        system.append({"type": "text", "text": MODE_NOTES[mode]})
-    if name:
-        system.append({"type": "text", "text": f"The user's name is {name}. Greet them by name in your first reply "
-                                               "and use their name only occasionally after that."})
-
-    if defaults_text and defaults_text.strip():
-        system.append({"type": "text", "text": "The user's saved default parameters. Use them as the base of every "
-                                               "run unless the user asks for something else:\n" + defaults_text.strip()})
+    parts = _system_parts(messages, mode, name, defaults_text)
+    # the long prompt is cached; the short per-request notes follow it
+    system = [{"type": "text", "text": parts[0], "cache_control": {"type": "ephemeral"}}] + \
+             [{"type": "text", "text": t} for t in parts[1:]]
     turn_in = turn_out = 0
 
     def usage():
@@ -191,22 +177,40 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
     yield {"type": "done", "messages": messages}
 
 
-def _system_text(mode=None, name=None, defaults_text=None):
-    parts = [SYSTEM_PROMPT]
-    if mode in MODE_NOTES:
-        parts.append(MODE_NOTES[mode])
-    if name:
-        parts.append(f"The user's name is {name}. Greet them by name in your first reply and use their name only occasionally after that.")
+def _first_turn(messages):
+    """True when the conversation has exactly one message typed by the user (tool results do not count)."""
+    typed = 0
+    for m in messages:
+        if m.get("role") != "user":
+            continue
+        c = m.get("content")
+        if isinstance(c, str) or any(b.get("type") == "text" for b in (c or []) if isinstance(b, dict)):
+            typed += 1
+    return typed <= 1
+
+
+def _system_parts(messages, mode=None, name=None, defaults_text=None):
+    parts = [prompts.SYSTEM_PROMPT]
+    if mode in prompts.MODE_NOTES:
+        parts.append(prompts.MODE_NOTES[mode])
+    note = prompts.name_note(name, _first_turn(messages))
+    if note:
+        parts.append(note)
     if defaults_text and defaults_text.strip():
-        parts.append("The user's saved default parameters. Use them as the base of every run unless the user asks for something else:\n" + defaults_text.strip())
-    return "\n\n".join(parts)
+        parts.append("The user's saved default parameters (priority 3). Use them as the base of every run unless "
+                     "the message asks for something else:\n" + defaults_text.strip())
+    return parts
+
+
+def _system_text(messages, mode=None, name=None, defaults_text=None):
+    return "\n\n".join(_system_parts(messages, mode, name, defaults_text))
 
 
 def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
     model = model or openai_provider.DEFAULT_MODEL
     messages = list(messages)
     input_items = openai_provider.to_input(messages)
-    instructions = _system_text(mode, name, defaults_text)
+    instructions = _system_text(messages, mode, name, defaults_text)
     turn_in = turn_out = 0
 
     def usage_event():

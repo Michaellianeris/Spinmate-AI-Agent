@@ -18,6 +18,7 @@ COPY app ./app
 COPY macrospin ./macrospin
 COPY web ./web
 COPY examples ./examples
+COPY evals ./evals
 
 RUN useradd --create-home --uid 1000 sim \
  && mkdir -p /data && chown -R sim:sim /data /app

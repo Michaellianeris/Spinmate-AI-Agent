@@ -23,8 +23,13 @@ MAX_UPLOAD = 200_000
 
 app = FastAPI(title="Sublattice Agent")
 S.recover_interrupted()
-# fill the catalog with runs already on disk, without delaying startup
-threading.Thread(target=catalog.backfill, args=(S.RUNS, S.SWEEPS), daemon=True).start()
+# newer summary fields for old runs, then the catalog, without delaying startup
+def _startup_jobs():
+    S.upgrade_summaries()
+    catalog.backfill(S.RUNS, S.SWEEPS)
+
+
+threading.Thread(target=_startup_jobs, daemon=True).start()
 
 
 class ChatIn(BaseModel):

@@ -53,8 +53,9 @@ TOOLS = [
     },
     {
         "name": "wait_for_run",
-        "description": "Wait until a run has finished (up to timeout_s, at most 120). Call it right after "
-                       "start_simulation, then get_run with include_plot=true to report the result.",
+        "description": "Wait until a run has finished (up to timeout_s, at most 120). Returns the status and, when "
+                       "done, the summary. Call it right after start_simulation; get_run is only needed for the "
+                       "plot or the full parameter text.",
         "input_schema": {"type": "object",
                          "properties": {"run_id": TEXT, "timeout_s": {"type": "number"}},
                          "required": ["run_id"]},
@@ -62,8 +63,8 @@ TOOLS = [
     {
         "name": "wait_for_sweep",
         "description": "Wait until every run of a sweep has finished (up to timeout_s, at most 120). "
-                       "Then call get_sweep. Rows carry mean |n_z|, neel_z_sign_changes, order_final and "
-                       "neel_z_final, which are what a threshold search needs.",
+                       "Then call get_sweep. Rows carry mean |n_z|, neel_z_switches (real reversals), order_final "
+                       "and neel_z_final, which are what a threshold search needs.",
         "input_schema": {"type": "object",
                          "properties": {"sweep_id": TEXT, "timeout_s": {"type": "number"}},
                          "required": ["sweep_id"]},
@@ -134,13 +135,14 @@ def _query_description(dialect):
         "run, defaults included, e.g. params->>'A0'; vectors are arrays, e.g. params->'m1'->>2), changed "
         f"({json_t}: only the values that differ from the defaults), t_start_s, t_end_s, runtime_s, "
         "order_initial, order_final ('AFM','FM','canted'), m1_dot_m2_initial, m1_dot_m2_final, "
-        "neel_z_sign_changes, first_neel_z_sign_change_s, neel_z_abs_mean_second_half, freq_m1x_ghz, "
+        "neel_z_switches (real reversals of n_z), first_neel_z_switch_s, settle_time_s (null = still moving), "
+        "neel_z_sign_changes (every zero crossing, ringing included), neel_z_abs_mean_second_half, freq_m1x_ghz, "
         f"freq_neel_z_ghz, summary ({json_t}, the full summary.json).\n"
         f"Table sweeps: sweep_id, label, parameter, sweep_values ({arr_t}), run_ids ({arr_t}), created.\n"
         "Cast numbers from JSON with CAST(params->>'A0' AS DOUBLE PRECISION). Times are in seconds; multiply "
         "by 1e9 for ns. Example: SELECT run_id, CAST(params->>'A0' AS DOUBLE PRECISION) AS a0, order_final, "
-        "first_neel_z_sign_change_s*1e12 AS first_flip_ps FROM runs WHERE status='done' AND "
-        "CAST(params->>'A0' AS DOUBLE PRECISION) > 0 ORDER BY first_flip_ps")
+        "first_neel_z_switch_s*1e12 AS first_switch_ps FROM runs WHERE status='done' AND "
+        "CAST(params->>'A0' AS DOUBLE PRECISION) > 0 ORDER BY first_switch_ps")
 
 
 QUERY_TOOL = {

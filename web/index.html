@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="spin">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem("sublattice.theme")||"light"}catch{}</script>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("spinmate.theme")||"spin"}catch{}</script>
 <style>
 :root{
   --paper:#EDF0F3; --panel:#FFFFFF; --ink:#17212B; --muted:#5A6875; --line:#CDD5DD; --soft:#F5F7F9; --grid:#E3E8ED;
@@ -469,9 +469,9 @@ main{grid-template-columns:minmax(0,1fr)}
     <div class="popover" id="settingspanel" role="dialog" aria-label="Settings" hidden>
       <div class="lbl-t">Colour theme</div>
       <div class="themes" id="themes">
-        <button type="button" data-theme="light" aria-pressed="true"><i style="background:#fff"></i>Light</button>
+        <button type="button" data-theme="light" aria-pressed="false"><i style="background:#fff"></i>Light</button>
         <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
-        <button type="button" data-theme="spin" aria-pressed="false"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
+        <button type="button" data-theme="spin" aria-pressed="true"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
       <label>Anthropic API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
       <label>OpenAI API key <input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"></label>
@@ -1100,7 +1100,8 @@ class RunView {
         <dt>m₂ final</dt><dd>${vec(s.m2_final)}</dd>
         <dt>Néel vector final</dt><dd>${vec(s.neel_final)}</dd>
         <dt>mean |n<sub>z</sub>|</dt><dd>${fmt(s.neel_z_abs_mean)}</dd>
-        <dt>n<sub>z</sub> sign changes</dt><dd>${s.neel_z_sign_changes}</dd>
+        <dt>n<sub>z</sub> switches</dt><dd>${s.neel_z_switches ?? s.neel_z_sign_changes}${s.first_neel_z_switch_s ? ` (first ${fmt(s.first_neel_z_switch_s * 1e12, 1)} ps)` : ""}</dd>
+        <dt>settled after</dt><dd>${s.settle_time_s != null ? fmt(s.settle_time_s * 1e12, 1) + " ps" : "–"}</dd>
         <dt>dominant f(m<sub>1x</sub>)</dt><dd>${s.dominant_freq_m1x_GHz ? s.dominant_freq_m1x_GHz + " GHz" : "–"}</dd>
         <dt>steps</dt><dd>${(r.steps || 0).toLocaleString()}</dd>
       </dl>
@@ -1339,7 +1340,7 @@ async function paintSweepCard(id, c, s) {
     onClick: i => openRunCard(rows[i].run_id)});
   c.chart.setData(rows.map(r => r.value / scale), [{k: "y", c: "#1F4FD1", y: rows.map(r => r.neel_z_abs_mean), width: 1.4}]);
   plot.querySelector(".rc-meta").textContent = "Click a point to open that run.\n" +
-    rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${r.neel_z_sign_changes ? ", " + r.neel_z_sign_changes + " flips" : ""}`).join("\n");
+    rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${(r.neel_z_switches ?? r.neel_z_sign_changes) ? ", " + (r.neel_z_switches ?? r.neel_z_sign_changes) + " switches" : ""}`).join("\n");
 }
 async function paintCard(id, c, r) {
   const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
@@ -1852,8 +1853,8 @@ $("#apikey").addEventListener("input", () => { sessionStorage.setItem("sublattic
 $("#openaikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.openai.key", $("#openaikey").value.trim()); keyState(); });
 
 function setTheme(t) {
-  if (!["light", "dark", "spin"].includes(t)) t = "light";
-  document.documentElement.dataset.theme = t; try { localStorage.setItem("sublattice.theme", t); } catch {}
+  if (!["light", "dark", "spin"].includes(t)) t = "spin";
+  document.documentElement.dataset.theme = t; try { localStorage.setItem("spinmate.theme", t); } catch {}
   document.querySelectorAll("#themes button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === t)));
   for (const c of cardEls.values()) { c.chart && c.chart.draw(); c.view && c.view.chart && c.view.chart.draw(); }
 }

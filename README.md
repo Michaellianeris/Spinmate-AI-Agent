@@ -311,6 +311,24 @@ run catalog (app/catalog.py) --> Postgres: runs and sweeps, read-only SQL for qu
 progress bar, silences the per-step print of the temperature branch, adds a font fallback and writes the
 summary. Parameter files are parsed with the original `importdata.py`. `app/guide.py` backs Athena, the guide.
 
+## Prompt evaluation
+
+`evals/` runs a fixed set of requests (`evals/cases.py`: the starter scenarios, a 100 ps run, FeRh in Deep mode,
+SOT rotation, a unit slip, a continuation, a goal search, two catalog questions, a parameter question and a
+two-message greeting check) through the real agent and real simulations, and checks the tools used, the final
+order, the answer length and what the answer says. It uses a temporary workspace, so your runs are not touched.
+
+```bash
+docker compose exec -e ANTHROPIC_API_KEY=sk-... sublattice-agent python -m evals.run_eval --label v2
+docker compose exec -e ANTHROPIC_API_KEY=sk-... sublattice-agent python -m evals.run_eval --label v1 --prompt v1
+docker compose exec sublattice-agent python -m evals.run_eval --compare evals/results/v1.json evals/results/v2.json
+docker compose cp sublattice-agent:/app/evals/results ./evals/
+```
+
+`--prompt v1` uses the previous prompt (`evals/prompt_v1.py`), `--cases a,b` runs only some cases and
+`--model` picks the model. Each report (`evals/results/<label>.md`) lists, per case, the checks, model calls,
+tokens, answer lines, the tool sequence and the answer.
+
 ## Development
 
 ```bash
