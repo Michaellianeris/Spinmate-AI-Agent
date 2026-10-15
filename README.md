@@ -87,84 +87,43 @@ with the paperclip (drag and drop also works). Under the message box you choose 
 - **Deep** works from the full parameter set or your txt file, mentions the caveats that apply and gives a
   quantitative explanation.
 
-Under the message box you choose one of four gods: **Hermes** (quick and economical), **Dionysus** (balanced),
-**Zeus** (deep and most capable) or **Apollo** (specialised and new models). The model behind each god is chosen
-automatically from the keys you have: for every provider it takes the newest suitable model of that level (for
-Hermes, for example, Claude Haiku or an OpenAI nano/mini model), tries Claude first and switches to OpenAI if a
-call fails, for instance when there is no credit. Each answer shows which model was used. To always use a given
-model for a god, open Settings and pick it under *Model behind each god*; the default is Auto. The logos are
-read from `web/gods/` (`hermes.png`, `dionysus.png`, `zeus.png`, `apollo.png`); until a file exists the god
-shows a coloured badge with its initial.
-The temple icon in the left bar opens *Model gods*, a comparison of the four levels with what each is good
-for, its speed and depth, and the model each one will use, plus a button to choose it.
+### Models and the guide
 
-**Agent behaviour.** After it starts a run the assistant waits for it, reads the result and reports it, so a single request such as "run the default" ends with an explanation. For goal
-requests ("find the smallest current that switches the Néel vector") it searches on its own: a coarse
-sweep, then finer sweeps inside the interval where the behaviour changes, for at most four rounds, and it
-reports the interval it found. The assistant is the only part that uses tokens; runs started from Run setup
-never do.
+Under the message box you choose one of four gods. Each is a level of model, not a fixed model: the
+model behind it is picked from the Claude and OpenAI keys you have.
 
-**Tokens and cost.** A counter next to the Fast and Deep switch shows the tokens used in the current chat and an
-estimated cost in euro at list prices; each answer ends with its own tokens and cost. Prices live in
-`app/pricing.py` (override with `PRICES_JSON`, exchange rate `EUR_PER_USD`).
+<table>
+<tr><th></th><th>Persona</th><th>Best for</th><th>Typical models</th></tr>
+<tr><td><img src="web/gods/hermes.png" width="56" alt="Hermes"></td><td><b>Hermes</b><br>quick and economical</td>
+<td>Single runs, the presets, short answers in Fast mode</td><td>Claude Haiku, GPT nano / mini</td></tr>
+<tr><td><img src="web/gods/dionysus.png" width="56" alt="Dionysus"></td><td><b>Dionysus</b><br>balanced (default)</td>
+<td>Everyday runs with a clear explanation, sweeps and comparisons</td><td>Claude Sonnet, GPT-5.x</td></tr>
+<tr><td><img src="web/gods/zeus.png" width="56" alt="Zeus"></td><td><b>Zeus</b><br>deep and most capable</td>
+<td>Deep mode, goal searches over several sweeps, careful reading of curves, reports</td><td>Claude Opus, OpenAI o-series</td></tr>
+<tr><td><img src="web/gods/apollo.png" width="56" alt="Apollo"></td><td><b>Apollo</b><br>specialised and new</td>
+<td>Trying new or special models as they appear</td><td>Claude Fable / Mythos and other new models</td></tr>
+<tr><td><img src="web/athena.png" width="56" alt="Athena"></td><td><b>Athena</b><br>the guide</td>
+<td>How to use the app: where results are, what Fast and Deep do, what a tool does</td><td>The selected provider, with built-in answers offline</td></tr>
+</table>
 
-**Next steps.** Each answer ends with two or three suggested follow-ups as buttons ("Continue 2 ns", "Sweep A0
-around this value"); click one to send it.
+**How the model is chosen.** On *Auto* (the default), every request is scored over all models of the chosen
+god from both providers: `capability + bonus for the god's strongest model − price weight × cost`, where the
+price weight depends on the god (Hermes cares most about price, Zeus least) and shrinks when the request is
+demanding (Deep mode, sweeps, comparisons, reports, long messages). So the strongest model wins unless a
+cheaper one is clearly enough. There is no fixed provider order; if a call fails, the next model by the same
+score is used. Pro models are used only when you pin them. Each answer shows the model, the reason and the
+cost in €. To always use one model for a god, open Settings and pick it under *Model behind each god*.
+The logic is in `app/router.py`, the prices in `app/pricing.py`.
 
-**Large requests.** A run or sweep estimated above `CONFIRM_MINUTES` (10) of wall time or `CONFIRM_RUNS` (40)
-runs is held by the server: the chat shows the estimate with a **Run it** button, and nothing starts until you
-press it. Set `TOKEN_BUDGET` to stop the assistant, and with it any
-run it would start, once the server has used that many tokens since it started.
-
-**Conversations.** The clock icon in the left bar lists earlier chats with their runs and graphs; the
-pencil starts a new one. Run cards appear in the chat under the prompt that asked for them. Older cards fold to
-one line (order, switches, settle time, the parameters you changed) when a new one appears; click the line to
-open it again.
-
-**Runs.** The list icon in the left bar shows every run on the server. Search by id, label, `#tag` or parameter,
-filter by status, end state or kind, star runs and give them tags. Click a run to open its card. **Select all** ticks every run the filters show, and **Delete** removes the
-ticked runs and their files (running runs must be cancelled first). Tick 2 to 6 runs for **Compare** (one chart with n_z, m1·m2, m1z, m2z, n_x or the net m_z of each run, and a table of results and
-of the parameters that differ), **Figure** or **Report**. The assistant can compare runs and write reports too.
-
-**3D sphere.** Under the dial of a run card, *3D sphere* shows m1 and m2 on the unit sphere with their paths;
-drag to rotate. It follows the playhead and Play.
-
-**Figures for papers.** *Figure…* on a run card or a comparison draws the chosen quantities and time window with
-matplotlib and SciencePlots in Science, IEEE or Nature style (no LaTeX needed). The figure appears in the chat as
-a card with *Download PDF*, *SVG* and *PNG* (300 dpi) and *Change…*; ask the assistant for a figure and it does
-the same.
-
-**Reports.** A report holds the method, a results table, the parameters shared by all runs and those that differ,
-figures, an optional discussion and the parameter files. It appears in the chat as a card with a preview, *Print / save as
-PDF*, *Open full page*, *Download HTML* and the Markdown version with the figures. Reports are kept in `reports/` of the workspace.
-
-**Default parameters.** The sliders icon in the left bar edits the values Fast mode starts from. They are
-stored in the browser and also sent to the assistant as the base of its runs.
-
-**Export.** Each run card has *Export CSV* (time, m1, m2 and the Néel vector) and *Export all data*
-(a zip with every output file and the CSV).
-
-**Runs in the chat.** Every run adds a card that shows its steps (parameters checked, run started,
-simulating with progress and time left) and, when it finishes, the complete viewer, so the result is
-there as soon as the answer is: a dial with the +x and +z axes showing the sublattice orientation, the
-order before and after (for example AFM to FM), the final vectors, and a plot of m1, m2 and the Néel
-vector. Toggle components, click to move the playhead, drag to zoom (the window is read again from the raw
-data), double-click to reset, and press Play to animate the run. Sweep cards plot mean |nz| against the
-swept parameter; click a point to open that run.
-
-**Run setup.** The play icon in the left bar opens a dialog for starting a run yourself, without the
-assistant. The result appears in the chat like any other.
-
-- *Fast*: presets, sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping,
-  temperature and SOT current, an initial-state selector and a "Quick extra txt" field for one or two
-  additional flags. The text that will be run is shown below the form.
-- *Deep*: a text editor for the full parameter file, an examples menu, Check, Run and Save as file.
+The temple icon in the left bar opens *Model gods*, a comparison of the four levels with their speed and
+depth and the model each would use now. The god logos are read from `web/gods/`; until a file exists the
+god shows a coloured badge with its initial.
 
 The app works without the assistant: Run setup runs a simulation directly and only the chat needs the API.
 
-**Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) is a small
-assistant that only explains how to use the app. It asks for your name the first time and answers questions such as where the results are or what
-Fast and Deep do. If the selected provider cannot be reached it falls back to a built-in list of answers.
+**Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) only explains how
+to use the app. It asks for your name the first time; if the provider cannot be reached it answers from a
+built-in list.
 
 **Account.** There is no password: you log in by typing your name when Athena asks for it. The round button
 with your initial in the left bar shows who is signed in and lets you log out. Every name keeps its own
