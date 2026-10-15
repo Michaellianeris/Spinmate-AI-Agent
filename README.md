@@ -11,9 +11,6 @@ result from the actual magnetization curves.
 
 <img src="docs/screenshot.png" alt="SpinMate: a run started from a plain-language question, with the 3D sphere, the n_z curves, the answer and the suggested next steps" width="900">
 
-The physics code in `macrospin/` is the original code and has not been modified. The repository is
-named `sublattice-agent`.
-
 ## Contents
 
 - [Quick start](#quick-start)
