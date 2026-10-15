@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SpinMate User Guide</title>
+<style>
+@page{size:A4;margin:18mm 17mm 18mm 17mm}
+*{box-sizing:border-box}
+body{font:10.5pt/1.55 Inter,"Segoe UI",Arial,sans-serif;color:#1A1530;margin:0}
+.cover{height:257mm;display:flex;flex-direction:column;justify-content:center;gap:10mm;page-break-after:always;position:relative}
+.cover img.logo{width:120mm}
+.cover h1{font-size:30pt;line-height:1.15;margin:0;letter-spacing:-.01em}
+.cover p{font-size:13pt;color:#4A3D60;margin:0;max-width:150mm}
+.cover .bar{position:absolute;left:0;right:0;bottom:0;height:3mm;background:linear-gradient(90deg,#E5341B,#8A3FB5 55%,#1D1DD8)}
+.cover .meta{position:absolute;bottom:10mm;left:0;font-size:9.5pt;color:#6B5A86}
+h2{font-size:16pt;margin:0 0 3mm;padding-top:2mm;border-bottom:.4mm solid #E6DFF0;padding-bottom:2mm;break-after:avoid}
+h3{font-size:11.5pt;margin:5mm 0 1.5mm;break-after:avoid;color:#2A1F45}
+section{margin-bottom:7mm}
+.new{page-break-before:always}
+p{margin:0 0 2.5mm}
+ul,ol{margin:0 0 3mm;padding-left:6mm}li{margin-bottom:1mm}
+code{font:9pt ui-monospace,Menlo,Consolas,monospace;background:#F3EEF9;padding:.3mm 1.2mm;border-radius:1mm}
+pre{font:8.8pt/1.45 ui-monospace,Menlo,Consolas,monospace;background:#F8F4FB;border:.3mm solid #E6DFF0;border-radius:2mm;padding:3mm 4mm;white-space:pre-wrap;margin:0 0 3mm}
+.ask{background:#F8F4FB;border-left:1mm solid #8A3FB5;border-radius:1.5mm;padding:2mm 4mm;margin:0 0 2mm;font-style:italic}
+table{border-collapse:collapse;width:100%;margin:1mm 0 4mm;font-size:9.5pt}
+th,td{border:.3mm solid #E6DFF0;padding:1.6mm 2.4mm;text-align:left;vertical-align:top}th{background:#F8F4FB}
+figure{margin:2mm 0 5mm;text-align:center;break-inside:avoid}figure img{max-width:100%;border:.3mm solid #E6DFF0;border-radius:2mm}
+figcaption{font-size:8.8pt;color:#6B5A86;margin-top:1.5mm}
+.tip{background:#EEF6F7;border:.3mm solid #CBE6E9;border-radius:2mm;padding:2.5mm 4mm;margin:2mm 0 4mm}
+.toc li{margin-bottom:1.2mm}
+</style></head><body>
+
+<div class="cover">
+  <img class="logo" src="../logo-light.png" alt="SpinMate">
+  <h1>User Guide</h1>
+  <p>An AI agent for spintronics simulation. Describe a setup in plain language or upload a parameter file; SpinMate
+  validates it, runs the two-sublattice macrospin model and explains the result from the actual magnetization dynamics.</p>
+  <div class="meta">Version 1.0 · Free and open source (MIT) · github.com/Michaellianeris/sublattice-agent</div>
+  <div class="bar"></div>
+</div>
+
+<section>
+<h2>Contents</h2>
+<ol class="toc">
+<li>Getting started</li><li>Asking for a simulation</li><li>Reading a run card</li><li>Fast and Deep</li>
+<li>Models and the guide</li><li>Sweeps, threshold searches and continuing runs</li>
+<li>Comparing runs, figures and reports</li><li>The Runs panel and questions across runs</li>
+<li>Settings, cost and conversations</li><li>Parameter reference</li><li>Troubleshooting</li>
+</ol>
+</section>
+
+<section>
+<h2>1. Getting started</h2>
+<ol>
+<li><b>Start the app.</b> With Docker: <code>docker compose up -d</code>, then open <code>http://localhost:8421</code>.
+On Windows you can also run <code>SpinMate.exe</code>, which opens the app in your browser.</li>
+<li><b>Meet Athena.</b> The first time, Athena (the owl) asks for your name and email. The email creates your account
+and brings you this guide; you can skip it.</li>
+<li><b>Add an API key.</b> Open Settings (gear icon) and paste an Anthropic and/or OpenAI key. A key in the page stays in
+that browser tab; a key in <code>.env</code> is used by the server for everyone on it.</li>
+<li><b>Ask.</b> Type a request in the message box and press Enter, or pick one of the cards under <i>Find a skill</i>.</li>
+</ol>
+<div class="tip">The simulator also works without a key: the play icon in the left bar (<i>Run setup</i>) runs a
+preset or your own parameter file directly. Only the chat needs a model.</div>
+</section>
+
+<section class="new">
+<h2>2. Asking for a simulation</h2>
+<p>Describe the starting state, the exchange, any field, current or temperature, and the duration. Units follow the solver
+(SI; currents in A/cm²). Examples:</p>
+<div class="ask">Start antiferromagnetic with a positive exchange A0 = 0.248e-12, no current, 50 ps. Does it end ferromagnetic?</div>
+<div class="ask">Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937) and A0 = -0.248e-12, 50 ps.</div>
+<div class="ask">Apply a DC spin-orbit current of 100e6 A/cm² for 2 ns to the default AFM state. What happens?</div>
+<div class="ask">Heat a FeRh layer through its transition: positive A0, 370 K ± 60 K at 0.25 GHz, 2 ns.</div>
+<p>SpinMate checks the parameters with the solver's own parser before anything runs. A suspicious value (for example
+<code>A0 = 0.248</code> without the <code>e-12</code>) is pointed out instead of being run. Large requests
+(many runs or long runtimes) wait for your <b>Run it</b> button.</p>
+<figure><img src="../screenshot.png" style="width:150mm"><figcaption>A request in plain language, the run card and the answer with suggested next steps.</figcaption></figure>
+</section>
+
+<section class="new">
+<h2>3. Reading a run card</h2>
+<table>
+<tr><th>Field</th><th>Meaning</th></tr>
+<tr><td>order</td><td>Initial and final order from m₁·m₂: AFM below −0.9, FM above +0.9.</td></tr>
+<tr><td>m₁, m₂ final, Néel vector</td><td>Final unit vectors and n = (m₁ − m₂)/2.</td></tr>
+<tr><td>n<sub>z</sub> switches</td><td>Real reversals of n<sub>z</sub> (from below −0.5 to above +0.5 or back), with the time of the first one. Ringing around zero is not counted.</td></tr>
+<tr><td>settled after</td><td>When m₁ and m₂ stop changing (within 2 %). “–” if they did not settle in the run.</td></tr>
+<tr><td>dominant f</td><td>Main frequency of m₁ₓ, given only if at least five periods fit in the second half of the run.</td></tr>
+</table>
+<p>The <b>sphere</b> shows the trajectories of m₁ (blue) and m₂ (magenta) in 3D, or as an x–z dial. The <b>chart</b>
+shows m₁, m₂, z-components only, or the Néel vector; drag to zoom, double-click to reset, click to move the playhead.
+<b>Play</b> animates the run. The card also links the raw files, CSV export and a zip of all data.</p>
+</section>
+
+<section>
+<h2>4. Fast and Deep</h2>
+<p><b>Fast</b> uses the default parameters, changes only what you name and answers in a few lines.
+<b>Deep</b> works from the full parameter set or your file, mentions the caveats that apply and gives a quantitative
+explanation. Both end with up to three suggested next steps as buttons.</p>
+</section>
+
+<section class="new">
+<h2>5. Models and the guide</h2>
+<p>Under the message box you pick a persona, not a model. On <i>Auto</i> each request is scored on capability against
+price across your Claude and OpenAI keys; the strongest model of the persona wins unless a cheaper one is clearly
+enough. Every answer shows the model, the reason and the cost in €. To always use one model, pick it in
+Settings → <i>Model behind each god</i>.</p>
+<figure><img src="../personas.png" style="width:165mm"></figure>
+</section>
+
+<section>
+<h2>6. Sweeps, threshold searches and continuing runs</h2>
+<ul>
+<li><b>Sweep:</b> “Sweep A0 from −0.25e-12 to +0.25e-12 in 11 steps, 0.5 ns each.” Runs go in parallel; the card shows a table and an overlay.</li>
+<li><b>Threshold search:</b> “Find the smallest SOT current between 50e6 and 150e6 A/cm² that makes the Néel vector rotate.” SpinMate brackets the threshold with a few rounds of sweeps and reports the interval.</li>
+<li><b>Continue a run:</b> “Continue r0003 for another 0.5 ns.” Time does not restart; <i>combine</i> joins the segments into one curve.</li>
+</ul>
+</section>
+
+<section class="new">
+<h2>7. Comparing runs, figures and reports</h2>
+<ul>
+<li><b>Compare:</b> “Compare r0003 and r0005.” Lists the parameters that differ and overlays the curves.</li>
+<li><b>Figures:</b> “Make an IEEE figure of n<sub>z</sub> for r0001 and r0003, first 60 ps.” Styles: science, IEEE, Nature. The figure appears in the chat with PDF, SVG and PNG downloads, and <i>Change…</i> to adjust it.</li>
+<li><b>Reports:</b> “Write a short report of these runs with your interpretation.” The report has the SpinMate header, method,
+results table, parameters, figures and appendix, with LaTeX math. Print it to PDF or download the Markdown version.</li>
+</ul>
+<h2 style="margin-top:6mm">8. The Runs panel and questions across runs</h2>
+<p>The list icon in the left bar opens every run: search by id, label, #tag or parameter, filter by status and end state,
+star and tag runs, select several to compare, plot or report, or delete them. With the run catalog enabled, the
+assistant answers questions across runs with one read-only SQL query:</p>
+<div class="ask">Make me a table of all finished runs: id, A0, initial and final order, first n_z switch in ps.</div>
+</section>
+
+<section>
+<h2>9. Settings, cost and conversations</h2>
+<ul>
+<li><b>Theme:</b> Spin (default), Light or Dark in Settings.</li>
+<li><b>Default parameters:</b> saved per user and used as the base of every run.</li>
+<li><b>Cost:</b> the counter next to the mode buttons shows tokens and the estimated cost in €, converted with the daily ECB rate.</li>
+<li><b>Conversations:</b> the clock icon lists your chats; select several or all and delete them. Runs are kept.</li>
+<li><b>Voice:</b> the microphone records a request; the arrow next to it chooses the microphone and language.</li>
+</ul>
+</section>
+
+<section class="new">
+<h2>10. Parameter reference (most used)</h2>
+<table>
+<tr><th>Parameter</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><code>--t</code></td><td>Duration (s)</td><td><code>--t=5e-11</code></td></tr>
+<tr><td><code>--A0</code></td><td>Inter-sublattice exchange (J/m); negative = AFM coupling</td><td><code>--A0=-0.248e-12</code></td></tr>
+<tr><td><code>--m1</code>, <code>--m2</code></td><td>Initial unit vectors</td><td><code>--m1=0.25,0.0,0.968</code></td></tr>
+<tr><td><code>--SOT_DC_Amp</code></td><td>DC spin-orbit current (A/cm²)</td><td><code>--SOT_DC_Amp=1e8</code></td></tr>
+<tr><td><code>--flagTempVarying</code>, <code>--Temp</code>, <code>--Fr</code></td><td>FeRh temperature cycle: on/off, amplitude (K), frequency (Hz)</td><td><code>--Temp=60 --Fr=0.25e9</code></td></tr>
+</table>
+<p>A parameter file is plain text with one <code>--name=value</code> per line; attach it with the paper clip. Ask Athena
+or the assistant “Which parameters can I set?” for the full list with units.</p>
+<pre>--t=2e-9
+--A0=-0.248e-12
+--m1=0.25,0.0,0.968
+--m2=0.35,0.0,0.937</pre>
+</section>
+
+<section>
+<h2>11. Troubleshooting</h2>
+<table>
+<tr><th>Symptom</th><th>What to do</th></tr>
+<tr><td>“Add an API key”</td><td>Paste a key in Settings, or set it in <code>.env</code> and restart.</td></tr>
+<tr><td>No answer, 401/429 errors</td><td>Check the key and the credit of the provider; on Auto the next model by score is tried.</td></tr>
+<tr><td>Page does not open from another computer</td><td>By design the app listens on this computer only (<code>BIND_ADDRESS=127.0.0.1</code>).</td></tr>
+<tr><td>Behind a corporate proxy</td><td>Put the company CA bundle in <code>./certs</code> and set <code>SSL_CERT_FILE</code> (see README).</td></tr>
+<tr><td>Microphone not listed</td><td>Allow the microphone in the browser once; open the app on localhost or https.</td></tr>
+</table>
+<p>More in the README on GitHub. Feedback and issues are welcome.</p>
+</section>
+</body></html>

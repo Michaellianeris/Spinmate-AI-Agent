@@ -5,11 +5,15 @@
 
 # SpinMate
 
-SpinMate is a web interface for a two-sublattice macrospin simulator. You describe a run in plain language, or attach a parameter file, and
-the selected Claude or OpenAI model checks the input with the simulator's own parser, starts the run, follows it and explains the
-result from the actual magnetization curves.
+**An AI agent for spintronics simulation.** Describe the setup in plain language or provide a parameter
+file. SpinMate validates the input with the solver's own parser, runs two-sublattice macrospin (LLG)
+simulations and parameter sweeps for antiferromagnets, FeRh and exchange-coupled ferromagnets, and
+explains the results from the actual magnetization dynamics, with figures and reports ready to share.
 
 <img src="docs/screenshot.png" alt="SpinMate: a run started from a plain-language question, with the 3D sphere, the n_z curves, the answer and the suggested next steps" width="900">
+
+The physics code in `macrospin/` is the original code and has not been modified. The repository is
+named `sublattice-agent`.
 
 ## Contents
 
@@ -120,7 +124,10 @@ god shows a coloured badge with its initial.
 The app works without the assistant: Run setup runs a simulation directly and only the chat needs the API.
 
 **Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) only explains how
-to use the app. It asks for your name the first time; if the provider cannot be reached it answers from a
+to use the app. The first time it asks for your name and, optionally, your email to create an account: you
+then receive a welcome email with the logo, a greeting with your name and the PDF user guide
+([`web/spinmate-guide.pdf`](web/spinmate-guide.pdf), source in `docs/guide/`). Set `SMTP_*` in `.env` to send it;
+without a mail server it is saved to `workspace/outbox`. If the provider cannot be reached Athena answers from a
 built-in list.
 
 **Account.** There is no password: you log in by typing your name when Athena asks for it. The round button
@@ -242,6 +249,7 @@ Set these in `.env`.
 | `OPENAI_MODEL` | `gpt-4.1` | default OpenAI model |
 | `OPENAI_MODELS` | built-in list | fallback OpenAI model list |
 | `HOST_PORT` | `8421` | port on your machine |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | empty | mail server for the optional welcome email; empty = saved to `workspace/outbox` |
 | `BIND_ADDRESS` | `127.0.0.1` | who can open the app; `0.0.0.0` = your whole network |
 | `MAX_PARALLEL` | CPU cores - 1 | simultaneous runs |
 | `MAX_SWEEP_RUNS` | `400` | largest sweep |

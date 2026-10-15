@@ -20,6 +20,12 @@ services:
       - CONFIRM_MINUTES=${CONFIRM_MINUTES:-10}
       - CONFIRM_RUNS=${CONFIRM_RUNS:-40}
       - EUR_PER_USD=${EUR_PER_USD:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - APP_URL=${APP_URL:-}
       - PRICES_JSON=${PRICES_JSON:-}
     volumes:
       - sublattice-data:/data
