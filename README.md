@@ -1,4 +1,7 @@
-<img src="web/logo.svg" alt="SpinMate logo" width="96">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
+  <img src="docs/logo-light.png" alt="SpinMate" width="360">
+</picture>
 
 # SpinMate
 
