@@ -18,6 +18,7 @@ from . import tools
 from . import catalog
 from . import guide
 from . import openai_provider
+from . import router
 from . import params as P
 from . import simulations as S
 
@@ -45,6 +46,9 @@ class ChatIn(BaseModel):
     provider: str = "anthropic"
     fallbacks: list = []
     approve: bool = False    # the user pressed Run on a large request
+    auto: bool = False       # no model pinned for the persona: the router picks from candidates
+    god: str | None = None
+    candidates: list = []
 
 
 class GuideIn(BaseModel):
@@ -167,12 +171,19 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
     keys = {"anthropic": x_api_key or os.environ.get("ANTHROPIC_API_KEY"),
             "openai": x_openai_api_key or os.environ.get("OPENAI_API_KEY")}
     given = {"anthropic": x_api_key, "openai": x_openai_api_key}
-    tries = [{"provider": body.provider, "model": body.model}]
-    for c in body.fallbacks[:3]:
-        if (isinstance(c, dict) and c.get("provider") in keys and isinstance(c.get("model"), str)
-                and re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", c["model"])):
-            tries.append({"provider": c["provider"], "model": c["model"]})
-    tries = [t for t in tries if keys[t["provider"]]]
+    def ok(c):
+        return (isinstance(c, dict) and c.get("provider") in keys and keys[c["provider"]]
+                and isinstance(c.get("model"), str) and re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", c["model"]))
+
+    reason = ""
+    tries = []
+    if body.auto:
+        ranked, reason = router.rank([c for c in body.candidates[:40] if ok(c)], body.god, body.messages, body.mode)
+        tries = [{"provider": c["provider"], "model": c["model"]} for c in ranked[:4]]
+    if not tries:
+        tries = [{"provider": body.provider, "model": body.model}] + [c for c in body.fallbacks[:3] if ok(c)]
+        tries = [{"provider": t["provider"], "model": t["model"]} for t in tries if keys.get(t["provider"])]
+        reason = "pinned" if body.model and not body.auto else ""
     if not tries:
         env_name = "OPENAI_API_KEY" if body.provider == "openai" else "ANTHROPIC_API_KEY"
         return JSONResponse({"error": f"No {body.provider} API key. Add one in Settings or set {env_name}."},
@@ -189,7 +200,9 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
                 first = next(events, None)
                 if first and first.get("type") == "error" and first.get("status") in retry and i < len(tries) - 1:
                     continue
-                yield json.dumps({"type": "model", "provider": t["provider"], "model": t["model"]}) + "\n"
+                note = reason if i == 0 else f"fallback after an API error ({reason})" if reason else "fallback"
+                yield json.dumps({"type": "model", "provider": t["provider"], "model": t["model"],
+                                  "god": body.god, "auto": bool(body.auto), "reason": note}) + "\n"
                 if first:
                     yield json.dumps(first, default=str) + "\n"
                 for ev in events:
@@ -200,6 +213,31 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
 
     return StreamingResponse(stream(), media_type="application/x-ndjson",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# ---- voice input
+
+VOICE_PROMPT = ("SpinMate, macrospin, sublattice, antiferromagnetic, ferromagnetic, FeRh, Néel vector, "
+                "spin-orbit torque, SOT, A0, anisotropy, sweep, nanoseconds, picoseconds, A/cm2, GHz.")
+
+
+@app.post("/api/transcribe")
+async def transcribe(file: UploadFile = File(...), language: str = "",
+                     x_openai_api_key: str | None = Header(default=None)):
+    """Audio recorded in the browser (from the microphone the user chose) to text for the message box."""
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "empty recording")
+    if len(raw) > 20 * 1024 * 1024:
+        raise HTTPException(413, "recording larger than 20 MB")
+    lang = language if re.fullmatch(r"[a-z]{2}", language or "") else ""
+    mime = (file.content_type or "audio/webm").split(";")[0]
+    ext = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "mp4", "audio/mpeg": "mp3", "audio/wav": "wav"}.get(mime, "webm")
+    try:
+        text = openai_provider.transcribe(raw, f"speech.{ext}", mime, lang, x_openai_api_key, VOICE_PROMPT)
+    except openai_provider.OpenAIError as e:
+        return JSONResponse({"error": str(e)}, status_code=e.status if 400 <= e.status < 600 else 502)
+    return {"text": text}
 
 
 # ---- parameter files

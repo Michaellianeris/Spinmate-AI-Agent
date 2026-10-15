@@ -338,6 +338,18 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .tokpill{font-family:var(--mono);font-size:.74rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--soft)}
 .composer .row .hint{display:none}
 .composer .row .send{margin-left:auto}
+.micpick{position:relative;display:flex;align-items:center}
+.miccaret{border:none;background:none;color:var(--muted);cursor:pointer;font-size:.7rem;padding:0 4px 0 0;height:34px}
+.miccaret:hover{color:var(--ink)}
+.composer #mic.rec{background:#E5484D;color:#fff;animation:micpulse 1.2s ease-in-out infinite}
+.composer #mic.busy{opacity:.55;cursor:progress}
+@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,.45)}50%{box-shadow:0 0 0 6px rgba(229,72,77,0)}}
+.mictime{font-family:var(--mono);font-size:.74rem;color:#E5484D;margin-right:4px}
+.micmenu{position:absolute;bottom:42px;left:0;z-index:40;width:260px;background:var(--panel,var(--bg));border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:10px 12px;display:grid;gap:8px}
+.micmenu label{display:grid;gap:3px;font-size:.78rem;color:var(--muted)}
+.micmenu select{font:inherit;font-size:.85rem;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:5px 6px;max-width:100%}
+.micnote{margin:0;font-size:.74rem;color:var(--muted);line-height:1.35}
+@media (prefers-reduced-motion:reduce){.composer #mic.rec{animation:none}}
 .usage{font-size:.74rem;color:var(--muted);margin:-8px 0 16px;max-width:68ch}
 a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .history{position:fixed;left:64px;top:0;bottom:0;width:280px;z-index:15;background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
@@ -568,6 +580,18 @@ main{grid-template-columns:minmax(0,1fr)}
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
           </button>
           <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
+          <div class="micpick" id="micpick">
+            <button class="icon" id="mic" type="button" title="Voice input: click to talk, click again to stop" aria-label="Voice input" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3"/></svg>
+            </button>
+            <button class="miccaret" id="miccaret" type="button" title="Choose the microphone and language" aria-label="Choose the microphone" aria-haspopup="true" aria-expanded="false">&#9662;</button>
+            <span class="mictime" id="mictime" hidden></span>
+            <div class="micmenu" id="micmenu" role="dialog" aria-label="Voice input settings" hidden>
+              <label>Microphone<select id="micdev"></select></label>
+              <label>Language<select id="miclang"><option value="">Auto</option><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
+              <p class="micnote" id="micnote"></p>
+            </div>
+          </div>
           <div class="godpick" id="godpick">
             <button class="godbtn" id="godbtn" type="button" aria-haspopup="true" aria-expanded="false" title="Choose the model"><span id="godlogo"></span><span id="godname">Model</span><span class="caret" aria-hidden="true">&#9662;</span></button>
             <div class="godmenu" id="godmenu" role="menu" hidden></div>
@@ -880,10 +904,11 @@ function chipFor(name, input, result, running) {
 }
 
 function fmtUsage(u) {
-  return `tokens: ${fmtN(u.input)} in · ${fmtN(u.output)} out · ${fmtN(u.input + u.output)} total` +
-    (u.cost_usd != null ? ` · ≈${fmtEur(u.cost_usd)}` : "") +
-    (u.used ? ` · ${u.used.god ? u.used.god + " → " : ""}${u.used.model}` : "") +
-    (u.session ? ` (server session ${fmtN(u.session)}${u.budget ? " of " + fmtN(u.budget) : ""})` : "");
+  const cost = u.cost_usd != null ? ` · ${u.cost_estimate ? "~" : "≈"}${fmtEur(u.cost_usd)}` : " · € ?";
+  const m = u.used || {};
+  return `tokens: ${fmtN(u.input)} in · ${fmtN(u.output)} out · ${fmtN(u.input + u.output)} total` + cost +
+    (m.model ? ` · ${m.god ? m.god[0].toUpperCase() + m.god.slice(1) + " → " : ""}${m.model}${m.reason ? " (" + m.reason + ")" : ""}` : "") +
+    (u.session ? ` · server session ${fmtN(u.session)}${u.budget ? " of " + fmtN(u.budget) : ""}` : "");
 }
 
 function render() {
@@ -1059,7 +1084,7 @@ async function send() {
     const ak = $("#apikey").value.trim(), ok = $("#openaikey").value.trim();
     if (ak) headers["X-Api-Key"] = ak;
     if (ok) headers["X-OpenAI-Api-Key"] = ok;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText(), approve})});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, auto: picked.auto, god: picked.god, candidates: picked.candidates, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText(), approve})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1708,9 +1733,9 @@ document.addEventListener("click", e => { if (!e.target.closest("#history") && !
 
 function updateTok() {
   const t = state.usage.input + state.usage.output, p = $("#tokpill");
-  p.textContent = `${t >= 10000 ? (t / 1000).toFixed(1) + "k" : fmtN(t)} tokens` + (state.usage.cost ? ` · ≈${fmtEur(state.usage.cost)}` : "");
+  p.textContent = `${t >= 10000 ? (t / 1000).toFixed(1) + "k" : fmtN(t)} tokens · ≈${fmtEur(state.usage.cost || 0)}`;
   const b = state.config && state.config.token_budget;
-  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + (state.usage.cost ? `, about ${fmtEur(state.usage.cost)} at list prices` : "") + (b ? `. Budget ${fmtN(b)} per server session.` : "");
+  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + `, about ${fmtEur(state.usage.cost || 0)} at list prices (${(state.config && state.config.eur_per_usd) || 0.89} € per $)` + (b ? `. Budget ${fmtN(b)} per server session.` : "");
 }
 
 function getUD() { try { return JSON.parse(localStorage.getItem(kUD()) || "null"); } catch { return null; } }
@@ -1840,11 +1865,16 @@ function candidates(godId) {
   return list;
 }
 const currentGod = () => { try { return localStorage.getItem("sublattice.god") || "dionysus"; } catch { return "dionysus"; } };
+// Auto (nothing pinned for the god): the server scores every model of the god from both providers
+// with capability and price for this request and uses the best; see app/router.py.
+const autoPool = godId => godOptions(godId).filter(o => keyOk(o.dataset.provider) && !SKIP.test(o.dataset.model));
 function selectedModel() {
-  const list = candidates(currentGod()), c = list[0];
-  if (!c) return {provider: "anthropic", id: state.config.model, god: currentGod(), fallbacks: []};
-  return {provider: c.dataset.provider, id: c.dataset.model, god: currentGod(),
-          fallbacks: list.slice(1, 4).map(o => ({provider: o.dataset.provider, model: o.dataset.model}))};
+  const god = currentGod(), list = candidates(god), c = list[0];
+  const auto = !godOptions(god).some(o => o.value === godPref(god) && keyOk(o.dataset.provider));
+  const pool = auto ? autoPool(god).map(o => ({provider: o.dataset.provider, model: o.dataset.model})) : [];
+  if (!c) return {provider: "anthropic", id: state.config.model, god, fallbacks: [], auto: false, candidates: []};
+  return {provider: c.dataset.provider, id: c.dataset.model, god, auto: auto && pool.length > 0, candidates: pool,
+          fallbacks: []};   // a pinned model is used as it is, no hierarchy
 }
 const godLogo = g => `<span class="godlogo" style="--c:${g ? g.color : "#6B7280"}"><b>${g ? g.name[0] : "?"}</b>${g ? `<img src="/gods/${g.id}.png" alt="" onerror="this.remove()">` : ""}</span>`;
 const modelName = o => o.textContent.replace(/\s*\(.*\)$/, "");
@@ -1856,14 +1886,14 @@ function updateGodBtn() {
   const g = GODS.find(x => x.id === currentGod()) || GODS[1], c = candidates(g.id)[0];
   $("#godlogo").innerHTML = godLogo(g);
   $("#godname").textContent = g.name;
-  $("#godbtn").title = `${g.name} → ${c ? providerLabel(c.dataset.provider) + " " + c.dataset.model : "no model available, add an API key"}`;
+  $("#godbtn").title = `${g.name} → ${!c ? "no model available, add an API key" : godPref(g.id) && c.value === godPref(g.id) ? providerLabel(c.dataset.provider) + " " + c.dataset.model : "auto: the strongest model unless a cheaper one is enough for the request"}`;
 }
 function refreshGods() {
   const menu = $("#godmenu"), cur = currentGod(); menu.innerHTML = "";
   for (const g of GODS) {
     const c = candidates(g.id)[0], b = document.createElement("button");
     b.type = "button"; b.className = "godmodel godrow"; b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(g.id === cur));
-    b.innerHTML = `${godLogo(g)}<span><b>${g.name}</b><small>${g.tag}</small><small class="use">${c ? "Uses " + esc(modelName(c)) + " · " + providerLabel(c.dataset.provider) : "No model yet, add an API key"}</small></span>`;
+    b.innerHTML = `${godLogo(g)}<span><b>${g.name}</b><small>${g.tag}</small><small class="use">${!c ? "No model yet, add an API key" : godPref(g.id) && c.value === godPref(g.id) ? "Uses " + esc(modelName(c)) + " · " + providerLabel(c.dataset.provider) : `Auto: picks per request from ${autoPool(g.id).length} model${autoPool(g.id).length === 1 ? "" : "s"} by capability and price`}</small></span>`;
     b.onclick = () => chooseGod(g.id); menu.appendChild(b);
   }
   updateGodBtn(); renderPrefs();
@@ -1946,7 +1976,8 @@ const GUIDE_FAQ = [
   [/txt|file|attach|αρχε|upload/i, "Click the paperclip in the message box, or drop a .txt file on the chat. For editing, press the play icon in the left bar (Run setup) and choose Deep: a txt editor with an examples dropdown."],
   [/param|slider|exchange|A0|Ku|Ms|damping/i, "Run setup (play icon in the left bar) > Fast has sliders and number fields for duration, Ms, exchange A0, anisotropy Ku, damping, temperature and SOT current. Use Quick extra txt for one or two extra flags such as --H=0.1."],
   [/preset|afm|fm\b|ferh/i, "In Run setup (play icon in the left bar) > Fast the preset chips are AFM→FM (default), AFM→AFM, FM→AFM, FM→FM and FeRh heating. Press one, then Run."],
-  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box you choose a god: Hermes = quick and economical, Dionysus = balanced, Zeus = deep and most capable, Apollo = specialised and new models. The model behind each god is picked automatically from your Claude and OpenAI keys, and switches to the other provider if a call fails. To always use a specific model, open Settings > Model behind each god."],
+  [/model|claude|opus|sonnet|haiku|fable|hermes|zeus|apollo|dionysus|god/i, "Under the message box you choose a god: Hermes = quick and economical, Dionysus = balanced, Zeus = deep and most capable, Apollo = specialised and new models. On Auto, each request is scored over the god's models from both keys (capability against price): the strongest model wins unless a cheaper one is clearly enough. To always use a specific model, open Settings > Model behind each god."],
+  [/mic|voice|speak|dictat|φων|μικρόφ/i, "Press the microphone in the message bar to talk and again to stop; the text lands in the box and is sent only when you press Enter. The small arrow next to it chooses the microphone and the language. With an OpenAI key the speech is transcribed by OpenAI from the microphone you chose; without one the browser's own dictation is used, with the system default microphone."],
   [/key|api|κλειδ/i, "Settings has separate Anthropic and OpenAI API key fields. Paste either or both, or set ANTHROPIC_API_KEY and OPENAI_API_KEY in .env, then restart the container."],
   [/theme|colou?r|dark|χρώμα|θέμα/i, "Settings (gear, left bar) > Colour theme: Light, Dark or Spin."],
   [/name|όνομα|log ?in|log ?out|login|logout|account|user|sign/i, "Your name is your login. The round button with your initial in the left bar lets you log out; then type another name in my window to log in. Each name keeps its own chat history and default parameters."],
@@ -2561,6 +2592,102 @@ async function init() {
   setTimeout(loop, 2000);
 }
 init();
+
+// ---------------------------------------------------------------- voice input: chosen microphone -> OpenAI transcription
+// Without an OpenAI key it falls back to the browser's own dictation (system default microphone only).
+const mic = {rec: null, chunks: [], stream: null, t0: 0, timer: null, speech: null, cancel: false};
+const micGet = k => { try { return localStorage.getItem("sublattice.mic." + k) || ""; } catch { return ""; } };
+const micSet = (k, v) => { try { v ? localStorage.setItem("sublattice.mic." + k, v) : localStorage.removeItem("sublattice.mic." + k); } catch {} };
+const openaiKeyOk = () => keyOk("openai");
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+async function micDevices() {
+  const sel = $("#micdev"), keep = micGet("device");
+  let devs = [];
+  try { devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "audioinput"); } catch {}
+  sel.innerHTML = "";
+  const def = document.createElement("option"); def.value = ""; def.textContent = "System default"; sel.appendChild(def);
+  devs.filter(d => d.deviceId && d.deviceId !== "default" && d.deviceId !== "communications").forEach((d, i) => {
+    const o = document.createElement("option"); o.value = d.deviceId; o.textContent = d.label || `Microphone ${i + 1}`; sel.appendChild(o);
+  });
+  sel.value = keep; if (sel.value !== keep) sel.value = "";
+  const unnamed = devs.length && devs.every(d => !d.label);
+  $("#micnote").textContent = !navigator.mediaDevices ? "The browser blocks the microphone on this address; open SpinMate on localhost or https." :
+    !openaiKeyOk() ? (SpeechRec ? "No OpenAI key: the browser's dictation is used, always with the system default microphone. Add an OpenAI key to choose one." : "Voice input needs an OpenAI key (Settings).") :
+    unnamed ? "Names appear after you allow the microphone once." : "Speech is transcribed by OpenAI and put in the message box; nothing is sent until you press Enter.";
+}
+function micMenu(open) {
+  const m = $("#micmenu"), want = open === undefined ? m.hidden : open;
+  m.hidden = !want; $("#miccaret").setAttribute("aria-expanded", String(want));
+  if (want) micDevices();
+}
+function micUi(stateName) {
+  const b = $("#mic"), t = $("#mictime");
+  b.classList.toggle("rec", stateName === "rec"); b.classList.toggle("busy", stateName === "busy");
+  b.setAttribute("aria-pressed", String(stateName === "rec"));
+  b.title = stateName === "rec" ? "Recording: click to stop (Esc cancels)" : stateName === "busy" ? "Transcribing…" : "Voice input: click to talk, click again to stop";
+  clearInterval(mic.timer); t.hidden = stateName !== "rec";
+  if (stateName === "rec") { mic.t0 = Date.now(); const tick = () => { const s = Math.floor((Date.now() - mic.t0) / 1000); t.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }; tick(); mic.timer = setInterval(tick, 500); }
+}
+function micInsert(text) {
+  text = (text || "").trim(); if (!text) return;
+  const ta = $("#input"), v = ta.value;
+  ta.value = v + (v && !/\s$/.test(v) ? " " : "") + text; autosize(); ta.focus();
+}
+async function micStart() {
+  if (!openaiKeyOk()) return micBrowser();
+  const id = micGet("device");
+  try {
+    mic.stream = await navigator.mediaDevices.getUserMedia({audio: id ? {deviceId: {exact: id}} : true});
+  } catch (e) {
+    if (id && e.name === "OverconstrainedError") { micSet("device", ""); return micStart(); }   // that microphone is gone
+    alert(e.name === "NotAllowedError" ? "Microphone access was blocked. Allow it in the browser's site settings." : "Microphone error: " + e.message); return;
+  }
+  const type = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+  mic.chunks = []; mic.cancel = false;
+  mic.rec = new MediaRecorder(mic.stream, type ? {mimeType: type} : undefined);
+  mic.rec.ondataavailable = e => e.data.size && mic.chunks.push(e.data);
+  mic.rec.onstop = micSendAudio;
+  mic.rec.start(); micUi("rec");
+}
+async function micSendAudio() {
+  mic.stream && mic.stream.getTracks().forEach(t => t.stop());
+  const blob = new Blob(mic.chunks, {type: (mic.rec && mic.rec.mimeType) || "audio/webm"}); mic.rec = null;
+  if (mic.cancel || blob.size < 1200) { micUi(""); return; }
+  micUi("busy");
+  const fd = new FormData(); fd.append("file", blob, "speech." + (blob.type.includes("mp4") ? "mp4" : blob.type.includes("ogg") ? "ogg" : "webm"));
+  const headers = {}, k = $("#openaikey").value.trim(); if (k) headers["X-OpenAI-Api-Key"] = k;
+  try {
+    const res = await fetch("/api/transcribe?language=" + encodeURIComponent(micGet("lang")), {method: "POST", headers, body: fd});
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || out.detail || res.statusText);
+    micInsert(out.text);
+  } catch (e) { alert(e.message); }
+  micUi("");
+}
+function micBrowser() {
+  if (!SpeechRec) { alert("Voice input needs an OpenAI key (Settings), or a browser with built-in dictation such as Chrome or Edge."); return; }
+  const r = new SpeechRec(); mic.speech = r;
+  r.lang = micGet("lang") === "el" ? "el-GR" : micGet("lang") === "en" ? "en-US" : (navigator.language || "en-US");
+  r.interimResults = false; r.continuous = true;
+  r.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) micInsert(e.results[i][0].transcript); };
+  r.onerror = e => { if (e.error !== "aborted" && e.error !== "no-speech") alert("Dictation error: " + e.error); };
+  r.onend = () => { mic.speech = null; micUi(""); };
+  r.start(); micUi("rec");
+}
+function micStop(cancel) {
+  mic.cancel = !!cancel;
+  if (mic.rec && mic.rec.state !== "inactive") mic.rec.stop();
+  else if (mic.speech) cancel ? mic.speech.abort() : mic.speech.stop();
+}
+$("#mic").onclick = () => { if ($("#mic").classList.contains("busy")) return; (mic.rec || mic.speech) ? micStop() : micStart(); };
+$("#miccaret").onclick = e => { e.stopPropagation(); micMenu(); };
+$("#micdev").onchange = e => micSet("device", e.target.value);
+$("#miclang").onchange = e => micSet("lang", e.target.value);
+$("#miclang").value = micGet("lang");
+document.addEventListener("click", e => { if (!e.target.closest("#micpick")) micMenu(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && (mic.rec || mic.speech)) micStop(true); });
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener("devicechange", () => { if (!$("#micmenu").hidden) micDevices(); });
 </script>
 </body>
 </html>

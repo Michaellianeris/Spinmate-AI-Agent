@@ -154,3 +154,64 @@ def test_delete_runs(http):
     out = http.post("/api/runs/delete", json={"run_ids": [r["run_id"], "r9999"]}).json()
     assert out["deleted"] == [r["run_id"]] and out["refused"][0]["run_id"] == "r9999"
     assert http.get(f"/api/runs/{r['run_id']}").status_code == 404
+
+
+def test_pricing_covers_gpt5_and_families():
+    from app import pricing
+    assert pricing.price("gpt-5.5") == (5, 30, 5, 0.50)
+    assert pricing.price("gpt-5.4-mini-2026-03-01")[0] == 0.75
+    assert pricing.price("gpt-5.2")[0] == 1.75 and pricing.price("gpt-5")[0] == 1.25   # gpt-5 does not price gpt-5.2
+    assert pricing.is_estimate("claude-opus-9") and pricing.price("claude-opus-9")[0] == 5
+    assert not pricing.is_estimate("claude-sonnet-5-5")
+
+
+def test_router_prefers_the_strongest_and_saves_on_simple_requests():
+    from app import router
+    A = lambda *m: [{"provider": "anthropic", "model": x} for x in m]
+    O = lambda *m: [{"provider": "openai", "model": x} for x in m]
+    msg = lambda t: [{"role": "user", "content": t}]
+    zeus = A("claude-opus-4-8", "claude-opus-5-5") + O("o3", "gpt-5.5-pro")
+    ranked, why = router.rank(zeus, "zeus", msg("hi"), "fast")
+    assert ranked[0]["model"] == "claude-opus-5-5" and "gpt-5.5-pro" not in [c["model"] for c in ranked]
+    assert why.startswith("auto:")
+    dio = A("claude-sonnet-5-5") + O("gpt-5.5", "gpt-5.4")
+    hard = router.rank(dio, "dionysus", msg("find the smallest current with a sweep and explain why"), "deep")[0]
+    assert hard[0]["model"] == "gpt-5.5"                       # strongest when the request needs it
+    easy = router.rank(dio, "dionysus", msg("hi"), "fast")[0]
+    assert easy[0]["model"] != "gpt-5.5"                       # cheaper model enough for a greeting
+    assert router.complexity(msg("hi"), "fast") < router.complexity(msg("sweep and compare"), "deep")
+
+
+def test_chat_auto_routes_by_score(http, monkeypatch):
+    from app import agent
+    seen = []
+
+    def fake(messages, api_key=None, model=None, provider="anthropic", **kw):
+        seen.append((provider, model))
+        yield {"type": "done", "messages": messages}
+
+    monkeypatch.setattr(agent, "chat_stream", fake)
+    with http.stream("POST", "/api/chat", headers={"x-api-key": "a", "x-openai-api-key": "o"},
+                     json={"messages": [{"role": "user", "content": "explain and compare the runs"}], "mode": "deep",
+                           "auto": True, "god": "zeus", "provider": "openai", "model": "o3",
+                           "candidates": [{"provider": "openai", "model": "o3"},
+                                          {"provider": "anthropic", "model": "claude-opus-5-5"}]}) as r:
+        events = [json.loads(line) for line in r.iter_lines() if line]
+    model = next(e for e in events if e["type"] == "model")
+    assert seen == [("anthropic", "claude-opus-5-5")] and model["auto"] and model["reason"].startswith("auto:")
+
+
+def test_transcribe_endpoint(http, monkeypatch):
+    from app import openai_provider
+    got = {}
+
+    def fake(audio, filename, mime, language, api_key, prompt):
+        got.update(size=len(audio), mime=mime, language=language, key=api_key)
+        return "run AFM to FM"
+
+    monkeypatch.setattr(openai_provider, "transcribe", fake)
+    r = http.post("/api/transcribe?language=el", headers={"x-openai-api-key": "o"},
+                  files={"file": ("speech.webm", b"\x1aE\xdf\xa3" + b"0" * 2000, "audio/webm")})
+    assert r.json() == {"text": "run AFM to FM"}
+    assert got == {"size": 2004, "mime": "audio/webm", "language": "el", "key": "o"}
+    assert http.post("/api/transcribe", files={"file": ("s.webm", b"", "audio/webm")}).status_code == 400

@@ -169,3 +169,40 @@ def text(messages, instructions, model=None, api_key=None, max_tokens=400):
     response = create(model, instructions, to_input(messages), [], api_key, max_tokens, 60)
     blocks, _, _ = output_blocks(response)
     return "".join(b["text"] for b in blocks if b["type"] == "text").strip(), response
+
+
+TRANSCRIBE_MODEL = os.environ.get("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
+
+
+def transcribe(audio, filename="speech.webm", mime="audio/webm", language="", api_key=None, prompt="", timeout=60):
+    """Speech to text with OpenAI's transcription endpoint. Returns the text."""
+    key = api_key or os.environ.get("OPENAI_API_KEY")
+    if not key:
+        raise OpenAIError("Voice input needs an OpenAI key. Add one in Settings or set OPENAI_API_KEY.", 401)
+    boundary = "----spinmate" + os.urandom(8).hex()
+    fields = {"model": TRANSCRIBE_MODEL, "response_format": "json"}
+    if language:
+        fields["language"] = language
+    if prompt:
+        fields["prompt"] = prompt
+    parts = []
+    for k, v in fields.items():
+        parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode())
+    parts.append((f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+                  f"Content-Type: {mime}\r\n\r\n").encode() + audio + b"\r\n")
+    parts.append(f"--{boundary}--\r\n".encode())
+    req = urllib.request.Request(BASE_URL + "/audio/transcriptions", data=b"".join(parts), method="POST",
+                                 headers={"Authorization": f"Bearer {key}",
+                                          "Content-Type": f"multipart/form-data; boundary={boundary}"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()) as res:
+            return (json.loads(res.read().decode("utf-8", "replace")).get("text") or "").strip()
+    except urllib.error.HTTPError as e:
+        raw = e.read().decode("utf-8", "replace")
+        try:
+            msg = json.loads(raw).get("error", {}).get("message") or raw[:300]
+        except ValueError:
+            msg = raw[:300]
+        raise OpenAIError(f"Transcription failed: {msg}", e.code)
+    except (urllib.error.URLError, TimeoutError) as e:
+        raise OpenAIError(f"Transcription failed: {e}", 502)

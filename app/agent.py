@@ -116,7 +116,8 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
 
     def usage():
         return {"type": "usage", "input": turn_in, "output": turn_out, "session": tokens_used(), "budget": TOKEN_BUDGET,
-                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD}
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD,
+                "cost_estimate": pricing.is_estimate(model), "model": model}
 
     for _ in range(MAX_STEPS):
         if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:
@@ -230,7 +231,8 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
     def usage_event():
         return {"type": "usage", "input": turn_in, "output": turn_out,
                 "session": tokens_used(), "budget": TOKEN_BUDGET,
-                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD}
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD,
+                "cost_estimate": pricing.is_estimate(model), "model": model}
 
     for _ in range(MAX_STEPS):
         if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:

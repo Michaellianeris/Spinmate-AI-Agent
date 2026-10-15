@@ -206,7 +206,8 @@ def test_chat_falls_back_to_the_next_provider(client):
     finally:
         agent.chat_stream = real
     assert seen == [("anthropic", "claude-haiku-4-5"), ("openai", "gpt-5-nano")]
-    assert events[0] == {"type": "model", "provider": "openai", "model": "gpt-5-nano"}
+    assert {k: events[0][k] for k in ("type", "provider", "model")} == {"type": "model", "provider": "openai", "model": "gpt-5-nano"}
+    assert events[0]["reason"].startswith("fallback")
     assert events[-1]["type"] == "done"
 
 
