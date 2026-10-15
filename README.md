@@ -29,6 +29,7 @@ named `sublattice-agent`.
 - [Behind a corporate proxy](#behind-a-corporate-proxy)
 - [How it works](#how-it-works)
 - [Development](#development)
+- [Security](#security)
 - [License](#license)
 
 ## Quick start
@@ -40,7 +41,8 @@ cp .env.example .env          # put a key in ANTHROPIC_API_KEY and/or OPENAI_API
 docker compose up --build
 ```
 
-Open http://localhost:8421. The host port can be changed with `HOST_PORT` in `.env`.
+Open http://localhost:8421. The host port can be changed with `HOST_PORT` in `.env`. The app listens only
+on this computer (`BIND_ADDRESS=127.0.0.1`); see [Security](#security) before sharing it.
 
 If you leave `ANTHROPIC_API_KEY` empty you can paste the key in the settings of the page instead. It is
 kept in that browser tab only and sent to your own server with each message.
@@ -244,6 +246,7 @@ Set these in `.env`.
 | `OPENAI_MODEL` | `gpt-4.1` | default OpenAI model |
 | `OPENAI_MODELS` | built-in list | fallback OpenAI model list |
 | `HOST_PORT` | `8421` | port on your machine |
+| `BIND_ADDRESS` | `127.0.0.1` | who can open the app; `0.0.0.0` = your whole network |
 | `MAX_PARALLEL` | CPU cores - 1 | simultaneous runs |
 | `MAX_SWEEP_RUNS` | `400` | largest sweep |
 | `TOKEN_BUDGET` | `0` (off) | token limit for the assistant per server session |
@@ -339,6 +342,20 @@ tests/             smoke tests
 
 The server has no login. It is meant for local use; do not expose the port to the internet, since anyone
 who can reach it can start simulations and use the server-side API keys.
+
+## Security
+
+SpinMate is meant to run on your own computer.
+
+- **Local only by default.** Docker publishes the app on `127.0.0.1`. There is no password (the name you
+  give Athena is not a login), so anyone who can reach the page can run simulations and spend your API
+  key. Set `BIND_ADDRESS=0.0.0.0` only behind a reverse proxy with real authentication.
+- **Limit the cost.** Set `TOKEN_BUDGET` in `.env` and a monthly spend limit in the Anthropic and OpenAI
+  consoles. Use a separate API key for SpinMate so you can revoke it on its own.
+- **Change `POSTGRES_PASSWORD`.** The database is not exposed outside Docker, but the default is public.
+- **Keys** stay in `.env` (ignored by git) or in the browser tab where you paste them.
+- The agent can only read the run catalog (read-only SQL with a timeout) and only start runs through the
+  solver's own parameter parser; uploads are limited to 200 kB of text.
 
 ## License
 

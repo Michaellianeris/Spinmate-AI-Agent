@@ -3,7 +3,8 @@ services:
     build: .
     image: sublattice-agent
     ports:
-      - "${HOST_PORT:-8421}:8000"
+      # only this computer can open the app; set BIND_ADDRESS=0.0.0.0 to share it on your network
+      - "${BIND_ADDRESS:-127.0.0.1}:${HOST_PORT:-8421}:8000"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
