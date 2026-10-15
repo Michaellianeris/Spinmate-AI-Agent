@@ -6,6 +6,7 @@ import re
 import anthropic
 
 from . import openai_provider
+from . import fx
 from . import pricing
 from . import tools
 from . import prompts
@@ -116,7 +117,7 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
 
     def usage():
         return {"type": "usage", "input": turn_in, "output": turn_out, "session": tokens_used(), "budget": TOKEN_BUDGET,
-                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD,
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": fx.eur_per_usd(),
                 "cost_estimate": pricing.is_estimate(model), "model": model}
 
     for _ in range(MAX_STEPS):
@@ -231,7 +232,7 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
     def usage_event():
         return {"type": "usage", "input": turn_in, "output": turn_out,
                 "session": tokens_used(), "budget": TOKEN_BUDGET,
-                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD,
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": fx.eur_per_usd(),
                 "cost_estimate": pricing.is_estimate(model), "model": model}
 
     for _ in range(MAX_STEPS):

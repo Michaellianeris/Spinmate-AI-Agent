@@ -258,7 +258,7 @@ Set these in `.env`.
 | `QUERY_TIMEOUT_MS` | `5000` | longest time one catalog query may run |
 | `CONFIRM_MINUTES` | `10` | runs or sweeps estimated above this wall time wait for the Run it button |
 | `CONFIRM_RUNS` | `40` | sweeps with more runs than this wait for the Run it button |
-| `EUR_PER_USD` | `0.89` | exchange rate for the cost estimate |
+| `EUR_PER_USD` | daily ECB rate | fixed exchange rate for the cost estimate; empty = the ECB reference rate, refreshed daily |
 | `PRICES_JSON` | built-in table | token prices, `{"model-prefix": [input, output, cache write, cache read]}` in USD per million |
 
 One Heun step takes roughly 0.6 to 1 ms on one core, so the default 10 ns (100 000 steps) takes one to two

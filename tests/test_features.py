@@ -226,3 +226,32 @@ def test_report_math_is_mathml():
     assert "$" not in page
     assert mathtext.to_markdown("n_z and --A0=1e-12") == "$n_{z}$ and --A0=1e-12"
     assert "<code>" in mathtext.mathml(r"\frac{")                                  # bad LaTeX does not break the page
+
+
+def test_fx_daily_rate(monkeypatch, tmp_path):
+    from app import fx
+    monkeypatch.delenv("EUR_PER_USD", raising=False)
+    monkeypatch.setattr(fx, "CACHE", tmp_path / "fx.json")
+    monkeypatch.setattr(fx, "_state", {"rate": None, "date": None, "source": None, "checked": 0.0})
+    monkeypatch.setattr(fx, "fetch_ecb", lambda timeout=8: (1 / 1.25, "2026-10-15"))
+    fx.refresh(force=True)
+    assert fx.eur_per_usd() == pytest.approx(0.8)
+    assert fx.info()["fx_date"] == "2026-10-15" and (tmp_path / "fx.json").exists()
+    def offline(timeout=8):
+        raise OSError("offline")
+    monkeypatch.setattr(fx, "fetch_ecb", offline)
+    fx.refresh(force=True)
+    assert fx.eur_per_usd() == pytest.approx(0.8)                       # keeps the last rate
+    monkeypatch.setenv("EUR_PER_USD", "0.9")
+    assert fx.eur_per_usd() == 0.9 and "fixed" in fx.info()["fx_source"]
+
+
+def test_fx_parses_ecb_xml(monkeypatch):
+    import io
+    from app import fx
+    xml = b"""<?xml version="1.0"?><gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01"
+      xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref"><Cube><Cube time="2026-10-15">
+      <Cube currency="USD" rate="1.1650"/><Cube currency="JPY" rate="170.1"/></Cube></Cube></gesmes:Envelope>"""
+    monkeypatch.setattr(fx.urllib.request, "urlopen", lambda *a, **k: io.BytesIO(xml))
+    rate, day = fx.fetch_ecb()
+    assert day == "2026-10-15" and rate == pytest.approx(1 / 1.165)

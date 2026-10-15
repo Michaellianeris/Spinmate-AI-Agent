@@ -361,6 +361,12 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 #historylist .hd{grid-column:1;font-size:.72rem;color:var(--muted)}
 #historylist .hx{grid-row:1 / span 2;grid-column:2;border:none;background:none;color:var(--muted);cursor:pointer;opacity:0}
 #historylist li:hover .hx{opacity:1}
+#historylist li.sel{grid-template-columns:auto 1fr auto}
+#historylist .hc{grid-row:1 / span 2;align-self:center;margin:0 4px 0 0;accent-color:var(--m1)}
+#historylist li.sel .ht,#historylist li.sel .hd{grid-column:2}#historylist li.sel .hx{grid-column:3}
+.history-foot{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.history-foot .grow{flex:1}
+.history-foot .danger{color:#C0262D;border-color:#E9B8BB}.history-foot .danger:disabled{opacity:.45;cursor:default}
 .modal-back{position:fixed;inset:0;z-index:24;background:rgba(15,20,30,.5)}
 .defdlg{position:fixed;z-index:25;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px 20px}
 .defdlg h3{margin:0 0 4px}
@@ -744,6 +750,8 @@ main{grid-template-columns:minmax(0,1fr)}
 <aside class="history" id="history" hidden aria-label="Conversations">
   <div class="history-head"><b>Conversations</b><button class="btn small" id="histnew" type="button">New chat</button></div>
   <ul id="historylist"></ul>
+  <div class="history-foot"><button class="btn small" id="histall" type="button">Select all</button><span class="grow" id="histcount"></span>
+    <button class="btn small danger" id="histdel" type="button" disabled>Delete</button></div>
 </aside>
 <div class="modal-back" id="defback" hidden></div>
 <section class="defdlg" id="defdlg" hidden role="dialog" aria-label="Default parameters">
@@ -1045,7 +1053,7 @@ function onEvent(ev) {
     }
   }
   else if (ev.type === "model") { state.turnModel = ev; }
-  else if (ev.type === "usage") { state.turnUsage = Object.assign({}, ev, {used: state.turnModel}); state.usage.input += ev.input; state.usage.output += ev.output; state.usage.cost = (state.usage.cost || 0) + (ev.cost_usd || 0); updateTok(); }
+  else if (ev.type === "usage") { if (ev.eur_per_usd && state.config) state.config.eur_per_usd = ev.eur_per_usd; state.turnUsage = Object.assign({}, ev, {used: state.turnModel}); state.usage.input += ev.input; state.usage.output += ev.output; state.usage.cost = (state.usage.cost || 0) + (ev.cost_usd || 0); updateTok(); }
   else if (ev.type === "done") {
     state.messages = ev.messages; state.live = []; state.finished = true;
     if (state.turnUsage) state.usages[ev.messages.length - 1] = state.turnUsage;
@@ -1710,17 +1718,42 @@ function delChat(id) {
   saveChats(loadChats().filter(c => c.id !== id));
   if (id === state.chatId) { state.messages = []; newChat(); } else renderHistory();
 }
+const histSel = new Set();
 function renderHistory() {
   const ul = $("#historylist"); if (!ul) return; ul.innerHTML = "";
   const list = loadChats();
-  if (!list.length) { ul.innerHTML = `<li class="nothing">No conversations yet.</li>`; return; }
+  for (const id of [...histSel]) if (!list.some(c => c.id === id)) histSel.delete(id);
+  if (!list.length) ul.innerHTML = `<li class="nothing">No conversations yet.</li>`;
   for (const c of list) {
-    const li = document.createElement("li"); li.tabIndex = 0; if (c.id === state.chatId) li.classList.add("active");
-    li.innerHTML = `<span class="ht">${esc(c.title)}</span><span class="hd">${new Date(c.ts).toLocaleString([], {dateStyle: "medium", timeStyle: "short"})}</span><button type="button" class="hx" title="Delete" aria-label="Delete conversation">✕</button>`;
-    li.onclick = e => { if (e.target.closest(".hx")) delChat(c.id); else if (!state.busy) openChat(c.id); };
+    const li = document.createElement("li"); li.tabIndex = 0; li.className = "sel"; if (c.id === state.chatId) li.classList.add("active");
+    li.innerHTML = `<input type="checkbox" class="hc" aria-label="Select conversation"${histSel.has(c.id) ? " checked" : ""}><span class="ht">${esc(c.title)}</span><span class="hd">${new Date(c.ts).toLocaleString([], {dateStyle: "medium", timeStyle: "short"})}</span><button type="button" class="hx" title="Delete" aria-label="Delete conversation">✕</button>`;
+    li.onclick = e => {
+      if (e.target.closest(".hc")) { e.target.checked ? histSel.add(c.id) : histSel.delete(c.id); histFoot(); return; }
+      if (e.target.closest(".hx")) delChat(c.id); else if (!state.busy) openChat(c.id);
+    };
     ul.appendChild(li);
   }
+  histFoot();
 }
+function histFoot() {
+  const n = loadChats().length, k = histSel.size;
+  $("#histall").textContent = n && k === n ? "Clear" : `Select all${n ? " (" + n + ")" : ""}`;
+  $("#histall").disabled = !n;
+  $("#histcount").textContent = k ? `${k} selected` : "";
+  $("#histdel").disabled = !k;
+}
+$("#histall").onclick = () => {
+  const list = loadChats();
+  if (list.length && histSel.size === list.length) histSel.clear(); else list.forEach(c => histSel.add(c.id));
+  renderHistory();
+};
+$("#histdel").onclick = () => {
+  const k = histSel.size; if (!k || state.busy) return;
+  if (!confirm(`Delete ${k} conversation${k > 1 ? "s" : ""}? This cannot be undone. Runs stay in the Runs panel.`)) return;
+  const current = histSel.has(state.chatId);
+  saveChats(loadChats().filter(c => !histSel.has(c.id))); histSel.clear();
+  if (current) { state.messages = []; newChat(); toggleHistory(true); } else renderHistory();
+};
 function toggleHistory(open) {
   const h = $("#history"), want = open === undefined ? h.hidden : open;
   h.hidden = !want; $("#historybtn").setAttribute("aria-pressed", String(want));
@@ -1735,7 +1768,7 @@ function updateTok() {
   const t = state.usage.input + state.usage.output, p = $("#tokpill");
   p.textContent = `${t >= 10000 ? (t / 1000).toFixed(1) + "k" : fmtN(t)} tokens · ≈${fmtEur(state.usage.cost || 0)}`;
   const b = state.config && state.config.token_budget;
-  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + `, about ${fmtEur(state.usage.cost || 0)} at list prices (${(state.config && state.config.eur_per_usd) || 0.89} € per $)` + (b ? `. Budget ${fmtN(b)} per server session.` : "");
+  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + `, about ${fmtEur(state.usage.cost || 0)} at list prices (1 $ = ${((state.config && state.config.eur_per_usd) || 0.89).toFixed(4)} €${state.config && state.config.fx_date ? ", " + state.config.fx_source + " " + state.config.fx_date : state.config && state.config.fx_source ? ", " + state.config.fx_source : ""})` + (b ? `. Budget ${fmtN(b)} per server session.` : "");
 }
 
 function getUD() { try { return JSON.parse(localStorage.getItem(kUD()) || "null"); } catch { return null; } }
