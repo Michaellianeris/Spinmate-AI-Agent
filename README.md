@@ -122,19 +122,21 @@ one line (order, switches, settle time, the parameters you changed) when a new o
 open it again.
 
 **Runs.** The list icon in the left bar shows every run on the server. Search by id, label, `#tag` or parameter,
-filter by status, end state or kind, star runs and give them tags. Click a run to open its card. Tick 2 to 6 runs
-for **Compare** (one chart with n_z, m1·m2, m1z, m2z, n_x or the net m_z of each run, and a table of results and
+filter by status, end state or kind, star runs and give them tags. Click a run to open its card. **Select all** ticks every run the filters show, and **Delete** removes the
+ticked runs and their files (running runs must be cancelled first). Tick 2 to 6 runs for **Compare** (one chart with n_z, m1·m2, m1z, m2z, n_x or the net m_z of each run, and a table of results and
 of the parameters that differ), **Figure** or **Report**. The assistant can compare runs and write reports too.
 
 **3D sphere.** Under the dial of a run card, *3D sphere* shows m1 and m2 on the unit sphere with their paths;
 drag to rotate. It follows the playhead and Play.
 
 **Figures for papers.** *Figure…* on a run card or a comparison draws the chosen quantities and time window with
-matplotlib and SciencePlots in Science, IEEE or Nature style, as PDF, SVG or 300 dpi PNG (no LaTeX needed).
+matplotlib and SciencePlots in Science, IEEE or Nature style (no LaTeX needed). The figure appears in the chat as
+a card with *Download PDF*, *SVG* and *PNG* (300 dpi) and *Change…*; ask the assistant for a figure and it does
+the same.
 
 **Reports.** A report holds the method, a results table, the parameters shared by all runs and those that differ,
-figures, an optional discussion and the parameter files. It opens as a page you can print to PDF, and downloads
-as Markdown with the figures. Reports are kept in `reports/` of the workspace.
+figures, an optional discussion and the parameter files. It appears in the chat as a card with a preview, *Print / save as
+PDF*, *Open full page*, *Download HTML* and the Markdown version with the figures. Reports are kept in `reports/` of the workspace.
 
 **Default parameters.** The sliders icon in the left bar edits the values Fast mode starts from. They are
 stored in the browser and also sent to the assistant as the base of its runs.

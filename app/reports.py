@@ -1,6 +1,7 @@
 """Reports of selected runs: one self-contained HTML page (print it to PDF from the browser) and a
 Markdown version with the figures, both kept under WORKSPACE/reports."""
 import base64
+import json
 import html
 import io
 import re
@@ -175,6 +176,8 @@ def build(run_ids, title="", notes="", author=""):
         for n, (_, png) in enumerate(figs, 1):
             z.writestr(f"figure{n}.png", png)
     (REPORTS / name / "report.zip").write_bytes(buf.getvalue())
+    (REPORTS / name / "report.json").write_text(json.dumps({"report": name, "title": title, "run_ids": ids,
+                                                             "created": time.time()}))
     return {"ok": True, "report": name, "run_ids": ids, "title": title,
             "html_url": f"/api/reports/{name}.html", "zip_url": f"/api/reports/{name}.zip"}
 
@@ -196,7 +199,7 @@ def md_table(head, rows):
 
 
 def report_file(name):
-    m = re.fullmatch(r"(rep\d{4,})\.(html|zip)", name or "")
+    m = re.fullmatch(r"(rep\d{4,})\.(html|zip|json)", name or "")
     if not m:
         return None
     path = REPORTS / m.group(1) / f"report.{m.group(2)}"

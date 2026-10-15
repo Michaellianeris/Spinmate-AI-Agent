@@ -89,6 +89,10 @@ class FigureIn(BaseModel):
     title: str = ""
 
 
+class RunIdsIn(BaseModel):
+    run_ids: list[str]
+
+
 class ReportIn(BaseModel):
     run_ids: list[str]
     title: str = ""
@@ -300,6 +304,32 @@ def figure(body: FigureIn):
     return Response(data, media_type=mime, headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
+@app.post("/api/figures")
+def save_figure(body: FigureIn):
+    out = figures.save(body.run_ids, body.quantities, body.t0_ns, body.t1_ns, body.style,
+                       body.width_in, body.height_in, body.title[:120])
+    if not out["ok"]:
+        raise HTTPException(400, out["error"])
+    return out
+
+
+@app.get("/api/figures/{name}")
+def figure_file(name: str):
+    path = figures.figure_file(name)
+    if not path:
+        raise HTTPException(404, "figure not found")
+    meta = json.loads((path.parent / "figure.json").read_text())
+    ext = name.rsplit(".", 1)[1]
+    if ext in ("png", "json"):
+        return FileResponse(path)
+    return FileResponse(path, filename=f"{meta.get('file_stem') or name.split('.')[0]}.{ext}")
+
+
+@app.post("/api/runs/delete")
+def delete_runs(body: RunIdsIn):
+    return S.delete_runs(body.run_ids[:2000])
+
+
 @app.post("/api/reports")
 def make_report(body: ReportIn):
     out = reports.build(body.run_ids, body.title, body.notes[:20000], re.sub(r"[^\w .'-]", "", body.author)[:40])
@@ -315,6 +345,8 @@ def report_file(name: str):
         raise HTTPException(404, "report not found")
     if name.endswith(".html"):
         return FileResponse(path, media_type="text/html")
+    if name.endswith(".json"):
+        return FileResponse(path)
     return FileResponse(path, filename=name)
 
 

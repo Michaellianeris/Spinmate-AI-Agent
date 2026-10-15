@@ -132,3 +132,25 @@ def test_chat_approval_reaches_the_tools(http, monkeypatch):
     assert held["needs_confirmation"] and held["runs"] == 2
     started = run(True)
     assert started.get("sweep_id") and not started.get("needs_confirmation")
+
+
+def test_stored_figure_and_card_files(two_runs, http):
+    out = http.post("/api/figures", json={"run_ids": two_runs, "quantities": ["nz"], "style": "nature"}).json()
+    assert out["ok"] and out["figure"].startswith("fig")
+    assert http.get(out["png_url"]).content.startswith(b"\x89PNG")
+    pdf = http.get(out["pdf_url"])
+    assert pdf.content.startswith(b"%PDF") and "attachment" in pdf.headers["content-disposition"]
+    assert http.get(out["svg_url"]).status_code == 200
+    assert http.get(f"/api/figures/{out['figure']}.json").json()["run_ids"] == two_runs
+    from app import tools
+    content, event = tools.call("make_figure", {"run_ids": two_runs[:1], "quantities": ["m1z", "m2z"]})
+    assert json.loads(content)["ok"] and event["png_url"].endswith(".png")
+
+
+def test_delete_runs(http):
+    from app import simulations as S
+    r = S.start_run("--t=1e-11\n", label="to delete")
+    assert S.wait_for_run(r["run_id"], 60)["status"] == "done"
+    out = http.post("/api/runs/delete", json={"run_ids": [r["run_id"], "r9999"]}).json()
+    assert out["deleted"] == [r["run_id"]] and out["refused"][0]["run_id"] == "r9999"
+    assert http.get(f"/api/runs/{r['run_id']}").status_code == 404

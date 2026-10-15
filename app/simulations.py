@@ -417,6 +417,25 @@ def update_meta(run_id, starred=None, tags=None, label=None):
     return _update(run_id, **kw)
 
 
+def delete_runs(run_ids):
+    """Deletes finished runs (their folders and catalog rows). Queued or running runs are refused."""
+    import shutil
+    deleted, refused = [], []
+    for rid in dict.fromkeys(run_ids or []):
+        m = _meta(rid) if _valid(rid, "r") else None
+        if not m:
+            refused.append({"run_id": rid, "reason": "not found"})
+        elif m.get("status") in ("queued", "running"):
+            refused.append({"run_id": rid, "reason": f"{m['status']}; cancel it first"})
+        else:
+            shutil.rmtree(RUNS / rid, ignore_errors=True)
+            with _lock:
+                _series_cache.pop(rid, None)
+            deleted.append(rid)
+    catalog.delete_runs(deleted)
+    return {"ok": True, "deleted": deleted, "refused": refused}
+
+
 METRICS = ("order_initial", "order_final", "m1_dot_m2_final", "neel_z_switches", "first_neel_z_switch_s",
            "settle_time_s", "dominant_freq_m1x_GHz", "dominant_freq_neel_z_GHz", "t_start_s", "t_end_s", "runtime_s")
 

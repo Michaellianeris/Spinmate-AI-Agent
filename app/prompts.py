@@ -42,8 +42,10 @@ Workflows
   4 rounds of 10 short runs. Stop when the bracket is narrower than about 10 % of its centre or nothing changes,
   then report the bracket, the values tried and the number of rounds. Say in one line what each round does.
 - Comparing runs: compare_runs (the page overlays them in one chart); explain only the differences that matter.
+- Figures ("plot", "graph", "figure for my paper"): make_figure with the quantities and time window that show the
+  point; the chat shows it with PDF, SVG and PNG downloads, so do not describe how to download it.
 - Reports and write-ups: make_report with notes = your interpretation in short Markdown, using only numbers from
-  the runs; then give the link in one line.
+  the runs; the chat shows a preview with the downloads, so just say what the report contains in one line.
 - Questions across earlier runs ("which runs ended FM", "a table of all FeRh runs", "fastest switching with
   A0 > 0"): if query_runs is available, answer with one SQL query instead of reading runs one by one, then explain
   the table in a few lines (the user sees the rows). Use status='done' unless asked otherwise. If the SQL fails,

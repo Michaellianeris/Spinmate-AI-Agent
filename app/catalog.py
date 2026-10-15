@@ -293,6 +293,22 @@ def sync_sweep(sweep_dir):
         _bg.submit(_safe, sync_sweep_now, sweep_dir)
 
 
+def delete_runs_now(run_ids):
+    if not _available() or not run_ids:
+        return False
+    ph = "?" if _sqlite_path() else "%s"
+    with _connect() as c:
+        for rid in run_ids:
+            c.execute(f"DELETE FROM runs WHERE run_id = {ph}", (rid,))
+    return True
+
+
+def delete_runs(run_ids):
+    """Queue removal of deleted runs from the catalog."""
+    if enabled():
+        _bg.submit(_safe, delete_runs_now, list(run_ids))
+
+
 def backfill(runs_dir, sweeps_dir):
     """Add every run and sweep already on disk (runs made before the catalog existed)."""
     if not enabled():

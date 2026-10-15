@@ -1,6 +1,9 @@
 """Publication figures of one or more runs (matplotlib + SciencePlots, no LaTeX needed)."""
 import io
+import json
+import re
 import threading
+import time
 
 from . import simulations as S
 
@@ -97,3 +100,33 @@ def render(run_ids, quantities=("m1z", "m2z", "nz"), t0_ns=None, t1_ns=None, sty
         fig.savefig(buf, format=fmt, dpi=300 if fmt == "png" else None)
         plt.close(fig)
     return buf.getvalue(), MIME[fmt], f"{'_'.join(ids)}_{'-'.join(qs)}.{fmt}"
+
+
+FIGURES = S.WORKSPACE / "figures"
+FIGURES.mkdir(parents=True, exist_ok=True)
+
+
+def save(run_ids, quantities=("m1z", "m2z", "nz"), t0_ns=None, t1_ns=None, style="science",
+         width_in=None, height_in=None, title="", labels=None):
+    """Renders PNG (preview), PDF and SVG into figures/figNNNN/ so the chat can show and offer them."""
+    try:
+        files = {f: render(run_ids, quantities, t0_ns, t1_ns, style, f, width_in, height_in, title, labels)
+                 for f in ("png", "pdf", "svg")}
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+    name = S._next_id(FIGURES, "fig")
+    for f, (data, _, _) in files.items():
+        (FIGURES / name / f"figure.{f}").write_bytes(data)
+    stem = files["png"][2].rsplit(".", 1)[0]
+    meta = {"figure": name, "run_ids": [r for r in run_ids if S._valid(r, "r")][:6], "quantities": list(quantities),
+            "t0_ns": t0_ns, "t1_ns": t1_ns, "style": style, "title": title, "file_stem": stem, "created": time.time()}
+    (FIGURES / name / "figure.json").write_text(json.dumps(meta))
+    return {"ok": True, **meta, **{f"{f}_url": f"/api/figures/{name}.{f}" for f in ("png", "pdf", "svg")}}
+
+
+def figure_file(name):
+    m = re.fullmatch(r"(fig\d{4,})\.(png|pdf|svg|json)", name or "")
+    if not m:
+        return None
+    path = FIGURES / m.group(1) / f"figure.{m.group(2)}"
+    return path if path.exists() else None

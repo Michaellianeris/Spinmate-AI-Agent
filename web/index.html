@@ -453,8 +453,9 @@ main{grid-template-columns:minmax(0,1fr)}
 .star{border:none;background:none;cursor:pointer;font-size:.95rem;line-height:1;color:var(--muted);padding:0 2px;opacity:.55}
 .star:hover{opacity:1}
 .star[aria-pressed=true]{color:#E0A100;opacity:1}
-.rp-foot{border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.rp-foot span{flex:1;font-size:.84rem;color:var(--muted)}
+.rp-foot{border-top:1px solid var(--line);padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.rp-line{display:flex;gap:6px;align-items:center}
+.rp-line span{flex:1;font-size:.84rem;color:var(--muted)}
 .rp-empty{color:var(--muted);font-size:.88rem;padding:14px}
 .runcard .fold{border:none;background:none;cursor:pointer;color:var(--muted);font-size:.95rem;padding:0 2px;margin-left:auto}
 .rc-head .status + .fold{margin-left:0}
@@ -491,6 +492,12 @@ main{grid-template-columns:minmax(0,1fr)}
 .dialmode button{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:0 8px;font-size:.76rem;cursor:pointer;color:var(--ink)}
 .dialmode button[aria-pressed=true]{border-color:var(--m1);color:var(--m1)}
 .dial canvas{width:190px;height:190px;display:block;cursor:grab;touch-action:none}
+.figprev{margin-top:10px;text-align:center}
+.figprev img{max-width:100%;max-height:520px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px}
+.repframe{width:100%;height:560px;margin-top:10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.btn.danger{color:var(--err)}
+.btn.danger:hover:not(:disabled){border-color:var(--err)}
+.rp-foot .grow{flex:1}
 
 @media (max-width:900px){
   body{grid-template-columns:1fr;overflow:auto}
@@ -679,30 +686,31 @@ main{grid-template-columns:minmax(0,1fr)}
     <label><input type="checkbox" id="rpstar"> ★ only</label>
   </div>
   <ul class="rp-list" id="rplist"></ul>
-  <div class="rp-foot"><span id="rpsel"></span>
-    <button class="btn small" id="rpcompare" type="button" disabled title="2 to 6 runs in one chart and table">Compare</button>
-    <button class="btn small" id="rpfigure" type="button" disabled title="Publication figure (PDF, SVG, PNG)">Figure</button>
-    <button class="btn small" id="rpreport" type="button" disabled title="Report with method, results and figures">Report</button>
-    <button class="btn small" id="rpclear" type="button" disabled>Clear</button></div>
+  <div class="rp-foot">
+    <div class="rp-line"><button class="btn small" id="rpall" type="button">Select all</button><span id="rpsel"></span>
+      <button class="btn small" id="rpclear" type="button" disabled>Clear</button></div>
+    <div class="rp-line"><button class="btn small" id="rpcompare" type="button" disabled title="2 to 6 runs in one chart and table">Compare</button>
+      <button class="btn small" id="rpfigure" type="button" disabled title="Publication figure (PDF, SVG, PNG)">Figure</button>
+      <button class="btn small" id="rpreport" type="button" disabled title="Report with method, results and figures">Report</button>
+      <span></span><button class="btn small danger" id="rpdelete" type="button" disabled title="Delete the selected runs and their files">Delete</button></div></div>
 </aside>
 <div class="modal-back" id="figback" hidden></div>
 <section class="defdlg figdlg" id="figdlg" hidden role="dialog" aria-label="Publication figure">
   <div class="dlg-head"><h3>Publication figure</h3><button class="rail-btn" id="figclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <p>Drawn on the server with matplotlib and SciencePlots. PDF and SVG stay sharp in papers; PNG is 300 dpi.</p>
+  <p>Drawn on the server with matplotlib and SciencePlots. The figure appears in the chat, where you can download it as PDF, SVG or 300 dpi PNG.</p>
   <div class="frow"><label for="fig-runs">Runs</label><input id="fig-runs" spellcheck="false"></div>
   <div class="frow"><label>Quantities</label><div class="qgrid" id="fig-q"></div></div>
   <div class="frow"><label for="fig-t0">Time (ns)</label><div class="pair"><input id="fig-t0" placeholder="from" aria-label="From (ns)"> – <input id="fig-t1" placeholder="to" aria-label="To (ns)"></div></div>
   <div class="frow"><label for="fig-style">Style</label><select id="fig-style"><option value="science">Science</option><option value="ieee">IEEE, one column</option><option value="nature">Nature</option><option value="plain">Plain</option></select></div>
-  <div class="frow"><label for="fig-fmt">Format</label><select id="fig-fmt"><option value="pdf">PDF</option><option value="svg">SVG</option><option value="png">PNG, 300 dpi</option></select></div>
   <div class="frow"><label for="fig-w">Size (inches)</label><div class="pair"><input id="fig-w" placeholder="width" aria-label="Width (inches)"> × <input id="fig-h" placeholder="height" aria-label="Height (inches)"></div></div>
   <div class="frow"><label for="fig-title">Title</label><input id="fig-title" placeholder="optional"></div>
-  <div class="row"><button class="btn primary" id="figgo" type="button">Download</button><button class="btn" id="figprev" type="button">Preview</button></div>
+  <div class="row"><button class="btn primary" id="figgo" type="button">Add to chat</button><button class="btn" id="figprev" type="button">Preview</button></div>
   <div class="dlg-out" id="figout"></div>
 </section>
 <div class="modal-back" id="repback" hidden></div>
 <section class="defdlg repdlg" id="repdlg" hidden role="dialog" aria-label="Report">
   <div class="dlg-head"><h3>Report</h3><button class="rail-btn" id="repclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <p>Method, results table, parameters, figures and the parameter files of the runs. Open it and print to PDF, or download the Markdown version with the figures.</p>
+  <p>Method, results table, parameters, figures and the parameter files of the runs. It appears in the chat, where you can read it, print it to PDF or download it.</p>
   <div class="frow"><label for="rep-runs">Runs</label><input id="rep-runs" spellcheck="false"></div>
   <div class="frow"><label for="rep-title">Title</label><input id="rep-title" placeholder="optional"></div>
   <div class="frow"><label for="rep-notes">Discussion</label><textarea id="rep-notes" placeholder="Optional, Markdown. Or let the assistant write it."></textarea></div>
@@ -809,7 +817,8 @@ const TOOL_UI = {
   continue_run: {run: a => `Continuing ${a.run_id}`, done: (a, r) => r.run_id ? `Continued ${a.run_id} as ${r.run_id}` : `Continued ${a.run_id}`},
   combine_runs: {run: () => "Combining runs", done: (a, r) => r.run_id ? `Combined ${(r.chain || []).join(" + ")} into ${r.run_id}` : "Combined runs"},
   compare_runs: {run: () => "Comparing runs", done: (a, r) => r.run_ids ? `Compared ${r.run_ids.join(", ")}` : "Compared runs"},
-  make_report: {run: () => "Writing the report", done: (a, r) => r.report ? `Report ${r.report}: open` : "Wrote the report"},
+  make_report: {run: () => "Writing the report", done: (a, r) => r.report ? `Report ${r.report}` : "Wrote the report"},
+  make_figure: {run: () => "Drawing the figure", done: (a, r) => r.figure ? `Figure ${r.figure}` : "Drew the figure"},
   query_runs: {run: () => "Querying the run catalog", done: (a, r) => r.columns ? `Queried the catalog: ${r.row_count}${r.truncated ? "+" : ""} rows` : "Queried the catalog"},
 };
 
@@ -852,9 +861,10 @@ function chipFor(name, input, result, running) {
   }
   let label = ui.done(input, result);
   if (result.needs_confirmation) { c.textContent = `Waiting for your OK: ${result.runs} run${result.runs > 1 ? "s" : ""}, about ${dur(result.estimated_wall_time_s)}`; return c; }
-  if (name === "make_report" && result.html_url) {
+  const own = name === "make_report" && result.report ? "rep:" + result.report : name === "make_figure" && result.figure ? "fig:" + result.figure : null;
+  if (own) {
     c.textContent = label; c.classList.add("link"); c.tabIndex = 0;
-    c.onclick = () => window.open(result.html_url, "_blank", "noopener"); c.onkeydown = e => { if (e.key === "Enter") c.onclick(); };
+    c.onclick = () => openRunCard(own); c.onkeydown = e => { if (e.key === "Enter") c.onclick(); };
     return c;
   }
   if (name === "compare_runs" && result.run_ids && result.ok !== false) {
@@ -885,6 +895,10 @@ function render() {
   const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); return d; };
   const place = (name, res) => {
     if (name === "compare_runs" && res.ok && res.run_ids) { const cid = cmpId(res.run_ids); if (!cardEls.has(cid)) trackCompare(res.run_ids, true); }
+    if (name === "make_figure" && res.figure && !cardEls.has("fig:" + res.figure)) trackFigure(res.figure, true);
+    if (name === "make_report" && res.report && !cardEls.has("rep:" + res.report)) trackReport(res.report, true);
+    if (name === "make_figure" && res.figure) { const fid = "fig:" + res.figure; log.appendChild(cardEls.get(fid).el); placed.add(fid); return true; }
+    if (name === "make_report" && res.report) { const rid = "rep:" + res.report; log.appendChild(cardEls.get(rid).el); placed.add(rid); return true; }
     const id = ["start_simulation", "continue_run", "combine_runs"].includes(name) ? res.run_id : name === "start_sweep" ? res.sweep_id
       : name === "compare_runs" && res.run_ids ? cmpId(res.run_ids) : null;
     if (id && cardEls.has(id)) { log.appendChild(cardEls.get(id).el); placed.add(id); return true; }
@@ -998,6 +1012,8 @@ function onEvent(ev) {
     if (it) { it.status = "done"; it.event = ev.event; }
     const target = ev.event && (ev.event.run_id || ev.event.sweep_id);
     if (ev.event && ev.event.tool === "compare_runs" && ev.event.run_ids && ev.event.ok !== false) trackCompare(ev.event.run_ids, true);
+    if (ev.event && ev.event.tool === "make_figure" && ev.event.figure) { foldOthers(null); trackFigure(ev.event.figure, true); }
+    if (ev.event && ev.event.tool === "make_report" && ev.event.report) { foldOthers(null); trackReport(ev.event.report, true); }
     if (target && ["start_simulation", "start_sweep", "continue_run", "combine_runs"].includes(ev.event.tool)) {
       refreshRuns();
       if (ev.event.run_id) trackRun(ev.event.run_id); else trackSweep(ev.event.sweep_id);
@@ -1411,7 +1427,7 @@ $("#examples").onchange = e => {
 const cardEls = new Map();
 const CARD_SERIES = [{k: "m1z", c: "#1F4FD1"}, {k: "m2z", c: "#B0127F"}, {k: "nz", c: "#17212B"}];
 function openRunCard(id) {
-  if (!cardEls.has(id)) { if (id.startsWith("cmp:")) { trackCompare(id.slice(4).split(","), true); render(); } else if (id.startsWith("s")) trackSweep(id); else trackRun(id); }
+  if (!cardEls.has(id)) { if (/^(cmp|fig|rep):/.test(id)) { restoreCard(id); render(); } else if (id.startsWith("s")) trackSweep(id); else trackRun(id); }
   const cc = cardEls.get(id); if (cc) setFold(cc, false);
   setTimeout(() => {
     const c = cardEls.get(id); if (!c) return;
@@ -1662,7 +1678,7 @@ function openChat(id, quiet) {
   if (!quiet) persist();
   resetChat({messages: rec.messages || [], chatId: rec.id, usage: rec.usage || {input: 0, output: 0}, usages: rec.usages || {}});
   try { localStorage.setItem(kCur(), rec.id); } catch {}
-  for (const rid of rec.runs || []) rid.startsWith("cmp:") ? trackCompare(rid.slice(4).split(","), true) : rid.startsWith("s") ? trackSweep(rid) : trackRun(rid);
+  for (const rid of rec.runs || []) restoreCard(rid);
   render(); updateTok(); renderHistory(); toggleHistory(false);
 }
 function delChat(id) {
@@ -2196,7 +2212,9 @@ function rpFooter() {
   const n = runsPanel.sel.size;
   $("#rpsel").textContent = n ? `${n} selected` : "Select runs to compare, plot or report";
   $("#rpcompare").disabled = n < 2 || n > 6; $("#rpfigure").disabled = !n || n > 6;
-  $("#rpreport").disabled = !n || n > 6; $("#rpclear").disabled = !n;
+  $("#rpreport").disabled = !n || n > 6; $("#rpclear").disabled = !n; $("#rpdelete").disabled = !n;
+  const rows = runsFiltered(), all = rows.length && rows.every(r => runsPanel.sel.has(r.id));
+  $("#rpall").textContent = all ? "Unselect all" : `Select all (${rows.length})`; $("#rpall").disabled = !rows.length;
 }
 function toggleRunsPanel(open) {
   const p = $("#runspanel"), want = open === undefined ? p.hidden : open;
@@ -2320,7 +2338,7 @@ function openFigure(o) {
   const qs = new Set(o.quantities && o.quantities.length ? o.quantities : ["nz"]);
   $("#fig-q").querySelectorAll("input").forEach(i => { i.checked = qs.has(i.value); });
   $("#fig-t0").value = o.t0 != null ? +(+o.t0).toFixed(4) : ""; $("#fig-t1").value = o.t1 != null ? +(+o.t1).toFixed(4) : "";
-  $("#fig-title").value = ""; $("#figout").innerHTML = "";
+  $("#fig-title").value = o.title || ""; $("#fig-style").value = o.style || "science"; $("#figout").innerHTML = "";
   $("#figdlg").hidden = false; $("#figback").hidden = false;
 }
 const closeFigure = () => { $("#figdlg").hidden = true; $("#figback").hidden = true; };
@@ -2330,7 +2348,7 @@ function figBody(fmtOverride) {
   return {run_ids: $("#fig-runs").value.split(/[\s,]+/).filter(Boolean),
           quantities: [...$("#fig-q").querySelectorAll("input:checked")].map(i => i.value),
           t0_ns: num("#fig-t0"), t1_ns: num("#fig-t1"), style: $("#fig-style").value,
-          format: fmtOverride || $("#fig-fmt").value, width_in: num("#fig-w"), height_in: num("#fig-h"), title: $("#fig-title").value};
+          format: fmtOverride || "pdf", width_in: num("#fig-w"), height_in: num("#fig-h"), title: $("#fig-title").value};
 }
 async function figFetch(body) {
   const res = await fetch("/api/figure", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
@@ -2340,11 +2358,8 @@ async function figFetch(body) {
 }
 $("#figgo").onclick = async () => {
   const out = $("#figout"); out.textContent = "Rendering…";
-  try {
-    const {blob, name} = await figFetch(figBody());
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    out.textContent = `Saved ${name}.`;
-  } catch (e) { out.textContent = e.message; }
+  try { const r = await postJson("/api/figures", figBody()); closeFigure(); toggleRunsPanel(false); trackFigure(r.figure); }
+  catch (e) { out.textContent = e.message; }
 };
 $("#figprev").onclick = async () => {
   const out = $("#figout"); out.textContent = "Rendering…";
@@ -2364,7 +2379,7 @@ $("#repgo").onclick = async () => {
   const out = $("#repout"); out.textContent = "Writing the report…";
   try {
     const r = await postJson("/api/reports", {run_ids: reportIds(), title: $("#rep-title").value, notes: $("#rep-notes").value, author: getName()});
-    out.innerHTML = `<a href="${r.html_url}" target="_blank" rel="noopener">Open ${r.report}</a> (print it to PDF from the browser) · <a href="${r.zip_url}" download>Markdown + figures (.zip)</a>`;
+    closeReport(); toggleRunsPanel(false); trackReport(r.report);
   } catch (e) { out.textContent = e.message; }
 };
 $("#repask").onclick = () => {
@@ -2429,13 +2444,95 @@ class Sphere {
       let seen = 0, cut = pts.length;
       for (let j = 0; j < pts.length; j++) if (pts[j] && seen++ * step >= this.idx) { cut = j + 1; break; }
       this.path(pts.slice(0, cut), col, 1.4, .85, .25);
-      const i = Math.min(this.idx, n - 1), tip = this.p(d[k + "x"][i], d[k + "y"][i], d[k + "z"][i]), o = this.p(0, 0, 0);
-      c.globalAlpha = tip[2] >= 0 ? 1 : .45; c.strokeStyle = col; c.lineWidth = 2.6; c.lineCap = "round";
-      c.beginPath(); c.moveTo(o[0], o[1]); c.lineTo(tip[0], tip[1]); c.stroke();
-      c.fillStyle = col; c.beginPath(); c.arc(tip[0], tip[1], 4, 0, 7); c.fill(); c.globalAlpha = 1;
+      // vector from the centre with an arrowhead in screen space
+      const i = Math.min(this.idx, n - 1), vx = d[k + "x"][i], vy = d[k + "y"][i], vz = d[k + "z"][i];
+      const tip = this.p(vx, vy, vz), o = this.p(0, 0, 0);
+      let ux = tip[0] - o[0], uy = tip[1] - o[1]; const L = Math.hypot(ux, uy);
+      c.globalAlpha = tip[2] >= 0 ? 1 : .45; c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 2.6; c.lineCap = "round";
+      if (L < 3) { c.beginPath(); c.arc(tip[0], tip[1], 3.5, 0, 7); c.fill(); c.globalAlpha = 1; continue; }   // pointing at the viewer
+      ux /= L; uy /= L;
+      const h = Math.min(11, L * 0.45), w = h * 0.55, bx = tip[0] - ux * h, by = tip[1] - uy * h;
+      c.beginPath(); c.moveTo(o[0], o[1]); c.lineTo(bx, by); c.stroke();
+      c.beginPath(); c.moveTo(tip[0], tip[1]); c.lineTo(bx - uy * w, by + ux * w); c.lineTo(bx + uy * w, by - ux * w); c.closePath(); c.fill();
+      c.globalAlpha = 1;
     }
   }
 }
+
+// ---------------------------------------------------------------- figure and report cards in the chat
+function cardShell(id, cls, title) {
+  const el = document.createElement("div"); el.className = "runcard " + cls;
+  el.innerHTML = `<div class="rc-head"><span class="mono">${title}</span><span class="rc-label" data-r="lab"></span>
+      <button class="fold" type="button" data-r="fold" aria-expanded="true" title="Fold to one line">▾</button></div>
+    <div class="rc-sum" data-r="sum"></div>`;
+  const c = {el, chart: null, view: null, final: true};
+  cardEls.set(id, c); state.cards.push(id); wireFold(c);
+  return c;
+}
+function showCard(id, quiet) { if (!quiet) { foldOthers(id); render(); openRunCard(id); persist(); } }
+
+function trackFigure(name, quiet) {
+  const id = "fig:" + name;
+  if (cardEls.has(id)) { if (!quiet) openRunCard(id); return; }
+  const c = cardShell(id, "figcard", `Figure ${name}`), el = c.el;
+  el.insertAdjacentHTML("beforeend", `<div class="figprev"><img alt="Figure ${name}" src="/api/figures/${name}.png"></div>
+    <div class="actions"><a class="btn small primary" href="/api/figures/${name}.pdf" download>Download PDF</a>
+      <a class="btn small" href="/api/figures/${name}.svg" download>SVG</a><a class="btn small" href="/api/figures/${name}.png" download="${name}.png">PNG</a>
+      <button class="btn small" type="button" data-r="edit">Change…</button></div>`);
+  api(`/api/figures/${name}.json`).then(m => {
+    const text = `${m.run_ids.join(", ")} · ${m.quantities.join(", ")}` + (m.t0_ns != null || m.t1_ns != null ? ` · ${m.t0_ns ?? 0}–${m.t1_ns ?? "end"} ns` : "") + (m.title ? ` · ${m.title}` : "");
+    el.querySelector("[data-r=lab]").textContent = text; el.querySelector("[data-r=sum]").textContent = text;
+    el.querySelector("[data-r=edit]").onclick = () => openFigure({runs: m.run_ids, quantities: m.quantities, t0: m.t0_ns, t1: m.t1_ns, style: m.style, title: m.title});
+  }).catch(() => { el.querySelector("[data-r=sum]").textContent = "This figure is no longer on the server."; });
+  showCard(id, quiet);
+}
+
+function trackReport(name, quiet) {
+  const id = "rep:" + name;
+  if (cardEls.has(id)) { if (!quiet) openRunCard(id); return; }
+  const c = cardShell(id, "repcard", `Report ${name}`), el = c.el;
+  el.insertAdjacentHTML("beforeend", `<iframe class="repframe" src="/api/reports/${name}.html" title="Report ${name}"></iframe>
+    <div class="actions"><button class="btn small primary" type="button" data-r="print">Print / save as PDF</button>
+      <a class="btn small" href="/api/reports/${name}.html" target="_blank" rel="noopener">Open full page</a>
+      <a class="btn small" href="/api/reports/${name}.html" download="${name}.html">Download HTML</a>
+      <a class="btn small" href="/api/reports/${name}.zip" download>Markdown + figures (.zip)</a></div>`);
+  el.querySelector("[data-r=print]").onclick = () => { const w = el.querySelector("iframe").contentWindow; w.focus(); w.print(); };
+  api(`/api/reports/${name}.json`).then(m => {
+    el.querySelector("[data-r=lab]").textContent = m.title;
+    el.querySelector("[data-r=sum]").textContent = `${m.title} · runs ${m.run_ids.join(", ")}`;
+  }).catch(() => { el.querySelector("[data-r=sum]").textContent = "This report is no longer on the server."; });
+  showCard(id, quiet);
+}
+
+function restoreCard(id) {
+  if (id.startsWith("cmp:")) trackCompare(id.slice(4).split(","), true);
+  else if (id.startsWith("fig:")) trackFigure(id.slice(4), true);
+  else if (id.startsWith("rep:")) trackReport(id.slice(4), true);
+  else if (id.startsWith("s")) trackSweep(id);
+  else trackRun(id);
+}
+
+// ---------------------------------------------------------------- runs panel: select all, delete
+function rpSelectAll() {
+  const rows = runsFiltered(), all = rows.length && rows.every(r => runsPanel.sel.has(r.id));
+  for (const r of rows) all ? runsPanel.sel.delete(r.id) : runsPanel.sel.add(r.id);
+  renderRunsPanel();
+}
+async function rpDelete() {
+  const ids = [...runsPanel.sel]; if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} run${ids.length > 1 ? "s" : ""} (${ids.slice(0, 8).join(", ")}${ids.length > 8 ? "…" : ""})? Their files are removed from the server; this cannot be undone.`)) return;
+  let out;
+  try { out = await postJson("/api/runs/delete", {run_ids: ids}); } catch (e) { alert(e.message); return; }
+  for (const id of out.deleted) {
+    runsPanel.sel.delete(id);
+    const c = cardEls.get(id);
+    if (c) { c.chart && c.chart.destroy(); c.view && c.view.destroy(); cardEls.delete(id); state.cards = state.cards.filter(x => x !== id); }
+  }
+  if (out.refused.length) alert("Not deleted:\n" + out.refused.map(r => `${r.run_id}: ${r.reason}`).join("\n"));
+  render(); persist(); await loadRunsPanel(); refreshRuns();
+}
+$("#rpall").onclick = rpSelectAll;
+$("#rpdelete").onclick = rpDelete;
 
 async function init() {
   setTheme(document.documentElement.dataset.theme);

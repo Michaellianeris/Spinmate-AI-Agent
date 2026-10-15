@@ -4,6 +4,7 @@ import json
 import os
 
 from . import catalog
+from . import figures
 from . import reports
 from . import params as P
 from . import simulations as S
@@ -156,6 +157,19 @@ TOOLS += [
                          "required": ["run_ids"]},
     },
     {
+        "name": "make_figure",
+        "description": "Make a publication-quality figure (matplotlib + SciencePlots) of 1-6 runs. The chat shows it with "
+                       "PDF, SVG and PNG downloads. quantities: m1x m1y m1z m2x m2y m2z nx ny nz dot (m1.m2) mz (net); "
+                       "one run: several quantities; several runs: usually one quantity. Optional time window in ns, "
+                       "style science | ieee | nature | plain, title. Use it when the user asks for a graph or figure.",
+        "input_schema": {"type": "object",
+                         "properties": {"run_ids": {"type": "array", "items": TEXT},
+                                        "quantities": {"type": "array", "items": TEXT},
+                                        "t0_ns": {"type": "number"}, "t1_ns": {"type": "number"},
+                                        "style": TEXT, "title": TEXT},
+                         "required": ["run_ids"]},
+    },
+    {
         "name": "make_report",
         "description": "Write a report of 1-6 finished runs (method, results table, parameters, figures, appendix) "
                        "as an HTML page the user can print to PDF, plus a Markdown zip. Put your interpretation in "
@@ -268,6 +282,10 @@ def call(name, args, approved=False):
         out = S.cancel(args["run_id"])
     elif name == "compare_runs":
         out = S.compare(args.get("run_ids") or [])
+    elif name == "make_figure":
+        out = figures.save(args.get("run_ids") or [], args.get("quantities") or ["m1z", "m2z", "nz"],
+                           args.get("t0_ns"), args.get("t1_ns"), args.get("style") or "science",
+                           title=args.get("title") or "")
     elif name == "make_report":
         out = reports.build(args.get("run_ids") or [], args.get("title") or "", args.get("notes") or "")
     elif name == "query_runs":
@@ -276,7 +294,7 @@ def call(name, args, approved=False):
         out = {"error": f"unknown tool {name}"}
 
     event = {"tool": name}
-    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error", "run_ids", "report", "html_url", "zip_url"):
+    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error", "run_ids", "report", "html_url", "zip_url", "figure", "png_url"):
         if isinstance(out, dict) and key in out:
             event[key] = out[key]
     if name in ("get_run", "wait_for_run") and isinstance(out, dict) and "id" in out:
