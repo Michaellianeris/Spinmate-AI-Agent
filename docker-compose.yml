@@ -16,6 +16,10 @@ services:
       - MAX_SWEEP_RUNS=${MAX_SWEEP_RUNS:-400}
       - DATABASE_URL=${DATABASE_URL-postgresql://spinmate:${POSTGRES_PASSWORD:-spinmate}@postgres:5432/spinmate}
       - QUERY_TIMEOUT_MS=${QUERY_TIMEOUT_MS:-5000}
+      - CONFIRM_MINUTES=${CONFIRM_MINUTES:-10}
+      - CONFIRM_RUNS=${CONFIRM_RUNS:-40}
+      - EUR_PER_USD=${EUR_PER_USD:-0.89}
+      - PRICES_JSON=${PRICES_JSON:-}
     volumes:
       - sublattice-data:/data
       - ./certs:/certs:ro

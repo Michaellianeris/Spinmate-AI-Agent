@@ -1,8 +1,10 @@
 """Tools exposed to Claude."""
 import base64
 import json
+import os
 
 from . import catalog
+from . import reports
 from . import params as P
 from . import simulations as S
 
@@ -145,6 +147,45 @@ def _query_description(dialect):
         "CAST(params->>'A0' AS DOUBLE PRECISION) > 0 ORDER BY first_switch_ps")
 
 
+TOOLS += [
+    {
+        "name": "compare_runs",
+        "description": "Compare 2-6 runs side by side: key results of each and the parameters that differ. The "
+                       "page also shows them overlaid in one chart. Use it when the user asks how runs differ.",
+        "input_schema": {"type": "object", "properties": {"run_ids": {"type": "array", "items": TEXT}},
+                         "required": ["run_ids"]},
+    },
+    {
+        "name": "make_report",
+        "description": "Write a report of 1-6 finished runs (method, results table, parameters, figures, appendix) "
+                       "as an HTML page the user can print to PDF, plus a Markdown zip. Put your interpretation in "
+                       "notes (Markdown, a few short paragraphs or bullets, only numbers from the runs). Use it when "
+                       "the user asks for a report or a write-up.",
+        "input_schema": {"type": "object",
+                         "properties": {"run_ids": {"type": "array", "items": TEXT}, "title": TEXT, "notes": TEXT},
+                         "required": ["run_ids"]},
+    },
+]
+
+CONFIRM_MINUTES = float(os.environ.get("CONFIRM_MINUTES") or 10)
+CONFIRM_RUNS = int(os.environ.get("CONFIRM_RUNS") or 40)
+
+
+def _needs_confirmation(name, args, approved):
+    """Large requests wait for the user's Run button; the next message then carries the approval."""
+    if approved or name not in ("start_simulation", "start_sweep"):
+        return None
+    runs = len(args.get("values") or []) if name == "start_sweep" else 1
+    wall = S.estimate(args.get("parameters_text") or "", runs)
+    if wall is None:
+        return None
+    if wall <= CONFIRM_MINUTES * 60 and runs <= CONFIRM_RUNS:
+        return None
+    return {"ok": False, "needs_confirmation": True, "runs": runs, "estimated_wall_time_s": round(wall, 1),
+            "error": f"needs the user's confirmation: {runs} run(s), about {wall / 60:.1f} min. The page shows a Run "
+                     "button; tell the user the estimate in one line and stop. Do not retry in this turn."}
+
+
 QUERY_TOOL = {
     "name": "query_runs",
     "description": _query_description(catalog.dialect()),
@@ -169,8 +210,12 @@ def _brief(run):
     return {k: run[k] for k in keep if k in run and run[k] is not None}
 
 
-def call(name, args):
+def call(name, args, approved=False):
     """Run a tool. Returns (content for Claude, event for the UI)."""
+    gate = _needs_confirmation(name, args, approved)
+    if gate:
+        return json.dumps(gate), {"tool": name, **{k: gate[k] for k in ("needs_confirmation", "runs",
+                                                                       "estimated_wall_time_s", "error")}}
     if name == "list_input_files":
         out = {"files": S.list_inputs()}
     elif name == "read_input_file":
@@ -221,13 +266,17 @@ def call(name, args):
                         for r in S.list_runs(int(args.get("limit") or 20))]}
     elif name == "cancel_run":
         out = S.cancel(args["run_id"])
+    elif name == "compare_runs":
+        out = S.compare(args.get("run_ids") or [])
+    elif name == "make_report":
+        out = reports.build(args.get("run_ids") or [], args.get("title") or "", args.get("notes") or "")
     elif name == "query_runs":
         out = catalog.query(args.get("sql", ""), args.get("limit") or 200)
     else:
         out = {"error": f"unknown tool {name}"}
 
     event = {"tool": name}
-    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error"):
+    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error", "run_ids", "report", "html_url", "zip_url"):
         if isinstance(out, dict) and key in out:
             event[key] = out[key]
     if name in ("get_run", "wait_for_run") and isinstance(out, dict) and "id" in out:

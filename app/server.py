@@ -11,6 +11,10 @@ from pydantic import BaseModel
 import threading
 
 from . import agent
+from . import figures
+from . import pricing
+from . import reports
+from . import tools
 from . import catalog
 from . import guide
 from . import openai_provider
@@ -40,6 +44,7 @@ class ChatIn(BaseModel):
     defaults: str | None = None
     provider: str = "anthropic"
     fallbacks: list = []
+    approve: bool = False    # the user pressed Run on a large request
 
 
 class GuideIn(BaseModel):
@@ -64,6 +69,31 @@ class CombineIn(BaseModel):
     run_id: str | None = None
     run_ids: list[str] = []
     label: str = ""
+
+
+class MetaIn(BaseModel):
+    starred: bool | None = None
+    tags: list[str] | None = None
+    label: str | None = None
+
+
+class FigureIn(BaseModel):
+    run_ids: list[str]
+    quantities: list[str] = ["m1z", "m2z", "nz"]
+    t0_ns: float | None = None
+    t1_ns: float | None = None
+    style: str = "science"
+    format: str = "pdf"
+    width_in: float | None = None
+    height_in: float | None = None
+    title: str = ""
+
+
+class ReportIn(BaseModel):
+    run_ids: list[str]
+    title: str = ""
+    notes: str = ""
+    author: str = ""
 
 
 class SaveIn(BaseModel):
@@ -96,7 +126,8 @@ def config():
             "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
-            "catalog": catalog.status()}
+            "catalog": catalog.status(), "eur_per_usd": pricing.EUR_PER_USD,
+            "confirm": {"minutes": tools.CONFIRM_MINUTES, "runs": tools.CONFIRM_RUNS}}
 
 
 @app.post("/api/guide")
@@ -149,7 +180,8 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
             for i, t in enumerate(tries):
                 events = agent.chat_stream(body.messages, api_key=given[t["provider"]], model=t["model"], mode=body.mode,
                                            name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip(),
-                                           defaults_text=(body.defaults or "")[:2000], provider=t["provider"])
+                                           defaults_text=(body.defaults or "")[:2000], provider=t["provider"],
+                                           approved=body.approve)
                 first = next(events, None)
                 if first and first.get("type") == "error" and first.get("status") in retry and i < len(tries) - 1:
                     continue
@@ -239,7 +271,51 @@ def continue_run(run_id: str, body: ContinueIn):
 
 @app.get("/api/runs")
 def runs(limit: int = 50):
-    return {"runs": S.list_runs(limit), "sweeps": S.list_sweeps()}
+    return {"runs": S.list_runs(max(1, min(limit, 5000))), "sweeps": S.list_sweeps()}
+
+
+@app.post("/api/runs/{run_id}/meta")
+def run_meta(run_id: str, body: MetaIn):
+    out = S.update_meta(run_id, body.starred, body.tags, body.label)
+    if out is None:
+        raise HTTPException(404, "run not found")
+    return out
+
+
+@app.get("/api/compare")
+def compare(ids: str):
+    out = S.compare([i.strip() for i in ids.split(",") if i.strip()])
+    if not out["ok"]:
+        raise HTTPException(400, out["error"])
+    return out
+
+
+@app.post("/api/figure")
+def figure(body: FigureIn):
+    try:
+        data, mime, name = figures.render(body.run_ids, body.quantities, body.t0_ns, body.t1_ns, body.style,
+                                          body.format, body.width_in, body.height_in, body.title[:120])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return Response(data, media_type=mime, headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@app.post("/api/reports")
+def make_report(body: ReportIn):
+    out = reports.build(body.run_ids, body.title, body.notes[:20000], re.sub(r"[^\w .'-]", "", body.author)[:40])
+    if not out["ok"]:
+        raise HTTPException(400, out["error"])
+    return out
+
+
+@app.get("/api/reports/{name}")
+def report_file(name: str):
+    path = reports.report_file(name)
+    if not path:
+        raise HTTPException(404, "report not found")
+    if name.endswith(".html"):
+        return FileResponse(path, media_type="text/html")
+    return FileResponse(path, filename=name)
 
 
 @app.get("/api/runs/{run_id}")

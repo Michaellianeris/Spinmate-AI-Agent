@@ -45,7 +45,7 @@ def load_prompt(spec):
 
 def answer_lines(text):
     text = re.sub(r"```.*?```", "", text, flags=re.S)
-    return [ln for ln in text.splitlines() if ln.strip()]
+    return [ln for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("NEXT:")]
 
 
 class Ctx:

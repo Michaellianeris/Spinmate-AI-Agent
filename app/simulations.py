@@ -403,6 +403,56 @@ def run_series(run_id, points=1200, t0_ns=None, t1_ns=None):
             "m2x": col(4), "m2y": col(5), "m2z": col(6)}
 
 
+def update_meta(run_id, starred=None, tags=None, label=None):
+    """User annotations of a run: star, tags, label."""
+    if not (_valid(run_id, "r") and _meta(run_id)):
+        return None
+    kw = {}
+    if starred is not None:
+        kw["starred"] = bool(starred)
+    if tags is not None:
+        kw["tags"] = sorted({re.sub(r"[^\w .+-]", "", str(t))[:30].strip() for t in tags if str(t).strip()})[:12]
+    if label is not None:
+        kw["label"] = str(label)[:120]
+    return _update(run_id, **kw)
+
+
+METRICS = ("order_initial", "order_final", "m1_dot_m2_final", "neel_z_switches", "first_neel_z_switch_s",
+           "settle_time_s", "dominant_freq_m1x_GHz", "dominant_freq_neel_z_GHz", "t_start_s", "t_end_s", "runtime_s")
+
+
+def compare(run_ids):
+    """Side by side: key results of each run and the parameters that differ between them."""
+    ids = [r for r in dict.fromkeys(run_ids or []) if _valid(r, "r")][:6]
+    runs, params = [], {}
+    for rid in ids:
+        info = run_info(rid, full=True)
+        if not info:
+            continue
+        args, _ = P._parse(info.get("parameters_text") or "")
+        vals = {k: (list(v) if isinstance(v, (list, tuple)) else v) for k, v in vars(args).items()
+                if k != "input_file"} if args else {}
+        params[rid] = vals
+        s = info.get("summary") or {}
+        runs.append({"id": rid, "label": info.get("label") or "", "status": info.get("status"),
+                     "kind": info.get("kind") or "run", "metrics": {k: s.get(k) for k in METRICS}})
+    if len(runs) < 2:
+        return {"ok": False, "error": "need at least two existing runs to compare"}
+    keys = sorted(set().union(*[set(v) for v in params.values()]))
+    differ = {k: {rid: params[rid].get(k) for rid in params} for k in keys
+              if len({json.dumps(params[rid].get(k)) for rid in params}) > 1}
+    return {"ok": True, "run_ids": [r["id"] for r in runs], "runs": runs, "differing_parameters": differ}
+
+
+def estimate(parameters_text, runs=1):
+    """Wall time of `runs` copies of this run on the queue, or None if the text is invalid."""
+    check = P.validate(parameters_text, sec_per_step())
+    if not check["ok"]:
+        return None
+    waves = -(-max(1, runs) // MAX_PARALLEL)
+    return check["estimated_runtime_s"] * waves
+
+
 # ---------- sweeps
 
 def start_sweep(parameters_text, parameter, values, label=""):

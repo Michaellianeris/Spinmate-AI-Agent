@@ -6,6 +6,7 @@ import re
 import anthropic
 
 from . import openai_provider
+from . import pricing
 from . import tools
 from . import prompts
 
@@ -37,7 +38,7 @@ def list_models(api_key=None):
 MAX_TOKENS = int(os.environ.get("CLAUDE_MAX_TOKENS", "4096"))
 MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "24"))
 TOKEN_BUDGET = int(os.environ.get("TOKEN_BUDGET") or 0)
-USED = {"input": 0, "output": 0}
+USED = {"input": 0, "output": 0, "cost": 0.0}
 
 
 def tokens_used():
@@ -50,12 +51,19 @@ def _account_values(inp, out):
     return int(inp or 0), int(out or 0)
 
 
-def _account(resp):
-    """Add the usage of one Anthropic response to the session counters; returns (input, output)."""
+def _cost(c):
+    if c is not None:
+        USED["cost"] += c
+    return c or 0.0
+
+
+def _account(resp, model=None):
+    """Add the usage of one Anthropic response to the session counters; returns (input, output, cost USD)."""
     u = getattr(resp, "usage", None)
-    inp = sum(int(getattr(u, k, 0) or 0) for k in
-              ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
-    return _account_values(inp, getattr(u, "output_tokens", 0) if u else 0)
+    g = lambda k: int(getattr(u, k, 0) or 0) if u else 0
+    plain, cw, cr, out = g("input_tokens"), g("cache_creation_input_tokens"), g("cache_read_input_tokens"), g("output_tokens")
+    i, o = _account_values(plain + cw + cr, out)
+    return i, o, _cost(pricing.cost_usd(model, plain, out, cw, cr))
 
 
 class AgentError(Exception):
@@ -85,7 +93,7 @@ def _dump(block):
     return d
 
 
-def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
+def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False):
     """Run Claude until it answers without tool calls, yielding events as they happen.
 
     Events: text, tool_start, tool_done, then done (full message list) or error.
@@ -103,9 +111,12 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
     system = [{"type": "text", "text": parts[0], "cache_control": {"type": "ephemeral"}}] + \
              [{"type": "text", "text": t} for t in parts[1:]]
     turn_in = turn_out = 0
+    turn_cost = 0.0
+    priced = pricing.price(model) is not None
 
     def usage():
-        return {"type": "usage", "input": turn_in, "output": turn_out, "session": tokens_used(), "budget": TOKEN_BUDGET}
+        return {"type": "usage", "input": turn_in, "output": turn_out, "session": tokens_used(), "budget": TOKEN_BUDGET,
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD}
 
     for _ in range(MAX_STEPS):
         if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:
@@ -140,9 +151,10 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
                             + ". A proxy or firewall is intercepting api.anthropic.com; open that page in a browser or ask IT to allow the API."}
             return
 
-        i, o = _account(resp)
+        i, o, c = _account(resp, model)
         turn_in += i
         turn_out += o
+        turn_cost += c
         if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET and resp.stop_reason == "tool_use":
             yield usage()
             yield {"type": "error", "status": 429, "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
@@ -162,7 +174,7 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
                 continue
             yield {"type": "tool_start", "id": block.id, "name": block.name, "input": block.input or {}}
             try:
-                out, event = tools.call(block.name, block.input or {})
+                out, event = tools.call(block.name, block.input or {}, approved)
                 is_error = '"ok": false' in out if isinstance(out, str) else False
             except Exception as e:  # tool failure goes back to Claude, not to the user
                 out, event, is_error = f"tool failed: {e}", {"tool": block.name, "error": str(e)}, True
@@ -206,16 +218,19 @@ def _system_text(messages, mode=None, name=None, defaults_text=None):
     return "\n\n".join(_system_parts(messages, mode, name, defaults_text))
 
 
-def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None):
+def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False):
     model = model or openai_provider.DEFAULT_MODEL
     messages = list(messages)
     input_items = openai_provider.to_input(messages)
     instructions = _system_text(messages, mode, name, defaults_text)
     turn_in = turn_out = 0
+    turn_cost = 0.0
+    priced = pricing.price(model) is not None
 
     def usage_event():
         return {"type": "usage", "input": turn_in, "output": turn_out,
-                "session": tokens_used(), "budget": TOKEN_BUDGET}
+                "session": tokens_used(), "budget": TOKEN_BUDGET,
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": pricing.EUR_PER_USD}
 
     for _ in range(MAX_STEPS):
         if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:
@@ -231,8 +246,10 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
             return
 
         inp, out = _account_values(*openai_provider.usage(response))
+        cached = openai_provider.cached_tokens(response)
         turn_in += inp
         turn_out += out
+        turn_cost += _cost(pricing.cost_usd(model, inp - cached, out, 0, cached))
         blocks, calls, replay = openai_provider.output_blocks(response)
         if not blocks and response.get("error"):
             yield {"type": "error", "status": 502, "error": str(response["error"])}
@@ -258,7 +275,7 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
             yield {"type": "tool_start", "id": call["id"], "name": call["name"],
                    "input": call["input"]}
             try:
-                value, event = tools.call(call["name"], call["input"])
+                value, event = tools.call(call["name"], call["input"], approved)
                 is_error = '"ok": false' in value if isinstance(value, str) else False
             except Exception as e:
                 value, event, is_error = f"tool failed: {e}", {"tool": call["name"], "error": str(e)}, True
@@ -277,10 +294,11 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
 
 
 def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None,
+                approved=False,
                 provider="anthropic"):
     """Provider-neutral tool loop; yields the same events for Anthropic and OpenAI."""
     stream = _openai_stream if provider == "openai" else _anthropic_stream
-    yield from stream(messages, api_key, model, mode, name, defaults_text)
+    yield from stream(messages, api_key, model, mode, name, defaults_text, approved)
 
 
 def chat(messages, api_key=None, model=None, provider="anthropic"):

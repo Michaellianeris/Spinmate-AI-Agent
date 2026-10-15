@@ -178,7 +178,7 @@ def test_chat_streams_events_in_order(client):
             events = [json.loads(line) for line in r.iter_lines() if line]
     finally:
         agent.anthropic.Anthropic = real
-    assert [e["type"] for e in events] == ["model", "text", "tool_start", "tool_done", "text", "done"]
+    assert [e["type"] for e in events] == ["model", "text", "tool_start", "tool_done", "text", "usage", "done"]
     assert events[0]["provider"] == "anthropic"
     assert events[-1]["messages"][-1]["role"] == "assistant"
 
@@ -188,7 +188,7 @@ def test_chat_falls_back_to_the_next_provider(client):
 
     seen = []
 
-    def fake_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, provider="anthropic"):
+    def fake_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, provider="anthropic", approved=False):
         seen.append((provider, model))
         if provider == "anthropic":
             yield {"type": "error", "status": 429, "error": "no credit"}

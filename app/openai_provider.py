@@ -160,6 +160,11 @@ def usage(response):
     return int(value.get("input_tokens") or 0), int(value.get("output_tokens") or 0)
 
 
+def cached_tokens(response):
+    value = response.get("usage") or {}
+    return int(((value.get("input_tokens_details") or {}).get("cached_tokens")) or 0)
+
+
 def text(messages, instructions, model=None, api_key=None, max_tokens=400):
     response = create(model, instructions, to_input(messages), [], api_key, max_tokens, 60)
     blocks, _, _ = output_blocks(response)

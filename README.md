@@ -98,19 +98,43 @@ shows a coloured badge with its initial.
 The temple icon in the left bar opens *Model gods*, a comparison of the four levels with what each is good
 for, its speed and depth, and the model each one will use, plus a button to choose it.
 
-**Agent behaviour.** After it starts a run the assistant waits for it, reads the result (including the
-plot) and reports it, so a single request such as "run the default" ends with an explanation. For goal
+**Agent behaviour.** After it starts a run the assistant waits for it, reads the result and reports it, so a single request such as "run the default" ends with an explanation. For goal
 requests ("find the smallest current that switches the Néel vector") it searches on its own: a coarse
 sweep, then finer sweeps inside the interval where the behaviour changes, for at most four rounds, and it
 reports the interval it found. The assistant is the only part that uses tokens; runs started from Run setup
 never do.
 
-**Tokens.** A counter next to the Fast and Deep switch shows the tokens used in the current chat, and each
-answer ends with its own input and output tokens. Set `TOKEN_BUDGET` to stop the assistant, and with it any
+**Tokens and cost.** A counter next to the Fast and Deep switch shows the tokens used in the current chat and an
+estimated cost in euro at list prices; each answer ends with its own tokens and cost. Prices live in
+`app/pricing.py` (override with `PRICES_JSON`, exchange rate `EUR_PER_USD`).
+
+**Next steps.** Each answer ends with two or three suggested follow-ups as buttons ("Continue 2 ns", "Sweep A0
+around this value"); click one to send it.
+
+**Large requests.** A run or sweep estimated above `CONFIRM_MINUTES` (10) of wall time or `CONFIRM_RUNS` (40)
+runs is held by the server: the chat shows the estimate with a **Run it** button, and nothing starts until you
+press it. Set `TOKEN_BUDGET` to stop the assistant, and with it any
 run it would start, once the server has used that many tokens since it started.
 
 **Conversations.** The clock icon in the left bar lists earlier chats with their runs and graphs; the
-pencil starts a new one. Everything appears in the chat under the prompt that asked for it; there is no side panel.
+pencil starts a new one. Run cards appear in the chat under the prompt that asked for them. Older cards fold to
+one line (order, switches, settle time, the parameters you changed) when a new one appears; click the line to
+open it again.
+
+**Runs.** The list icon in the left bar shows every run on the server. Search by id, label, `#tag` or parameter,
+filter by status, end state or kind, star runs and give them tags. Click a run to open its card. Tick 2 to 6 runs
+for **Compare** (one chart with n_z, m1·m2, m1z, m2z, n_x or the net m_z of each run, and a table of results and
+of the parameters that differ), **Figure** or **Report**. The assistant can compare runs and write reports too.
+
+**3D sphere.** Under the dial of a run card, *3D sphere* shows m1 and m2 on the unit sphere with their paths;
+drag to rotate. It follows the playhead and Play.
+
+**Figures for papers.** *Figure…* on a run card or a comparison draws the chosen quantities and time window with
+matplotlib and SciencePlots in Science, IEEE or Nature style, as PDF, SVG or 300 dpi PNG (no LaTeX needed).
+
+**Reports.** A report holds the method, a results table, the parameters shared by all runs and those that differ,
+figures, an optional discussion and the parameter files. It opens as a page you can print to PDF, and downloads
+as Markdown with the figures. Reports are kept in `reports/` of the workspace.
 
 **Default parameters.** The sliders icon in the left bar edits the values Fast mode starts from. They are
 stored in the browser and also sent to the assistant as the base of its runs.
@@ -268,6 +292,10 @@ Set these in `.env`.
 | `POSTGRES_PASSWORD` | `spinmate` | password of the bundled catalog database (not exposed outside Docker) |
 | `DATABASE_URL` | bundled Postgres | catalog connection; set it empty to switch the catalog off |
 | `QUERY_TIMEOUT_MS` | `5000` | longest time one catalog query may run |
+| `CONFIRM_MINUTES` | `10` | runs or sweeps estimated above this wall time wait for the Run it button |
+| `CONFIRM_RUNS` | `40` | sweeps with more runs than this wait for the Run it button |
+| `EUR_PER_USD` | `0.89` | exchange rate for the cost estimate |
+| `PRICES_JSON` | built-in table | token prices, `{"model-prefix": [input, output, cache write, cache read]}` in USD per million |
 
 One Heun step takes roughly 0.6 to 1 ms on one core, so the default 10 ns (100 000 steps) takes one to two
 minutes. The runtime estimate is recalibrated from finished runs.

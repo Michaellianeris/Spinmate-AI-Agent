@@ -428,6 +428,70 @@ main{grid-template-columns:minmax(0,1fr)}
 #fast .row{flex-wrap:wrap;align-items:center}
 #fast .row input{border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:200px;background:var(--panel)}
 
+/* ---- runs panel, folded cards, next steps, confirmation, compare, figure and report dialogs, 3D ---- */
+.runspanel{position:fixed;left:64px;top:0;bottom:0;width:min(480px,calc(100vw - 64px));z-index:16;background:var(--panel);border-right:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.rp-head{display:flex;align-items:center;gap:8px;padding:14px 14px 8px}
+.rp-head b{flex:1}
+.rp-head b span{color:var(--muted);font-weight:400;font-size:.85rem;margin-left:4px}
+.rp-filters{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px;border-bottom:1px solid var(--line)}
+.rp-filters input[type=search]{flex:1 1 100%;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);color:var(--ink)}
+.rp-filters select{border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--panel);color:var(--ink);font-size:.82rem}
+.rp-filters label{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+.rp-list{flex:1;overflow-y:auto;margin:0;padding:6px 8px;list-style:none}
+.rp-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:3px 8px;align-items:center;padding:7px 8px;border-radius:8px;cursor:pointer}
+.rp-row:hover,.rp-row:focus-visible{background:var(--soft);outline:none}
+.rp-row.sel{background:color-mix(in srgb,var(--m1) 10%,transparent)}
+.rp-row .rid{font-family:var(--mono);font-weight:600;font-size:.84rem}
+.rp-row .rl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.88rem}
+.rp-row .rd{font-size:.74rem;color:var(--muted);white-space:nowrap}
+.rp-row .rt{grid-column:3 / 5;display:flex;gap:4px;flex-wrap:wrap}
+.rp-row .rx{grid-column:3 / 5;font-size:.75rem;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:.72rem;border-radius:999px;padding:0 7px;background:var(--soft);border:1px solid var(--line);color:var(--muted)}
+.tag.ord{color:var(--ink)}
+.tag.st-failed,.tag.st-cancelled,.tag.st-interrupted{color:var(--err)}
+.tag.st-running,.tag.st-queued{color:var(--m1)}
+.star{border:none;background:none;cursor:pointer;font-size:.95rem;line-height:1;color:var(--muted);padding:0 2px;opacity:.55}
+.star:hover{opacity:1}
+.star[aria-pressed=true]{color:#E0A100;opacity:1}
+.rp-foot{border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rp-foot span{flex:1;font-size:.84rem;color:var(--muted)}
+.rp-empty{color:var(--muted);font-size:.88rem;padding:14px}
+.runcard .fold{border:none;background:none;cursor:pointer;color:var(--muted);font-size:.95rem;padding:0 2px;margin-left:auto}
+.rc-head .status + .fold{margin-left:0}
+.rc-sum{display:none;font-size:.85rem;color:var(--muted);margin-top:4px}
+.rc-sum b{color:var(--ink);font-weight:500}
+.runcard.folded{padding:10px 14px;margin-bottom:10px}
+.runcard.folded .rc-head{cursor:pointer}
+.runcard.folded > :not(.rc-head):not(.rc-sum){display:none!important}
+.runcard.folded .rc-sum{display:block}
+.nextsteps{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 16px}
+.nextsteps button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 12px;font-size:.85rem;cursor:pointer;color:var(--ink)}
+.nextsteps button:hover{border-color:var(--m1);color:var(--m1)}
+.confirmbox{max-width:68ch;border:1px solid var(--m1);border-radius:12px;padding:10px 14px;margin:0 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--m1) 6%,var(--panel))}
+.confirmbox span{flex:1;font-size:.92rem}
+.cmp-q{margin:10px 0 6px}
+.cmp-q button[aria-pressed=true]{border-color:var(--m1);color:var(--m1)}
+.cmp-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;margin:4px 0 6px}
+.cmp-legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.cmp-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
+.cmp-table th,.cmp-table td{padding:3px 6px;border-bottom:1px solid var(--grid);text-align:left}
+.cmp-table td{font-family:var(--mono)}
+.cmp-table th{font-weight:500;color:var(--muted)}
+.cmp-table tr.diff th{color:var(--ink)}
+.figdlg .frow,.repdlg .frow{grid-template-columns:110px 1fr}
+.figdlg .frow input:not([type]),.repdlg .frow input:not([type]){grid-column:2}
+.pair{display:flex;align-items:center;gap:6px}
+.pair input{width:90px}
+.qgrid{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem}
+.qgrid label{display:flex;gap:4px;align-items:center}
+.repdlg textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);color:var(--ink);font:13px/1.45 var(--sans);box-sizing:border-box}
+.dlg-out{margin-top:10px;font-size:.88rem}
+.dlg-out a{color:var(--m1)}
+.dialmode{display:flex;justify-content:center;gap:4px;margin-top:4px}
+.dialmode button{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:0 8px;font-size:.76rem;cursor:pointer;color:var(--ink)}
+.dialmode button[aria-pressed=true]{border-color:var(--m1);color:var(--m1)}
+.dial canvas{width:190px;height:190px;display:block;cursor:grab;touch-action:none}
+
 @media (max-width:900px){
   body{grid-template-columns:1fr;overflow:auto}
   .rail{flex-direction:row;height:auto;border-right:none;border-bottom:1px solid var(--line);padding:8px 12px}
@@ -448,6 +512,7 @@ main{grid-template-columns:minmax(0,1fr)}
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
   </button>
   <button class="rail-btn" id="historybtn" type="button" title="Conversation history" aria-label="Conversation history" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+  <button class="rail-btn" id="runsbtn" type="button" title="All runs: search, compare, figures, reports" aria-label="All runs" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5.5l1 1 1.8-2M4 11.5l1 1 1.8-2"/><circle cx="5" cy="18" r="1.2"/></svg></button>
   <button class="rail-btn" id="defaultsbtn" type="button" title="Default parameters" aria-label="Default parameters"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>
   <button class="rail-btn" id="setupbtn" type="button" title="Run setup (no assistant)" aria-label="Run setup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></button>
   <div class="rail-sp"></div>
@@ -535,6 +600,7 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="toolsec">Left bar</div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span><div><h4>New chat</h4><p>Starts a fresh conversation. The current one is saved in the history first.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h4>History</h4><p>Lists your earlier chats with their runs and graphs. Click one to reopen it, or the cross to delete it. Every user has their own history.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5.5l1 1 1.8-2M4 11.5l1 1 1.8-2"/><circle cx="5" cy="18" r="1.2"/></svg></span><div><h4>Runs</h4><p>Every run on the server, newest first. Search by id, label, #tag or parameter, filter by status, end state or starred, star runs and give them tags. Click a run to open its card. Tick 2&ndash;6 runs to <b>Compare</b> them in one chart and table, make a <b>Figure</b> for a paper, or a <b>Report</b>.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><h4>Default parameters</h4><p>Edit the values Fast mode starts from: duration, Ms, exchange A0, anisotropy Ku, damping, temperature, SOT current, the initial state and one or two extra flags. They are saved in this browser and also sent to the assistant as the base of its runs. &ldquo;Reset to built-in&rdquo; brings back the originals.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></span><div><h4>Run setup</h4><p>Starts a simulation yourself, without the assistant, so it uses no tokens. <b>Fast</b> has presets (AFM&rarr;FM, AFM&rarr;AFM, FM&rarr;AFM, FM&rarr;FM, FeRh heating), sliders, Check and Run. <b>Deep</b> is a text editor for the full parameter file with an examples menu, Check, Run and Save as file. The result appears in the chat.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></span><div><h4>Model gods</h4><p>Opens a comparison of the four model levels (Hermes, Dionysus, Zeus, Apollo): what each one is good for, how fast and how deep it is, and which model it will use and what it falls back to. Each card has a button to choose it.</p></div></div>
@@ -549,6 +615,10 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span><div><h4>Send</h4><p>Sends the message. Enter does the same.</p></div></div>
 <div class="toolsec">In the chat</div>
 <div class="tool"><span class="ti"><b>&#9654;</b></span><div><h4>Run cards</h4><p>Every run shows its steps and then the full viewer: a dial with the +x and +z axes, the order before and after (for example AFM&rarr;FM), and a plot of m1, m2 and the N&eacute;el vector. Click the plot to move the playhead, drag to zoom, double-click to reset, and press Play to animate.</p></div></div>
+<div class="tool"><span class="ti"><b>▸</b></span><div><h4>Folded cards</h4><p>Older run cards fold to one line (order, switches, settle time and the parameters you changed) when a new one appears. Click the line or the arrow to open it again; the star marks a run.</p></div></div>
+<div class="tool"><span class="ti"><b>3D</b></span><div><h4>3D sphere</h4><p>Under the dial, switch to <b>3D sphere</b> to see m&#8321; and m&#8322; on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.</p></div></div>
+<div class="tool"><span class="ti"><b>fig</b></span><div><h4>Figure and Report</h4><p><b>Figure&hellip;</b> on a card or a comparison draws the quantities and time window you chose with matplotlib in Science, IEEE or Nature style, as PDF, SVG or PNG. <b>Report</b> writes a page with method, results, parameters, figures and parameter files; print it to PDF. The assistant can write the discussion for you.</p></div></div>
+<div class="tool"><span class="ti"><b>&rarr;</b></span><div><h4>Next steps and Run button</h4><p>After an answer, two or three suggested follow-ups appear as buttons. Large requests (many runs or long runtimes) wait for your <b>Run it</b> button before anything starts. The token counter also shows an estimated cost in euro at list prices.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg></span><div><h4>Export</h4><p><b>Export CSV</b> saves the whole trajectory (time, m1, m2, N&eacute;el vector). <b>Export all data</b> saves a zip with every output file of the run. Sweeps give a chart of mean |nz| against the swept parameter; click a point to open that run.</p></div></div>
 <div class="tool"><span class="ti"><img class="owl" src="/athena.png" alt="" onerror="this.remove()"></span><div><h4>Athena</h4><p>The owl in the bottom right corner explains how to use the app. She only answers questions about SpinMate itself; for simulations, ask in the chat.</p></div></div>
   </div>
@@ -597,6 +667,47 @@ main{grid-template-columns:minmax(0,1fr)}
         </div>
         <div class="check" id="checkout"></div>
       </div>
+</section>
+<aside class="runspanel" id="runspanel" hidden aria-label="All runs">
+  <div class="rp-head"><b>Runs<span id="rpcount"></span></b><button class="btn small" id="rprefresh" type="button">Refresh</button>
+    <button class="rail-btn" id="rpclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="rp-filters">
+    <input type="search" id="rpsearch" placeholder="Search id, label, #tag or parameter, e.g. A0 FM" aria-label="Search runs">
+    <select id="rpstatus" aria-label="Status"><option value="">Any status</option><option>done</option><option>running</option><option>queued</option><option>failed</option><option>cancelled</option><option>interrupted</option></select>
+    <select id="rporder" aria-label="Final order"><option value="">Any end state</option><option value="AFM">Ends AFM</option><option value="FM">Ends FM</option><option value="canted">Ends canted</option></select>
+    <select id="rpkind" aria-label="Kind"><option value="">Runs and chains</option><option value="run">Single runs</option><option value="combined">Combined chains</option></select>
+    <label><input type="checkbox" id="rpstar"> ★ only</label>
+  </div>
+  <ul class="rp-list" id="rplist"></ul>
+  <div class="rp-foot"><span id="rpsel"></span>
+    <button class="btn small" id="rpcompare" type="button" disabled title="2 to 6 runs in one chart and table">Compare</button>
+    <button class="btn small" id="rpfigure" type="button" disabled title="Publication figure (PDF, SVG, PNG)">Figure</button>
+    <button class="btn small" id="rpreport" type="button" disabled title="Report with method, results and figures">Report</button>
+    <button class="btn small" id="rpclear" type="button" disabled>Clear</button></div>
+</aside>
+<div class="modal-back" id="figback" hidden></div>
+<section class="defdlg figdlg" id="figdlg" hidden role="dialog" aria-label="Publication figure">
+  <div class="dlg-head"><h3>Publication figure</h3><button class="rail-btn" id="figclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p>Drawn on the server with matplotlib and SciencePlots. PDF and SVG stay sharp in papers; PNG is 300 dpi.</p>
+  <div class="frow"><label for="fig-runs">Runs</label><input id="fig-runs" spellcheck="false"></div>
+  <div class="frow"><label>Quantities</label><div class="qgrid" id="fig-q"></div></div>
+  <div class="frow"><label for="fig-t0">Time (ns)</label><div class="pair"><input id="fig-t0" placeholder="from" aria-label="From (ns)"> – <input id="fig-t1" placeholder="to" aria-label="To (ns)"></div></div>
+  <div class="frow"><label for="fig-style">Style</label><select id="fig-style"><option value="science">Science</option><option value="ieee">IEEE, one column</option><option value="nature">Nature</option><option value="plain">Plain</option></select></div>
+  <div class="frow"><label for="fig-fmt">Format</label><select id="fig-fmt"><option value="pdf">PDF</option><option value="svg">SVG</option><option value="png">PNG, 300 dpi</option></select></div>
+  <div class="frow"><label for="fig-w">Size (inches)</label><div class="pair"><input id="fig-w" placeholder="width" aria-label="Width (inches)"> × <input id="fig-h" placeholder="height" aria-label="Height (inches)"></div></div>
+  <div class="frow"><label for="fig-title">Title</label><input id="fig-title" placeholder="optional"></div>
+  <div class="row"><button class="btn primary" id="figgo" type="button">Download</button><button class="btn" id="figprev" type="button">Preview</button></div>
+  <div class="dlg-out" id="figout"></div>
+</section>
+<div class="modal-back" id="repback" hidden></div>
+<section class="defdlg repdlg" id="repdlg" hidden role="dialog" aria-label="Report">
+  <div class="dlg-head"><h3>Report</h3><button class="rail-btn" id="repclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p>Method, results table, parameters, figures and the parameter files of the runs. Open it and print to PDF, or download the Markdown version with the figures.</p>
+  <div class="frow"><label for="rep-runs">Runs</label><input id="rep-runs" spellcheck="false"></div>
+  <div class="frow"><label for="rep-title">Title</label><input id="rep-title" placeholder="optional"></div>
+  <div class="frow"><label for="rep-notes">Discussion</label><textarea id="rep-notes" placeholder="Optional, Markdown. Or let the assistant write it."></textarea></div>
+  <div class="row"><button class="btn primary" id="repgo" type="button">Create report</button><button class="btn" id="repask" type="button">Ask the assistant to write it</button></div>
+  <div class="dlg-out" id="repout"></div>
 </section>
 <aside class="history" id="history" hidden aria-label="Conversations">
   <div class="history-head"><b>Conversations</b><button class="btn small" id="histnew" type="button">New chat</button></div>
@@ -697,6 +808,8 @@ const TOOL_UI = {
   wait_for_sweep: {run: a => `Waiting for ${a.sweep_id}`, done: a => `Finished waiting for ${a.sweep_id}`},
   continue_run: {run: a => `Continuing ${a.run_id}`, done: (a, r) => r.run_id ? `Continued ${a.run_id} as ${r.run_id}` : `Continued ${a.run_id}`},
   combine_runs: {run: () => "Combining runs", done: (a, r) => r.run_id ? `Combined ${(r.chain || []).join(" + ")} into ${r.run_id}` : "Combined runs"},
+  compare_runs: {run: () => "Comparing runs", done: (a, r) => r.run_ids ? `Compared ${r.run_ids.join(", ")}` : "Compared runs"},
+  make_report: {run: () => "Writing the report", done: (a, r) => r.report ? `Report ${r.report}: open` : "Wrote the report"},
   query_runs: {run: () => "Querying the run catalog", done: (a, r) => r.columns ? `Queried the catalog: ${r.row_count}${r.truncated ? "+" : ""} rows` : "Queried the catalog"},
 };
 
@@ -738,6 +851,17 @@ function chipFor(name, input, result, running) {
     return c;
   }
   let label = ui.done(input, result);
+  if (result.needs_confirmation) { c.textContent = `Waiting for your OK: ${result.runs} run${result.runs > 1 ? "s" : ""}, about ${dur(result.estimated_wall_time_s)}`; return c; }
+  if (name === "make_report" && result.html_url) {
+    c.textContent = label; c.classList.add("link"); c.tabIndex = 0;
+    c.onclick = () => window.open(result.html_url, "_blank", "noopener"); c.onkeydown = e => { if (e.key === "Enter") c.onclick(); };
+    return c;
+  }
+  if (name === "compare_runs" && result.run_ids && result.ok !== false) {
+    c.textContent = label; c.classList.add("link"); c.tabIndex = 0;
+    c.onclick = () => openRunCard(cmpId(result.run_ids)); c.onkeydown = e => { if (e.key === "Enter") c.onclick(); };
+    return c;
+  }
   const target = result.run_id || result.sweep_id || input.run_id || input.sweep_id;
   if (result.ok === false || result.error) { c.classList.add("bad"); label += ": " + (result.error || "failed"); }
   c.textContent = label;
@@ -747,6 +871,7 @@ function chipFor(name, input, result, running) {
 
 function fmtUsage(u) {
   return `tokens: ${fmtN(u.input)} in · ${fmtN(u.output)} out · ${fmtN(u.input + u.output)} total` +
+    (u.cost_usd != null ? ` · ≈${fmtEur(u.cost_usd)}` : "") +
     (u.used ? ` · ${u.used.god ? u.used.god + " → " : ""}${u.used.model}` : "") +
     (u.session ? ` (server session ${fmtN(u.session)}${u.budget ? " of " + fmtN(u.budget) : ""})` : "");
 }
@@ -759,7 +884,9 @@ function render() {
   const results = toolResults(state.messages), placed = new Set();
   const add = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; log.appendChild(d); return d; };
   const place = (name, res) => {
-    const id = ["start_simulation", "continue_run", "combine_runs"].includes(name) ? res.run_id : name === "start_sweep" ? res.sweep_id : null;
+    if (name === "compare_runs" && res.ok && res.run_ids) { const cid = cmpId(res.run_ids); if (!cardEls.has(cid)) trackCompare(res.run_ids, true); }
+    const id = ["start_simulation", "continue_run", "combine_runs"].includes(name) ? res.run_id : name === "start_sweep" ? res.sweep_id
+      : name === "compare_runs" && res.run_ids ? cmpId(res.run_ids) : null;
     if (id && cardEls.has(id)) { log.appendChild(cardEls.get(id).el); placed.add(id); return true; }
     return false;
   };
@@ -775,7 +902,7 @@ function render() {
     const blocks = Array.isArray(m.content) ? m.content : [{type: "text", text: m.content}];
     let chips = null;
     for (const b of blocks) {
-      if (b.type === "text" && b.text.trim()) { chips = null; add("msg assistant", md(b.text)); }
+      if (b.type === "text" && b.text.trim()) { const body = splitNext(b.text).body; chips = null; if (body) add("msg assistant", md(body)); }
       else if (b.type === "tool_use") {
         if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
         const res = results[b.id] || {};
@@ -788,7 +915,7 @@ function render() {
   }
   let chips = null;
   for (const it of state.live) {
-    if (it.kind === "text") { chips = null; add("msg assistant", md(it.text)); }
+    if (it.kind === "text") { const body = splitNext(it.text).body; chips = null; if (body) add("msg assistant", md(body)); }
     else {
       if (!chips) { chips = document.createElement("div"); chips.className = "tools"; log.appendChild(chips); }
       chips.appendChild(chipFor(it.name, it.input, it.event || {}, it.status === "running"));
@@ -799,6 +926,7 @@ function render() {
   if (state.busy && !state.live.some(x => x.status === "running"))
     add("thinking", `<span class="spin"></span>Working…`);
   if (state.error) add("error", esc(state.error));
+  renderTail(log);
   log.scrollTop = log.scrollHeight;
 }
 
@@ -869,13 +997,14 @@ function onEvent(ev) {
     const it = state.live.find(x => x.id === ev.id);
     if (it) { it.status = "done"; it.event = ev.event; }
     const target = ev.event && (ev.event.run_id || ev.event.sweep_id);
+    if (ev.event && ev.event.tool === "compare_runs" && ev.event.run_ids && ev.event.ok !== false) trackCompare(ev.event.run_ids, true);
     if (target && ["start_simulation", "start_sweep", "continue_run", "combine_runs"].includes(ev.event.tool)) {
       refreshRuns();
       if (ev.event.run_id) trackRun(ev.event.run_id); else trackSweep(ev.event.sweep_id);
     }
   }
   else if (ev.type === "model") { state.turnModel = ev; }
-  else if (ev.type === "usage") { state.turnUsage = Object.assign({}, ev, {used: state.turnModel}); state.usage.input += ev.input; state.usage.output += ev.output; updateTok(); }
+  else if (ev.type === "usage") { state.turnUsage = Object.assign({}, ev, {used: state.turnModel}); state.usage.input += ev.input; state.usage.output += ev.output; state.usage.cost = (state.usage.cost || 0) + (ev.cost_usd || 0); updateTok(); }
   else if (ev.type === "done") {
     state.messages = ev.messages; state.live = []; state.finished = true;
     if (state.turnUsage) state.usages[ev.messages.length - 1] = state.turnUsage;
@@ -907,13 +1036,14 @@ async function send() {
   if (state.pending) content = "Attached parameter file `" + state.pending.name + "`:\n```\n" + state.pending.text.trim() + "\n```\n" + text;
   state.messages.push({role: "user", content});
   $("#input").value = ""; autosize(); setPending(null);
+  const approve = !!state.approveNext; state.approveNext = false; foldOthers(null);
   state.busy = true; state.error = null; state.live = []; state.finished = false; state.turnUsage = null; state.turnModel = null; render(); toggle();
   try {
     const headers = {"Content-Type": "application/json"}, picked = selectedModel();
     const ak = $("#apikey").value.trim(), ok = $("#openaikey").value.trim();
     if (ak) headers["X-Api-Key"] = ak;
     if (ok) headers["X-OpenAI-Api-Key"] = ok;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText()})});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText(), approve})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1092,7 +1222,8 @@ class RunView {
     const s = r.summary, q = this.q = sel => box.querySelector(sel), D = k => q(`[data-v=${k}]`);
     box.innerHTML = `
     <div class="top">
-      <div><div class="dial">${dialSVG()}</div>
+      <div><div class="dial">${dialSVG()}<canvas data-v="sphere" hidden aria-label="m1 and m2 on the unit sphere; drag to rotate"></canvas></div>
+        <div class="dialmode" role="group" aria-label="Dial view"><button type="button" data-dm="2d">x–z dial</button><button type="button" data-dm="3d">3D sphere</button></div>
         <div class="dial-legend"><span><b style="border-color:#1F4FD1"></b>m₁</span><span><b style="border-color:#B0127F"></b>m₂</span><span><b style="border-color:currentColor;border-top-style:dashed"></b>n</span></div></div>
       <dl class="figures">
         ${s.order_final ? `<dt>order</dt><dd>${s.order_initial} → ${s.order_final} (m₁·m₂ ${fmt(s.m1_dot_m2_initial, 2)} → ${fmt(s.m1_dot_m2_final, 2)})</dd>` : ""}
@@ -1120,11 +1251,12 @@ class RunView {
         <select data-v="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
         <input data-v="scrub" type="range" min="0" max="0" value="0" aria-label="Time">
         <button class="btn small" data-v="resetzoom" type="button" hidden>Reset zoom</button>
+        <button class="btn small" data-v="figure" type="button" title="Publication figure of the shown quantities and time window">Figure…</button>
       </div>
       <div class="note" data-v="note">Loading trajectory…</div>
     </div>`;
     this.dial = {l1: D("l1"), d1: D("d1"), l2: D("l2"), d2: D("d2"), nl: D("nl"), t1: D("trail1"), t2: D("trail2")};
-    this.chart = new Chart(q("canvas"), {
+    this.chart = new Chart(q(".canvaswrap canvas"), {
       height: 250, xLabel: "time (ns)", yLabel: "M / Ms", yMin: -1.05, yMax: 1.05,
       onHover: i => { this.hover = i; if (i === null) this.readout(this.idx, "playhead"); else this.readout(i, "cursor"); },
       onClick: i => { this.stopPlay(); this.pos = i; this.setIdx(i); },
@@ -1135,6 +1267,18 @@ class RunView {
     D("speed").onchange = e => { this.speed = +e.target.value; };
     D("scrub").oninput = e => { this.stopPlay(); this.pos = +e.target.value; this.setIdx(this.pos); };
     D("resetzoom").onclick = () => this.load(null);
+    D("figure").onclick = () => openFigure({runs: [this.id], quantities: CH.filter(ch => prefs[ch.k]).map(ch => ch.k),
+                                            t0: this.zoom && this.zoom[0], t1: this.zoom && this.zoom[1]});
+    this.sphere = new Sphere(D("sphere"));
+    const mode = m => {
+      this.mode3d = m === "3d"; try { localStorage.setItem("spinmate.dial", m); } catch {}
+      box.querySelector(".dial svg").style.display = this.mode3d ? "none" : ""; D("sphere").hidden = !this.mode3d;
+      box.querySelectorAll("[data-dm]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.dm === m)));
+      if (this.mode3d && this.data) { this.sphere.setData(this.data.cols); this.sphere.setIdx(this.idx); }
+    };
+    box.querySelectorAll("[data-dm]").forEach(b => b.onclick = () => mode(b.dataset.dm));
+    let saved = "2d"; try { saved = localStorage.getItem("spinmate.dial") || "2d"; } catch {}
+    mode(saved);
     box.querySelectorAll("[data-v=legend] button").forEach(b => b.onclick = () => { prefs[b.dataset.k] = !prefs[b.dataset.k]; this.applyVisibility(); });
     box.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => { for (const ch of CH) prefs[ch.k] = PRESETS[b.dataset.preset].includes(ch.k); this.applyVisibility(); });
     this.load(null);
@@ -1163,6 +1307,7 @@ class RunView {
     i = Math.max(0, Math.min(d.t.length - 1, Math.round(i))); this.idx = i;
     const C = d.cols;
     this.dialSet([C.m1x[i], C.m1y[i], C.m1z[i]], [C.m2x[i], C.m2y[i], C.m2z[i]]);
+    if (this.mode3d) this.sphere.setIdx(i);
     this.chart.setPlayhead(d.t[i]); this.q("[data-v=scrub]").value = i;
     if (this.hover === null) this.readout(i, "playhead");
   }
@@ -1196,6 +1341,7 @@ class RunView {
     const cols = {m1x: d.m1x, m1y: d.m1y, m1z: d.m1z, m2x: d.m2x, m2y: d.m2y, m2z: d.m2z};
     for (const a of "xyz") cols["n" + a] = d["m1" + a].map((v, i) => (v - d["m2" + a][i]) / 2);
     this.data = {t: d.t_ns, cols}; this.zoom = zoom;
+    if (this.mode3d) this.sphere.setData(cols);
     this.chart.setData(d.t_ns, CH.map(ch => ({...ch, y: cols[ch.k], visible: prefs[ch.k]})));
     // the trail is broken wherever neighbouring samples are too far apart to be connected honestly
     let gaps = 0;
@@ -1265,7 +1411,8 @@ $("#examples").onchange = e => {
 const cardEls = new Map();
 const CARD_SERIES = [{k: "m1z", c: "#1F4FD1"}, {k: "m2z", c: "#B0127F"}, {k: "nz", c: "#17212B"}];
 function openRunCard(id) {
-  if (!cardEls.has(id)) { if (id.startsWith("s")) trackSweep(id); else trackRun(id); }
+  if (!cardEls.has(id)) { if (id.startsWith("cmp:")) { trackCompare(id.slice(4).split(","), true); render(); } else if (id.startsWith("s")) trackSweep(id); else trackRun(id); }
+  const cc = cardEls.get(id); if (cc) setFold(cc, false);
   setTimeout(() => {
     const c = cardEls.get(id); if (!c) return;
     c.el.scrollIntoView({behavior: "smooth", block: "center"});
@@ -1275,7 +1422,9 @@ function openRunCard(id) {
 function trackRun(id, label) {
   if (cardEls.has(id)) return;
   const el = document.createElement("div"); el.className = "runcard";
-  el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label">${esc(label || "")}</span><span class="status" data-r="st"></span></div>
+  el.innerHTML = `<div class="rc-head"><button type="button" class="star" data-r="star" aria-pressed="false" title="Star this run">★</button><span class="mono">${id}</span><span class="rc-label">${esc(label || "")}</span><span class="status" data-r="st"></span>
+      <button class="fold" type="button" data-r="fold" aria-expanded="true" title="Fold to one line">▾</button></div>
+    <div class="rc-sum" data-r="sum"></div>
     <ul class="steps"><li data-s="check"></li><li data-s="start"></li><li data-s="sim"></li><li data-s="plot"></li></ul>
     <div class="bar"><i data-r="bar" style="width:0"></i></div>
     <pre class="mono rc-err" hidden></pre>
@@ -1289,7 +1438,9 @@ function trackRun(id, label) {
       <button class="btn small" type="button" data-r="join" hidden title="One trajectory, plot and CSV for the whole chain">Combine chain</button>
       <a class="btn small" data-r="csv" download hidden>Export CSV</a><a class="btn small" data-r="zip" download hidden>Export all data (.zip)</a>
     </div>`;
-  cardEls.set(id, {el, chart: null, view: null, final: false}); state.cards.push(id);
+  const card = {el, chart: null, view: null, final: false}; cardEls.set(id, card); state.cards.push(id); wireFold(card);
+  el.querySelector("[data-r=star]").onclick = e => { e.stopPropagation(); const b = e.currentTarget; setStar(id, b.getAttribute("aria-pressed") !== "true"); };
+  foldOthers(id);
   setStep(el, "check", "done", "Parameters checked"); setStep(el, "start", "done", `Run ${id} started`);
   setStep(el, "sim", "active", "Waiting for the solver"); setStep(el, "plot", "wait", "Show the results");
   render(); updateCards();
@@ -1316,11 +1467,14 @@ async function updateCards() {
 function trackSweep(id) {
   if (!id || cardEls.has(id)) return;
   const el = document.createElement("div"); el.className = "runcard";
-  el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label"></span><span class="status" data-r="st"></span></div>
+  el.innerHTML = `<div class="rc-head"><span class="mono">${id}</span><span class="rc-label"></span><span class="status" data-r="st"></span>
+      <button class="fold" type="button" data-r="fold" aria-expanded="true" title="Fold to one line">▾</button></div>
+    <div class="rc-sum" data-r="sum"></div>
     <div class="bar"><i data-r="bar" style="width:0"></i></div>
     <div class="rc-plot" hidden><div class="canvaswrap"><canvas role="img" aria-label="Sweep ${id}"></canvas></div><div class="rc-meta mono"></div></div>
     <div class="actions"><button class="btn small" type="button" data-r="analyse" hidden>Ask the assistant to analyse</button></div>`;
-  cardEls.set(id, {el, chart: null, view: null, final: false}); state.cards.push(id);
+  const card = {el, chart: null, view: null, final: false}; cardEls.set(id, card); state.cards.push(id); wireFold(card);
+  foldOthers(id);
   render(); updateCards();
 }
 async function paintSweepCard(id, c, s) {
@@ -1330,8 +1484,9 @@ async function paintSweepCard(id, c, s) {
   st.className = "status " + (done + failed === total ? (failed ? "failed" : "done") : "running");
   el.querySelector("[data-r=bar]").style.width = (100 * (done + failed) / total).toFixed(1) + "%";
   el.querySelector(".rc-label").textContent = `sweep of ${s.parameter}`;
+  el.querySelector("[data-r=sum]").innerHTML = `sweep of <b>${esc(s.parameter)}</b> · ${done}/${total} runs done` + (failed ? `, ${failed} failed` : "");
   if (done + failed < total) return;
-  c.final = true;
+  c.final = true; if (state.cards[state.cards.length - 1] !== id) setFold(c, true);
   const a = el.querySelector("[data-r=analyse]"); a.hidden = false; a.onclick = () => { $("#input").value = `Analyse sweep ${id}.`; send(); };
   const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
   if (!rows.length) return;
@@ -1346,12 +1501,16 @@ async function paintCard(id, c, r) {
   const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
   const show = (k, on) => { el.querySelector(`[data-r=${k}]`).hidden = !on; };
   st.textContent = statusText(r); st.className = "status " + r.status;
+  el.querySelector("[data-r=star]").setAttribute("aria-pressed", String(!!r.starred));
+  el.querySelector("[data-r=sum]").innerHTML = runSummaryLine(r);
+  const lab = el.querySelector(".rc-label"); if (!lab.textContent && r.label) lab.textContent = r.label;
   bar.style.width = (r.status === "done" ? 100 : r.progress * 100).toFixed(1) + "%";
   if (r.status === "queued") setStep(el, "sim", "active", `Queued, estimated ${dur(r.estimated_runtime_s)}`);
   else if (r.status === "running") setStep(el, "sim", "active", `Simulating, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`);
   else if (r.status === "done") setStep(el, "sim", "done", `Simulated${r.summary ? " in " + dur(r.summary.runtime_s) : ""}`);
   else {
     setStep(el, "sim", "bad", "Run " + r.status); setStep(el, "plot", "bad", "No trajectory"); c.final = true; show("cancel", false);
+    if (state.cards[state.cards.length - 1] !== id) setFold(c, true);
     if (r.error_tail) { const pre = el.querySelector(".rc-err"); pre.hidden = false; pre.textContent = r.error_tail; }
     return;
   }
@@ -1360,6 +1519,7 @@ async function paintCard(id, c, r) {
   el.querySelector("[data-r=cancel]").onclick = async () => { await postJson(`/api/runs/${id}/cancel`, {}); refreshRuns(); };
   if (r.status !== "done" || !r.summary) return;
   c.final = true; show("cancel", false);
+  if (state.cards[state.cards.length - 1] !== id) setFold(c, true);
   const csv = el.querySelector("[data-r=csv]"), zip = el.querySelector("[data-r=zip]");
   csv.href = `/api/runs/${id}/export.csv`; zip.href = `/api/runs/${id}/export.zip`;
   for (const k of ["csv", "zip", "analyse", "edit"]) show(k, true);
@@ -1490,7 +1650,7 @@ function migrateChats() {
 }
 function resetChat(extra) {
   clearCards();
-  Object.assign(state, {messages: [], live: [], error: null, chatId: null, usage: {input: 0, output: 0}, usages: {}, turnUsage: null}, extra || {});
+  Object.assign(state, {messages: [], live: [], error: null, chatId: null, usage: {input: 0, output: 0, cost: 0}, usages: {}, turnUsage: null, confirmDismissed: null}, extra || {});
 }
 function newChat() {
   if (state.busy) return;
@@ -1502,7 +1662,7 @@ function openChat(id, quiet) {
   if (!quiet) persist();
   resetChat({messages: rec.messages || [], chatId: rec.id, usage: rec.usage || {input: 0, output: 0}, usages: rec.usages || {}});
   try { localStorage.setItem(kCur(), rec.id); } catch {}
-  for (const rid of rec.runs || []) rid.startsWith("s") ? trackSweep(rid) : trackRun(rid);
+  for (const rid of rec.runs || []) rid.startsWith("cmp:") ? trackCompare(rid.slice(4).split(","), true) : rid.startsWith("s") ? trackSweep(rid) : trackRun(rid);
   render(); updateTok(); renderHistory(); toggleHistory(false);
 }
 function delChat(id) {
@@ -1532,9 +1692,9 @@ document.addEventListener("click", e => { if (!e.target.closest("#history") && !
 
 function updateTok() {
   const t = state.usage.input + state.usage.output, p = $("#tokpill");
-  p.textContent = `${t >= 10000 ? (t / 1000).toFixed(1) + "k" : fmtN(t)} tokens`;
+  p.textContent = `${t >= 10000 ? (t / 1000).toFixed(1) + "k" : fmtN(t)} tokens` + (state.usage.cost ? ` · ≈${fmtEur(state.usage.cost)}` : "");
   const b = state.config && state.config.token_budget;
-  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + (b ? `. Budget ${fmtN(b)} per server session.` : "");
+  p.title = `This chat: ${fmtN(state.usage.input)} in, ${fmtN(state.usage.output)} out` + (state.usage.cost ? `, about ${fmtEur(state.usage.cost)} at list prices` : "") + (b ? `. Budget ${fmtN(b)} per server session.` : "");
 }
 
 function getUD() { try { return JSON.parse(localStorage.getItem(kUD()) || "null"); } catch { return null; } }
@@ -1752,6 +1912,12 @@ $("#godsback").onclick = closeGods;
 
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
+  [/compare (runs|two|them)|overlay|side by side|σύγκρι/i, "Open Runs (the list icon in the left bar), tick 2 to 6 runs and press Compare: they appear overlaid in one chart, with a table of results and of the parameters that differ. You can also ask the assistant to compare runs."],
+  [/figure|paper|publication|\bpdf\b|\bsvg\b|δημοσί|γράφημα/i, "Every run card and comparison has a Figure… button: choose the quantities, the time window, the style (Science, IEEE or Nature) and PDF, SVG or PNG. Preview shows it before you download."],
+  [/report|write-?up|αναφορ/i, "In Runs, tick the runs and press Report, or use Report… on a comparison. It writes a page with method, results, parameters, figures and the parameter files; open it and print it to PDF. 'Ask the assistant to write it' adds an interpretation."],
+  [/3d|sphere|σφαίρ/i, "Under the dial of a run card, switch to 3D sphere: m1 and m2 on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play."],
+  [/all runs|runs list|search|filter|star|tag|find a run|λίστα/i, "The list icon in the left bar opens all runs: search by id, label, #tag or parameter, filter by status or end state, star runs and add tags. Click a run to open its card."],
+  [/cost|euro|price|€|κόστ/i, "The token counter under the message box also shows an estimated cost in euro at list prices, and every answer shows its own."],
   [/level|plan|compare|comparison|which model|best model|model gods/i, "The temple icon in the left bar (above the question mark) opens Model gods: four cards, one per level. Hermes = Haiku (quick), Dionysus = Sonnet (balanced), Zeus = Opus (most capable), Apollo = Fable. Each card says what it is good for and has a button to choose it."],
   [/tool|button|icon|explain|what does|help/i, "The question-mark button in the left bar (just above the settings gear) opens a window that explains what every button does: the left bar, the controls under the message box and the run cards."],
   [/who are you|athena|ποια είσαι|ποια ειστε|who is/i, "I am Athena, your guide. In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship, born fully armed from the head of Zeus and protector of Athens, and the owl was her symbol. I am SpinMate's AI assistant for two-sublattice macrospin simulations. Ask me how to use it."],
@@ -1874,6 +2040,402 @@ async function loadModels() {
 }
 let modelTimer;
 for (const id of ["#apikey", "#openaikey"]) $(id).addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
+
+// ---------------------------------------------------------------- cost, next steps, confirmation
+const eurOf = usd => usd * ((state.config && state.config.eur_per_usd) || 0.89);
+const fmtEur = usd => { const e = eurOf(usd); return "€" + (e < 0.01 ? e.toFixed(4) : e < 1 ? e.toFixed(3) : e.toFixed(2)); };
+
+function splitNext(text) {
+  const m = (text || "").match(/^[ \t]*NEXT:[ \t]*(.+?)[ \t]*$/m);
+  if (!m) return {body: text || "", next: []};
+  const next = m[1].split("|").map(s => s.trim().replace(/^["'`]+|["'`]+$/g, "")).filter(Boolean).slice(0, 3);
+  return {body: (text.slice(0, m.index) + text.slice(m.index + m[0].length)).trim(), next};
+}
+function lastTurnBlocks() {
+  // tool results and texts after the last message the user typed
+  const out = {results: [], text: ""};
+  for (let i = state.messages.length - 1; i >= 0; i--) {
+    const m = state.messages[i];
+    if (m.role === "user" && (typeof m.content === "string" || m.content.some(b => b.type === "text"))) break;
+    if (!Array.isArray(m.content)) { if (m.role === "assistant" && !out.text) out.text = m.content; continue; }
+    for (const b of m.content) {
+      if (b.type === "tool_result") {
+        const txt = typeof b.content === "string" ? b.content : (b.content.find(x => x.type === "text") || {}).text || "";
+        try { out.results.push(JSON.parse(txt)); } catch {}
+      }
+    }
+    if (m.role === "assistant" && !out.text) out.text = m.content.filter(b => b.type === "text").map(b => b.text).join("\n");
+  }
+  return out;
+}
+function renderTail(log) {
+  if (state.busy || state.error || !state.messages.length) return;
+  if (state.messages[state.messages.length - 1].role !== "assistant") return;
+  const turn = lastTurnBlocks();
+  const gate = turn.results.find(r => r && r.needs_confirmation);
+  if (gate && state.confirmDismissed !== state.messages.length) {
+    const box = document.createElement("div"); box.className = "confirmbox";
+    box.innerHTML = `<span>This request needs your OK: <b>${gate.runs} run${gate.runs > 1 ? "s" : ""}</b>, about <b>${dur(gate.estimated_wall_time_s)}</b> of simulation.</span>
+      <button class="btn small primary" type="button" data-c="go">Run it</button><button class="btn small" type="button" data-c="no">Not now</button>`;
+    box.querySelector("[data-c=go]").onclick = () => { state.approveNext = true; $("#input").value = "Yes, run it as proposed."; send(); };
+    box.querySelector("[data-c=no]").onclick = () => { state.confirmDismissed = state.messages.length; render(); };
+    log.appendChild(box);
+  }
+  const next = splitNext(turn.text).next;
+  if (next.length) {
+    const box = document.createElement("div"); box.className = "nextsteps"; box.setAttribute("aria-label", "Suggested next steps");
+    for (const s of next) {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = s;
+      b.onclick = () => { $("#input").value = s; send(); };
+      box.appendChild(b);
+    }
+    log.appendChild(box);
+  }
+}
+
+// ---------------------------------------------------------------- folding run cards
+function foldOthers(keep) {
+  for (const [id, c] of cardEls) if (id !== keep && c.final) setFold(c, true);
+}
+function setFold(c, on) {
+  c.el.classList.toggle("folded", on);
+  const b = c.el.querySelector("[data-r=fold]");
+  if (b) { b.textContent = on ? "▸" : "▾"; b.setAttribute("aria-expanded", String(!on)); b.title = on ? "Show the results" : "Fold to one line"; }
+}
+function wireFold(c) {
+  c.el.querySelector("[data-r=fold]").onclick = e => { e.stopPropagation(); setFold(c, !c.el.classList.contains("folded")); };
+  c.el.querySelector(".rc-head").addEventListener("click", e => {
+    if (c.el.classList.contains("folded") && !e.target.closest("button, a, input")) setFold(c, false);
+  });
+}
+const p3 = v => {
+  v = +v; if (!v) return "0";
+  const a = Math.abs(v);
+  return a >= 1e5 || a < 1e-3 ? v.toExponential(2).replace(/\.?0+e/, "e").replace("e+", "e") : String(Number(v.toPrecision(3)));
+};
+const changedText = ch => Object.entries(ch || {}).map(([k, v]) =>
+  `${k}=${Array.isArray(v) ? v.map(p3).join(",") : typeof v === "number" ? p3(v) : v}`).join(" · ");
+function runSummaryLine(r) {
+  const s = r.summary || {};
+  if (r.status !== "done") return esc(r.status || "");
+  const parts = [`<b>${s.order_initial} → ${s.order_final}</b>`];
+  const sw = s.neel_z_switches ?? s.neel_z_sign_changes;
+  if (sw != null) parts.push(`${sw} switch${sw === 1 ? "" : "es"}`);
+  parts.push(s.settle_time_s != null ? `settled ${fmt(s.settle_time_s * 1e12, 1)} ps` : "not settled");
+  const ch = changedText(r.changed_from_defaults);
+  if (ch) parts.push(`<span class="mono">${esc(ch)}</span>`);
+  return parts.join(" · ");
+}
+async function setStar(id, on) {
+  try { await postJson(`/api/runs/${id}/meta`, {starred: on}); } catch (e) { alert(e.message); return false; }
+  const row = runsPanel.rows.find(r => r.id === id); if (row) row.starred = on;
+  const c = cardEls.get(id); if (c) { const b = c.el.querySelector("[data-r=star]"); if (b) b.setAttribute("aria-pressed", String(on)); }
+  if (!$("#runspanel").hidden) renderRunsPanel();
+  return true;
+}
+
+// ---------------------------------------------------------------- runs panel
+const runsPanel = {rows: [], sel: new Set(), err: null, timer: 0};
+async function loadRunsPanel() {
+  try { runsPanel.rows = (await api("/api/runs?limit=2000")).runs; runsPanel.err = null; }
+  catch (e) { runsPanel.err = e.message; }
+  renderRunsPanel();
+}
+function runsFiltered() {
+  const q = $("#rpsearch").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const st = $("#rpstatus").value, ord = $("#rporder").value, kind = $("#rpkind").value, star = $("#rpstar").checked;
+  return runsPanel.rows.filter(r => {
+    const s = r.summary || {};
+    if (st && r.status !== st) return false;
+    if (ord && s.order_final !== ord) return false;
+    if (kind && (r.kind || "run") !== kind) return false;
+    if (star && !r.starred) return false;
+    if (!q.length) return true;
+    const hay = [r.id, r.label, (r.tags || []).join(" "), changedText(r.changed_from_defaults), s.order_initial, s.order_final, r.status].join(" ").toLowerCase();
+    return q.every(w => hay.includes(w));
+  });
+}
+function renderRunsPanel() {
+  const ul = $("#rplist"), rows = runsFiltered();
+  $("#rpcount").textContent = `${rows.length}${rows.length !== runsPanel.rows.length ? " of " + runsPanel.rows.length : ""}`;
+  ul.innerHTML = "";
+  if (runsPanel.err) ul.innerHTML = `<li class="rp-empty">${esc(runsPanel.err)}</li>`;
+  else if (!rows.length) ul.innerHTML = `<li class="rp-empty">${runsPanel.rows.length ? "No run matches the filters." : "No runs yet."}</li>`;
+  for (const r of rows) {
+    const s = r.summary || {}, li = document.createElement("li");
+    li.className = "rp-row" + (runsPanel.sel.has(r.id) ? " sel" : ""); li.tabIndex = 0;
+    const when = r.created ? new Date(r.created * 1000).toLocaleString([], {dateStyle: "short", timeStyle: "short"}) : "";
+    const tags = [];
+    if (s.order_final) tags.push(`<span class="tag ord">${s.order_initial} → ${s.order_final}</span>`);
+    if (r.status !== "done") tags.push(`<span class="tag st-${r.status}">${esc(r.status)}</span>`);
+    if (r.kind === "combined") tags.push(`<span class="tag">combined</span>`);
+    if (r.sweep_id) tags.push(`<span class="tag">${esc(r.sweep_id)}</span>`);
+    for (const t of r.tags || []) tags.push(`<span class="tag">#${esc(t)}</span>`);
+    li.innerHTML = `<input type="checkbox" aria-label="Select ${r.id}" ${runsPanel.sel.has(r.id) ? "checked" : ""}>
+      <button type="button" class="star" data-a="star" aria-pressed="${!!r.starred}" title="Star">★</button>
+      <span class="rl"><span class="rid">${r.id}</span> ${esc(r.label || "")}</span>
+      <span class="rd">${when} <button type="button" class="star" data-a="tags" title="Edit tags">#</button></span>
+      <span class="rt">${tags.join("")}</span>
+      <span class="rx">${esc(changedText(r.changed_from_defaults) || "defaults")}</span>`;
+    const cb = li.querySelector("input");
+    cb.onchange = () => { cb.checked ? runsPanel.sel.add(r.id) : runsPanel.sel.delete(r.id); li.classList.toggle("sel", cb.checked); rpFooter(); };
+    li.querySelector("[data-a=star]").onclick = e => { e.stopPropagation(); setStar(r.id, !r.starred); };
+    li.querySelector("[data-a=tags]").onclick = async e => {
+      e.stopPropagation();
+      const v = prompt(`Tags for ${r.id} (comma separated)`, (r.tags || []).join(", "));
+      if (v === null) return;
+      try { const out = await postJson(`/api/runs/${r.id}/meta`, {tags: v.split(",")}); r.tags = out.tags; renderRunsPanel(); } catch (err) { alert(err.message); }
+    };
+    li.onclick = e => { if (!e.target.closest("input, button")) { toggleRunsPanel(false); openRunCard(r.id); } };
+    li.onkeydown = e => { if (e.key === "Enter" && e.target === li) { toggleRunsPanel(false); openRunCard(r.id); } };
+    ul.appendChild(li);
+  }
+  rpFooter();
+}
+function rpFooter() {
+  const n = runsPanel.sel.size;
+  $("#rpsel").textContent = n ? `${n} selected` : "Select runs to compare, plot or report";
+  $("#rpcompare").disabled = n < 2 || n > 6; $("#rpfigure").disabled = !n || n > 6;
+  $("#rpreport").disabled = !n || n > 6; $("#rpclear").disabled = !n;
+}
+function toggleRunsPanel(open) {
+  const p = $("#runspanel"), want = open === undefined ? p.hidden : open;
+  p.hidden = !want; $("#runsbtn").setAttribute("aria-pressed", String(want));
+  clearInterval(runsPanel.timer);
+  if (want) {
+    toggleHistory(false); loadRunsPanel(); $("#rpsearch").focus();
+    runsPanel.timer = setInterval(() => { if (runsPanel.rows.some(r => ["running", "queued"].includes(r.status))) loadRunsPanel(); }, 4000);
+  }
+}
+$("#runsbtn").onclick = e => { e.stopPropagation(); toggleRunsPanel(); };
+$("#rpclose").onclick = () => toggleRunsPanel(false);
+$("#rprefresh").onclick = loadRunsPanel;
+for (const id of ["#rpsearch", "#rpstatus", "#rporder", "#rpkind", "#rpstar"]) $(id).addEventListener("input", renderRunsPanel);
+$("#rpclear").onclick = () => { runsPanel.sel.clear(); renderRunsPanel(); };
+$("#rpcompare").onclick = () => { const ids = [...runsPanel.sel]; toggleRunsPanel(false); trackCompare(ids); };
+$("#rpfigure").onclick = () => openFigure({runs: [...runsPanel.sel], quantities: runsPanel.sel.size > 1 ? ["nz"] : ["m1z", "m2z", "nz"]});
+$("#rpreport").onclick = () => openReport([...runsPanel.sel]);
+document.addEventListener("click", e => {
+  if ($("#runspanel").hidden || e.target.closest("#runspanel, #runsbtn, .defdlg, .modal-back")) return;
+  toggleRunsPanel(false);
+});
+
+// ---------------------------------------------------------------- compare card
+const CMP_COLORS = ["#1F4FD1", "#B0127F", "#C2410C", "#2E7D32", "#6B3FA0", "#0F766E"];
+const CMPQ = {
+  nz: ["n_z", (s, i) => (s.m1z[i] - s.m2z[i]) / 2], dot: ["m₁·m₂", (s, i) => s.m1x[i] * s.m2x[i] + s.m1y[i] * s.m2y[i] + s.m1z[i] * s.m2z[i]],
+  m1z: ["m₁z", (s, i) => s.m1z[i]], m2z: ["m₂z", (s, i) => s.m2z[i]], nx: ["n_x", (s, i) => (s.m1x[i] - s.m2x[i]) / 2],
+  mz: ["net m_z", (s, i) => (s.m1z[i] + s.m2z[i]) / 2],
+};
+const cmpId = ids => "cmp:" + ids.join(",");
+function interp(t, y, x) {
+  const n = t.length; if (!n || x < t[0] || x > t[n - 1]) return NaN;
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (t[m] <= x) lo = m; else hi = m; }
+  const d = t[hi] - t[lo]; return d > 0 ? y[lo] + (y[hi] - y[lo]) * (x - t[lo]) / d : y[lo];
+}
+function trackCompare(ids, quiet) {
+  ids = [...new Set(ids)].slice(0, 6);
+  const id = cmpId(ids);
+  if (cardEls.has(id)) { if (!quiet) openRunCard(id); return; }
+  const el = document.createElement("div"); el.className = "runcard cmpcard";
+  el.innerHTML = `<div class="rc-head"><span class="mono">Compare</span><span class="rc-label">${ids.map(esc).join(" · ")}</span><span class="status" data-r="st">loading…</span>
+      <button class="fold" type="button" data-r="fold" aria-expanded="true" title="Fold to one line">▾</button></div>
+    <div class="rc-sum" data-r="sum"></div>
+    <div class="cmp-q presets" role="group" aria-label="Quantity">${Object.entries(CMPQ).map(([k, v]) => `<button type="button" data-q="${k}" aria-pressed="${k === "nz"}">${v[0]}</button>`).join("")}</div>
+    <div class="cmp-legend" data-r="legend"></div>
+    <div class="canvaswrap"><canvas role="img" aria-label="Runs ${ids.join(", ")} overlaid"></canvas></div>
+    <div class="readout mono" data-r="readout"></div>
+    <div class="note">Drag to zoom, double-click to reset.</div>
+    <table class="cmp-table" data-r="table"></table>
+    <div class="actions"><button class="btn small" type="button" data-r="fig">Figure…</button><button class="btn small" type="button" data-r="rep">Report…</button>
+      <button class="btn small" type="button" data-r="ask">Ask the assistant</button></div>`;
+  const c = {el, chart: null, view: null, final: true, cmp: {ids, q: "nz", zoom: null}};
+  cardEls.set(id, c); state.cards.push(id); wireFold(c);
+  el.querySelectorAll("[data-q]").forEach(b => b.onclick = () => {
+    c.cmp.q = b.dataset.q; el.querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); cmpDraw(c);
+  });
+  el.querySelector("[data-r=fig]").onclick = () => openFigure({runs: c.cmp.ids, quantities: [c.cmp.q], t0: c.cmp.zoom && c.cmp.zoom[0], t1: c.cmp.zoom && c.cmp.zoom[1]});
+  el.querySelector("[data-r=rep]").onclick = () => openReport(c.cmp.ids);
+  el.querySelector("[data-r=ask]").onclick = () => { $("#input").value = `Compare runs ${c.cmp.ids.join(", ")} and explain what differs.`; send(); };
+  loadCompare(c);
+  if (!quiet) { foldOthers(id); render(); openRunCard(id); }
+}
+async function loadCompare(c) {
+  const k = c.cmp, el = c.el, st = el.querySelector("[data-r=st]");
+  try {
+    if (!k.info) k.info = await api(`/api/compare?ids=${encodeURIComponent(k.ids.join(","))}`);
+    const q = new URLSearchParams({points: 1500});
+    if (k.zoom) { q.set("t0_ns", k.zoom[0]); q.set("t1_ns", k.zoom[1]); }
+    k.series = await Promise.all(k.info.run_ids.map(id => api(`/api/runs/${id}/series?${q}`)));
+  } catch (e) { st.textContent = e.message; st.className = "status failed"; return; }
+  let lo = Math.min(...k.series.map(s => s.t_ns[0])), hi = Math.max(...k.series.map(s => s.t_ns[s.t_ns.length - 1]));
+  if (k.zoom) { lo = Math.max(lo, k.zoom[0]); hi = Math.min(hi, k.zoom[1]); }
+  k.grid = Array.from({length: 1200}, (_, i) => lo + (hi - lo) * i / 1199);
+  st.textContent = `${k.info.run_ids.length} runs`; st.className = "status done";
+  const info = k.info, diff = info.differing_parameters || {};
+  el.querySelector("[data-r=legend]").innerHTML = info.runs.map((r, j) =>
+    `<span><i style="background:${CMP_COLORS[j % 6]}"></i><b class="mono">${r.id}</b> ${esc(r.label || "")}</span>`).join("");
+  const m = r => r.metrics || {}, row = (name, f, cls = "") => `<tr class="${cls}"><th>${name}</th>${info.runs.map(r => `<td>${f(r)}</td>`).join("")}</tr>`;
+  el.querySelector("[data-r=table]").innerHTML =
+    `<tr><th></th>${info.runs.map((r, j) => `<th style="color:${CMP_COLORS[j % 6]}">${r.id}</th>`).join("")}</tr>` +
+    row("order", r => `${m(r).order_initial} → ${m(r).order_final}`) +
+    row("m₁·m₂ end", r => fmt(m(r).m1_dot_m2_final, 3)) +
+    row("switches", r => m(r).neel_z_switches ?? "–") +
+    row("first switch", r => m(r).first_neel_z_switch_s != null ? fmt(m(r).first_neel_z_switch_s * 1e12, 1) + " ps" : "–") +
+    row("settled", r => m(r).settle_time_s != null ? fmt(m(r).settle_time_s * 1e12, 1) + " ps" : "–") +
+    row("f(m₁x)", r => m(r).dominant_freq_m1x_GHz != null ? m(r).dominant_freq_m1x_GHz + " GHz" : "–") +
+    row("duration", r => fmt(((m(r).t_end_s || 0) - (m(r).t_start_s || 0)) * 1e9, 3) + " ns") +
+    (Object.keys(diff).length ? `<tr><th colspan="${info.runs.length + 1}" style="padding-top:10px">Parameters that differ</th></tr>` : "") +
+    Object.entries(diff).map(([p, vals]) => row(esc(p), r => { const v = vals[r.id]; return Array.isArray(v) ? v.map(p3).join(", ") : v == null ? "–" : typeof v === "number" ? p3(v) : esc(String(v)); }, "diff")).join("");
+  el.querySelector("[data-r=sum]").innerHTML = `differ in <span class="mono">${esc(Object.keys(diff).join(", ") || "nothing")}</span> · ` +
+    info.runs.map(r => `${r.id} <b>${(r.metrics || {}).order_initial} → ${(r.metrics || {}).order_final}</b>`).join(" · ");
+  cmpDraw(c);
+}
+function cmpDraw(c) {
+  const k = c.cmp; if (!k.series) return;
+  const [label, f] = CMPQ[k.q];
+  const ys = k.series.map(s => { const v = s.t_ns.map((_, i) => f(s, i)); return k.grid.map(x => interp(s.t_ns, v, x)); });
+  if (!c.chart) {
+    c.chart = new Chart(c.el.querySelector("canvas"), {height: 260, xLabel: "time (ns)", yLabel: label, yMin: -1.05, yMax: 1.05,
+      onZoom: (a, b) => { k.zoom = [a, b]; loadCompare(c); },
+      onReset: () => { if (k.zoom) { k.zoom = null; loadCompare(c); } },
+      onHover: i => {
+        const ro = c.el.querySelector("[data-r=readout]");
+        if (i === null || !c.chart.series.length) { ro.innerHTML = ""; return; }
+        ro.innerHTML = `<span><em>t</em> ${k.grid[i].toFixed(4)} ns</span>` + c.chart.series.map(s =>
+          `<span style="color:${s.c}">${s.k} ${isFinite(s.y[i]) ? s.y[i].toFixed(3) : "–"}</span>`).join("");
+      }});
+  }
+  c.chart.o.yLabel = label;
+  c.chart.setData(k.grid, ys.map((y, j) => ({k: k.info.run_ids[j], c: CMP_COLORS[j % 6], y, width: 1.5})));
+}
+
+// ---------------------------------------------------------------- publication figure dialog
+const FIGQ = [["m1x", "m₁x"], ["m1y", "m₁y"], ["m1z", "m₁z"], ["m2x", "m₂x"], ["m2y", "m₂y"], ["m2z", "m₂z"],
+              ["nx", "n_x"], ["ny", "n_y"], ["nz", "n_z"], ["dot", "m₁·m₂"], ["mz", "net m_z"]];
+$("#fig-q").innerHTML = FIGQ.map(([k, n]) => `<label><input type="checkbox" value="${k}">${n}</label>`).join("");
+function openFigure(o) {
+  $("#fig-runs").value = (o.runs || []).join(", ");
+  const qs = new Set(o.quantities && o.quantities.length ? o.quantities : ["nz"]);
+  $("#fig-q").querySelectorAll("input").forEach(i => { i.checked = qs.has(i.value); });
+  $("#fig-t0").value = o.t0 != null ? +(+o.t0).toFixed(4) : ""; $("#fig-t1").value = o.t1 != null ? +(+o.t1).toFixed(4) : "";
+  $("#fig-title").value = ""; $("#figout").innerHTML = "";
+  $("#figdlg").hidden = false; $("#figback").hidden = false;
+}
+const closeFigure = () => { $("#figdlg").hidden = true; $("#figback").hidden = true; };
+$("#figclose").onclick = closeFigure; $("#figback").onclick = closeFigure;
+function figBody(fmtOverride) {
+  const num = id => { const v = $(id).value.trim(); return v === "" ? null : +v; };
+  return {run_ids: $("#fig-runs").value.split(/[\s,]+/).filter(Boolean),
+          quantities: [...$("#fig-q").querySelectorAll("input:checked")].map(i => i.value),
+          t0_ns: num("#fig-t0"), t1_ns: num("#fig-t1"), style: $("#fig-style").value,
+          format: fmtOverride || $("#fig-fmt").value, width_in: num("#fig-w"), height_in: num("#fig-h"), title: $("#fig-title").value};
+}
+async function figFetch(body) {
+  const res = await fetch("/api/figure", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.detail || b.error || res.statusText); }
+  const name = ((res.headers.get("content-disposition") || "").match(/filename="([^"]+)"/) || [])[1] || "figure." + body.format;
+  return {blob: await res.blob(), name};
+}
+$("#figgo").onclick = async () => {
+  const out = $("#figout"); out.textContent = "Rendering…";
+  try {
+    const {blob, name} = await figFetch(figBody());
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    out.textContent = `Saved ${name}.`;
+  } catch (e) { out.textContent = e.message; }
+};
+$("#figprev").onclick = async () => {
+  const out = $("#figout"); out.textContent = "Rendering…";
+  try { const {blob} = await figFetch(figBody("png")); out.innerHTML = `<img alt="Figure preview" style="max-width:100%;border:1px solid var(--line);border-radius:6px" src="${URL.createObjectURL(blob)}">`; }
+  catch (e) { out.textContent = e.message; }
+};
+
+// ---------------------------------------------------------------- report dialog
+function openReport(ids) {
+  $("#rep-runs").value = ids.join(", "); $("#rep-title").value = ""; $("#rep-notes").value = ""; $("#repout").innerHTML = "";
+  $("#repdlg").hidden = false; $("#repback").hidden = false;
+}
+const closeReport = () => { $("#repdlg").hidden = true; $("#repback").hidden = true; };
+$("#repclose").onclick = closeReport; $("#repback").onclick = closeReport;
+const reportIds = () => $("#rep-runs").value.split(/[\s,]+/).filter(Boolean);
+$("#repgo").onclick = async () => {
+  const out = $("#repout"); out.textContent = "Writing the report…";
+  try {
+    const r = await postJson("/api/reports", {run_ids: reportIds(), title: $("#rep-title").value, notes: $("#rep-notes").value, author: getName()});
+    out.innerHTML = `<a href="${r.html_url}" target="_blank" rel="noopener">Open ${r.report}</a> (print it to PDF from the browser) · <a href="${r.zip_url}" download>Markdown + figures (.zip)</a>`;
+  } catch (e) { out.textContent = e.message; }
+};
+$("#repask").onclick = () => {
+  const ids = reportIds(); if (!ids.length) return;
+  closeReport(); $("#input").value = `Write a report of runs ${ids.join(", ")} with your interpretation.` + ($("#rep-title").value ? ` Title: ${$("#rep-title").value}.` : ""); send();
+};
+
+// ---------------------------------------------------------------- 3D view of m1 and m2 on the unit sphere
+class Sphere {
+  constructor(canvas) {
+    this.cv = canvas; this.ctx = canvas.getContext("2d"); this.yaw = -0.7; this.pitch = 0.35; this.cols = null; this.idx = 0;
+    const dpr = window.devicePixelRatio || 1; canvas.width = 190 * dpr; canvas.height = 190 * dpr; this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let drag = null;
+    canvas.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY, this.yaw, this.pitch]; canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener("pointermove", e => {
+      if (!drag) return;
+      this.yaw = drag[2] + (e.clientX - drag[0]) * 0.012;
+      this.pitch = Math.max(-1.45, Math.min(1.45, drag[3] + (e.clientY - drag[1]) * 0.012)); this.draw();
+    });
+    const up = () => { drag = null; }; canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
+  }
+  // physics z up; returns screen x, screen y and depth (> 0 faces the viewer)
+  p(x, y, z) {
+    const cy = Math.cos(this.yaw), sy = Math.sin(this.yaw), cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
+    const X = x * cy - y * sy, Y = x * sy + y * cy, Y2 = Y * cp - z * sp, Z2 = Y * sp + z * cp;
+    return [95 + X * 74, 95 - Z2 * 74, -Y2];
+  }
+  setData(cols) { this.cols = cols; this.draw(); }
+  setIdx(i) { this.idx = i; this.draw(); }
+  path(pts, color, width, frontAlpha, backAlpha) {
+    const c = this.ctx; c.lineWidth = width; c.strokeStyle = color;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i]; if (!a || !b) continue;
+      c.globalAlpha = (a[2] + b[2]) / 2 >= 0 ? frontAlpha : backAlpha;
+      c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
+    }
+    c.globalAlpha = 1;
+  }
+  draw() {
+    const c = this.ctx; c.clearRect(0, 0, 190, 190);
+    const grid = tc("--muted"), N = 72, ring = f => Array.from({length: N + 1}, (_, i) => { const a = i / N * 2 * Math.PI; return this.p(...f(Math.cos(a), Math.sin(a))); });
+    c.beginPath(); c.arc(95, 95, 74, 0, 7); c.strokeStyle = tc("--line"); c.lineWidth = 1; c.stroke();
+    this.path(ring((u, v) => [u, v, 0]), grid, 1, .55, .15);
+    this.path(ring((u, v) => [u, 0, v]), grid, 1, .35, .1);
+    this.path(ring((u, v) => [0, u, v]), grid, 1, .35, .1);
+    c.font = "10px system-ui, sans-serif"; c.fillStyle = grid;
+    for (const [lab, v] of [["x", [1.18, 0, 0]], ["y", [0, 1.18, 0]], ["z", [0, 0, 1.18]]]) { const q = this.p(...v); c.globalAlpha = q[2] >= 0 ? .9 : .4; c.fillText(lab, q[0] - 3, q[1] + 3); }
+    c.globalAlpha = 1;
+    const d = this.cols; if (!d) return;
+    const n = d.m1x.length, step = Math.max(1, Math.floor(n / 900));
+    for (const [k, col] of [["m1", "#1F4FD1"], ["m2", "#B0127F"]]) {
+      // break the path where neighbouring samples are too far apart to be joined honestly
+      const pts = []; let prev = -1;
+      for (let i = 0; i < n; i += step) {
+        if (prev >= 0) {
+          const dot = d[k + "x"][i] * d[k + "x"][prev] + d[k + "y"][i] * d[k + "y"][prev] + d[k + "z"][i] * d[k + "z"][prev];
+          if (dot < 0.94) pts.push(null);
+        }
+        pts.push(this.p(d[k + "x"][i], d[k + "y"][i], d[k + "z"][i])); prev = i;
+      }
+      this.path(pts, col, 1, .35, .1);
+      let seen = 0, cut = pts.length;
+      for (let j = 0; j < pts.length; j++) if (pts[j] && seen++ * step >= this.idx) { cut = j + 1; break; }
+      this.path(pts.slice(0, cut), col, 1.4, .85, .25);
+      const i = Math.min(this.idx, n - 1), tip = this.p(d[k + "x"][i], d[k + "y"][i], d[k + "z"][i]), o = this.p(0, 0, 0);
+      c.globalAlpha = tip[2] >= 0 ? 1 : .45; c.strokeStyle = col; c.lineWidth = 2.6; c.lineCap = "round";
+      c.beginPath(); c.moveTo(o[0], o[1]); c.lineTo(tip[0], tip[1]); c.stroke();
+      c.fillStyle = col; c.beginPath(); c.arc(tip[0], tip[1], 4, 0, 7); c.fill(); c.globalAlpha = 1;
+    }
+  }
+}
 
 async function init() {
   setTheme(document.documentElement.dataset.theme);
