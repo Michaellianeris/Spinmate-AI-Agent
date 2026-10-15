@@ -4,14 +4,10 @@
 
 SpinMate is a web interface for a two-sublattice macrospin simulator (antiferromagnets, FeRh and
 exchange-coupled ferromagnets). You describe a run in plain language, or attach a parameter file, and
-The selected Claude or OpenAI model checks the input with the simulator's own parser, starts the run, follows it and explains the
+the selected Claude or OpenAI model checks the input with the simulator's own parser, starts the run, follows it and explains the
 result from the actual magnetization curves.
 
-<img width="1906" height="950" alt="Screenshot 2026-10-12 111120" src="https://github.com/user-attachments/assets/12baa16a-9f33-4ac5-9416-d6a3ac20ed82" />
-
-
-
-
+<img src="docs/screenshot.png" alt="SpinMate: a run started from a plain-language question, with the 3D sphere, the n_z curves, the answer and the suggested next steps" width="900">
 
 The physics code in `macrospin/` is the original code and has not been modified. The repository is
 named `sublattice-agent`.
@@ -324,11 +320,14 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 
 ## How it works
 
+<img src="docs/architecture.png" alt="SpinMate architecture: browser, FastAPI server, agent loop with the model router, tools, run queue and runner inside Docker; Claude, OpenAI, the Postgres run catalog and the data volume outside" width="900">
+
 ```
 browser (web/index.html)
    |  conversation kept in the page, sent every turn, answer streamed back as events
    v
 FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/agent.py, app/tools.py)
+   |                                   model picked per request by capability and price (app/router.py)
    |                                   |  validate, start, sweep, get_run, cancel
    v                                   v
 run queue (app/simulations.py) --> python -m app.runner   (one process per run)
