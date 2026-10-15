@@ -255,3 +255,44 @@ def test_fx_parses_ecb_xml(monkeypatch):
     monkeypatch.setattr(fx.urllib.request, "urlopen", lambda *a, **k: io.BytesIO(xml))
     rate, day = fx.fetch_ecb()
     assert day == "2026-10-15" and rate == pytest.approx(1 / 1.165)
+
+
+def test_account_welcome_email_outbox(http, monkeypatch, tmp_path):
+    import email
+    from app import mailer
+    monkeypatch.delenv("SMTP_HOST", raising=False)
+    monkeypatch.setattr(mailer, "OUTBOX", tmp_path / "outbox")
+    monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts.json")
+    out = http.post("/api/account", json={"name": "Michalis", "email": "michalis@example.com"}).json()
+    assert out["ok"] and out["mode"] == "outbox"
+    eml = next((tmp_path / "outbox").glob("*.eml"))
+    msg = email.message_from_bytes(eml.read_bytes())
+    assert msg["Subject"] == "Welcome to SpinMate, Michalis"
+    kinds = [p.get_content_type() for p in msg.walk()]
+    assert "image/png" in kinds and "application/pdf" in kinds and "text/html" in kinds
+    html = next(p for p in msg.walk() if p.get_content_type() == "text/html").get_payload(decode=True).decode()
+    assert "Welcome to SpinMate, Michalis!" in html and "cid:spinmate-logo" in html
+    again = http.post("/api/account", json={"name": "Michalis", "email": "michalis@example.com"}).json()
+    assert again["mode"] == "skipped"                                       # no second email within the hour
+    assert http.post("/api/account", json={"name": "M", "email": "not-an-email"}).status_code == 400
+
+
+def test_account_welcome_email_smtp(monkeypatch, tmp_path):
+    from app import mailer
+    sent = {}
+
+    class FakeSMTP:
+        def __init__(self, host, port, timeout=None): sent["host"] = (host, port)
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self, context=None): sent["tls"] = True
+        def login(self, u, p): sent["login"] = u
+        def send_message(self, m): sent["to"] = m["To"]
+
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("SMTP_USER", "bot@example.com")
+    monkeypatch.setattr(mailer.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts.json")
+    out = mailer.create_account("Anna", "anna@example.com")
+    assert out["sent"] and sent == {"host": ("smtp.example.com", 587), "tls": True, "login": "bot@example.com",
+                                    "to": "Anna <anna@example.com>"}

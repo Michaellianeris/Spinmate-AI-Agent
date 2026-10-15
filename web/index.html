@@ -795,7 +795,8 @@ function esc(s) { return s.replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", 
 function inline(s) {
   return s.replace(/`([^`]+)`/g, "<code>$1</code>")
           .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-          .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+          .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>")
+          .replace(/\[([^\]]+)\]\((\/api\/[\w./-]+|https:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
 function md(text) {
   const out = []; const lines = esc(text).split("\n"); let i = 0;
@@ -2017,11 +2018,12 @@ const GUIDE_FAQ = [
   [/graph|plot|zoom|play|viewer|γράφημα/i, "In the run card: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
   [/cancel|stop|ακύρ/i, "Press Cancel run on the run card."],
   [/sweep|scan/i, "Ask for it in the main chat, for example: sweep A0 from -1e-12 to 1e-12 in 8 steps. The sweep chart appears in the chat."],
+  [/guide|manual|pdf|documentation|οδηγ/i, "The user guide is a PDF you can [download here](/api/guide.pdf). It is also attached to the welcome email you get when you create your account."],
   [/new|reset|clear|νέα/i, "The pencil icon in the left bar starts a new conversation."],
   [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or press the play icon in the left bar (Run setup), pick a preset and press Run. A card with the steps and the graph appears in the chat."],
 ];
 const ATHENA_INTRO = "In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship. Born fully armed from the head of Zeus, she was the protector of Athens, and the owl was her symbol.\n\nInspired by her spirit, I am Athena, SpinMate's AI assistant for two-sublattice macrospin simulations. Simply describe the simulation you want in plain language or upload a parameter file. I'll validate the inputs, run the simulation, and help you interpret the results using the actual magnetization curves produced by the model.";
-const guide = {open: false, msgs: [], started: false, awaitName: false, busy: false};
+const guide = {open: false, msgs: [], started: false, awaitName: false, awaitEmail: false, busy: false};
 const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
 
 function guideAdd(role, text) {
@@ -2049,6 +2051,31 @@ function openGuide(open) {
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
 }
+function guideSkip() {
+  const box = document.createElement("div"); box.className = "gchips";
+  const b = document.createElement("button"); b.type = "button"; b.textContent = "Skip for now";
+  b.onclick = () => { box.remove(); guideEmailDone("No problem. You can download the user guide any time from Help. Ask me anything about using SpinMate, or pick a question:"); };
+  box.appendChild(b); $("#guidelog").appendChild(box);
+}
+function guideEmailDone(text) {
+  guide.awaitEmail = false; setCentered(false);
+  document.querySelectorAll("#guidelog .gchips").forEach(x => x.remove());
+  guideAdd("bot", text); guideChips();
+}
+async function guideEmail(q) {
+  const email = q.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) { guideAdd("bot", "That doesn't look like an email address. Try again, or press Skip for now."); return; }
+  guide.busy = true; const wait = guideAdd("bot", "Creating your account…");
+  try {
+    const out = await postJson("/api/account", {name: getName(), email});
+    try { localStorage.setItem("sublattice.email." + userSlug(), email); } catch {}
+    wait.remove(); guide.busy = false;
+    guideEmailDone(out.sent ? `Your account is ready! I've sent a welcome email to **${email}** with the user guide attached. Ask me anything, or pick a question:`
+      : `Your account is ready! ${out.message} You can also [download the user guide](/api/guide.pdf). Ask me anything, or pick a question:`);
+  } catch (e) {
+    wait.remove(); guide.busy = false; guideAdd("bot", `I couldn't create the account: ${e.message}. Try again, or press Skip for now.`);
+  }
+}
 function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1] : "I can only help with using SpinMate: the chat, Fast and Deep modes, run setup, runs and results, settings and the API key. Ask me about any of those."; }
 async function guideAsk(q) {
   q = q.trim(); if (!q || guide.busy) return;
@@ -2056,9 +2083,12 @@ async function guideAsk(q) {
   if (guide.awaitName) {
     const v = cleanName(q); if (!v) { guideAdd("bot", "I couldn't read that. Please type just your first name."); return; }
     try { localStorage.setItem("sublattice.name", v); } catch {}
-    guide.awaitName = false; setCentered(false); onLogin();
-    guideAdd("bot", `Nice to meet you, ${v}! Ask me anything about using SpinMate, or pick a question:`); guideChips(); return;
+    guide.awaitName = false; guide.awaitEmail = true; onLogin();
+    $("#guideinput").placeholder = "you@example.com";
+    guideAdd("bot", `Nice to meet you, ${v}! Let's create your account. What's your email? I'll send you a welcome email with the SpinMate user guide (PDF).`);
+    guideSkip(); return;
   }
+  if (guide.awaitEmail) return guideEmail(q);
   guide.msgs.push({role: "user", content: q}); guide.busy = true;
   const wait = guideAdd("bot", "…");
   try {

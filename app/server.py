@@ -4,7 +4,7 @@ import os
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
@@ -13,6 +13,7 @@ import threading
 from . import agent
 from . import figures
 from . import fx
+from . import mailer
 from . import pricing
 from . import reports
 from . import tools
@@ -51,6 +52,11 @@ class ChatIn(BaseModel):
     auto: bool = False       # no model pinned for the persona: the router picks from candidates
     god: str | None = None
     candidates: list = []
+
+
+class AccountIn(BaseModel):
+    name: str
+    email: str
 
 
 class GuideIn(BaseModel):
@@ -136,7 +142,7 @@ def config():
             "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
-            "catalog": catalog.status(), **fx.info(),
+            "catalog": catalog.status(), **fx.info(), "email": bool(mailer.smtp_settings()),
             "confirm": {"minutes": tools.CONFIRM_MINUTES, "runs": tools.CONFIRM_RUNS}}
 
 
@@ -215,6 +221,28 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
 
     return StreamingResponse(stream(), media_type="application/x-ndjson",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# ---- accounts
+
+@app.post("/api/account")
+def account(body: AccountIn, request: Request):
+    """Saves name and email and sends the welcome email with the logo and the PDF guide."""
+    name = re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()
+    if not name:
+        raise HTTPException(400, "name required")
+    app_url = os.environ.get("APP_URL") or str(request.base_url).rstrip("/")
+    out = mailer.create_account(name, body.email, app_url)
+    if not out["ok"]:
+        return JSONResponse(out, status_code=400)
+    return out
+
+
+@app.get("/api/guide.pdf")
+def guide_pdf():
+    if not mailer.GUIDE.exists():
+        raise HTTPException(404, "guide not built")
+    return FileResponse(mailer.GUIDE, media_type="application/pdf", filename="SpinMate-User-Guide.pdf")
 
 
 # ---- voice input
