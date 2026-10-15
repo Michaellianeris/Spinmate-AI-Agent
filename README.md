@@ -5,8 +5,7 @@
 
 # SpinMate
 
-SpinMate is a web interface for a two-sublattice macrospin simulator (antiferromagnets, FeRh and
-exchange-coupled ferromagnets). You describe a run in plain language, or attach a parameter file, and
+SpinMate is a web interface for a two-sublattice macrospin simulator. You describe a run in plain language, or attach a parameter file, and
 the selected Claude or OpenAI model checks the input with the simulator's own parser, starts the run, follows it and explains the
 result from the actual magnetization curves.
 
