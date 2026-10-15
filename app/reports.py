@@ -9,17 +9,20 @@ import time
 import zipfile
 
 from . import figures
+from . import mathtext
 from . import simulations as S
 
 REPORTS = S.WORKSPACE / "reports"
 REPORTS.mkdir(parents=True, exist_ok=True)
 
-METHOD = ("Two-sublattice macrospin model of the original SpinMate code: the coupled Landau-Lifshitz-Gilbert "
-          "equations of m1 and m2 are integrated with Heun's method. Each sublattice feels the inter-sublattice "
-          "exchange field 4A0/(mu0 Ms^2 l^2) along the other sublattice and the uniaxial anisotropy field "
-          "2Ku/(mu0 Ms^2) along u_ani (both in units of Ms), and the applied fields, spin-orbit torques and thermal field set in its parameter file. "
-          "Order is read from m1.m2 (AFM below -0.9, FM above +0.9); a switch is a reversal of the Neel vector "
-          "n = (m1 - m2)/2 with n_z crossing from below -0.5 to above +0.5 or back.")
+METHOD = (r"Two-sublattice macrospin model of the original SpinMate code: the coupled Landau-Lifshitz-Gilbert "
+          r"equations of $\mathbf{m}_1$ and $\mathbf{m}_2$ are integrated with Heun's method. Each sublattice feels "
+          r"the inter-sublattice exchange field $4A_0/(\mu_0 M_\mathrm{s}^2 l^2)$ along the other sublattice and the "
+          r"uniaxial anisotropy field $2K_\mathrm{u}/(\mu_0 M_\mathrm{s}^2)$ along $\mathbf{u}_\mathrm{ani}$ (both in "
+          r"units of $M_\mathrm{s}$), and the applied fields, spin-orbit torques and thermal field set in its parameter "
+          r"file. Order is read from $\mathbf{m}_1\cdot\mathbf{m}_2$ (AFM below $-0.9$, FM above $+0.9$); a switch is "
+          r"a reversal of the Néel vector $\mathbf{n} = (\mathbf{m}_1 - \mathbf{m}_2)/2$ with $n_z$ crossing from "
+          r"below $-0.5$ to above $+0.5$ or back.")
 
 
 def _num(v, d=3):
@@ -34,15 +37,30 @@ def _ps(v):
     return "–" if v is None else f"{v * 1e12:.1f}"
 
 
+def _md_inline(s):
+    s = html.escape(s)
+    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    s = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", s)
+    return re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<i>\1</i>", s)
+
+
+def tex(s):
+    """One line of text with LaTeX (and bare n_z, 10^-12) as HTML."""
+    return mathtext.to_html(str(s))
+
+
+def _join_display_math(text):
+    """A $$ ... $$ block written over several lines becomes one line, so the line parser keeps it whole."""
+    return re.sub(r"\$\$(.+?)\$\$", lambda m: "$$" + " ".join(m.group(1).split()) + "$$", text or "", flags=re.S)
+
+
 def md_to_html(text):
-    """Small Markdown subset for the notes: headings, lists, bold, italics, code, paragraphs."""
+    """Small Markdown subset for the notes: headings, lists, bold, italics, code, paragraphs, LaTeX math."""
     out, para, items = [], [], []
+    text = _join_display_math(text)
 
     def inline(s):
-        s = html.escape(s)
-        s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
-        s = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", s)
-        return re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<i>\1</i>", s)
+        return mathtext.to_html(s, _md_inline)
 
     def flush():
         if para:
@@ -75,12 +93,12 @@ def _figures(ids, labels):
     """(caption, png bytes) pairs: overlays for several runs, components for each run."""
     out = []
     if len(ids) > 1:
-        out.append(("Néel vector n_z of all runs", figures.render(ids, ["nz"], style="science", fmt="png",
+        out.append((r"Néel vector $n_z$ of all runs", figures.render(ids, ["nz"], style="science", fmt="png",
                                                                   width_in=5.5, height_in=3.0, labels=labels)[0]))
-        out.append(("m1·m2 of all runs", figures.render(ids, ["dot"], style="science", fmt="png",
+        out.append((r"$\mathbf{m}_1\cdot\mathbf{m}_2$ of all runs", figures.render(ids, ["dot"], style="science", fmt="png",
                                                         width_in=5.5, height_in=3.0, labels=labels)[0]))
     for rid in ids[:6]:
-        out.append((f"{rid}: m1z, m2z and n_z", figures.render([rid], ["m1z", "m2z", "nz"], style="science",
+        out.append((rf"{rid}: $m_{{1z}}$, $m_{{2z}}$ and $n_z$", figures.render([rid], ["m1z", "m2z", "nz"], style="science",
                                                                fmt="png", width_in=5.5, height_in=2.8)[0]))
     return out
 
@@ -98,8 +116,8 @@ def build(run_ids, title="", notes="", author=""):
     figs = _figures(ids, labels)
     date = time.strftime("%Y-%m-%d %H:%M")
 
-    head = ["Run", "Label", "Order", "m1·m2 end", "Switches", "First switch (ps)", "Settled (ps)",
-            "f(m1x) GHz", "Duration (ns)", "Runtime (s)"]
+    head = ["Run", "Label", "Order", r"$\mathbf{m}_1\cdot\mathbf{m}_2$ (end)", r"$n_z$ switches", "First switch (ps)",
+            "Settled (ps)", r"$f(m_{1x})$ (GHz)", "Duration (ns)", "Runtime (s)"]
     rows = []
     for i in infos:
         s = i.get("summary") or {}
@@ -114,32 +132,33 @@ def build(run_ids, title="", notes="", author=""):
               if k not in differ and all(json_eq(c.get(k), v) for _, c in changed)}
 
     # ---- HTML
-    def table(h, rs):
-        return ("<table><tr>" + "".join(f"<th>{html.escape(str(x))}</th>" for x in h) + "</tr>" +
-                "".join("<tr>" + "".join(f"<td>{html.escape(str(x))}</td>" for x in r) + "</tr>" for r in rs) +
+    def table(h, rs, code_first=False):
+        cell = lambda x, k: f"<code>{html.escape(str(x))}</code>" if code_first and k == 0 else html.escape(str(x))
+        return ("<table><tr>" + "".join(f"<th>{tex(x)}</th>" for x in h) + "</tr>" +
+                "".join("<tr>" + "".join(f"<td>{cell(x, k)}</td>" for k, x in enumerate(r)) + "</tr>" for r in rs) +
                 "</table>")
 
-    parts = [f"<h1>{html.escape(title)}</h1>",
+    parts = [f"<h1>{tex(title)}</h1>",
              f"<p class='meta'>{date}{' · ' + html.escape(author) if author else ''} · runs {', '.join(ids)}</p>",
-             "<h2>Method</h2>", f"<p>{html.escape(METHOD)}</p>",
+             "<h2>Method</h2>", f"<p>{tex(METHOD)}</p>",
              "<h2>Results</h2>", table(head, rows)]
     if common:
         parts += ["<h2>Parameters shared by all runs (differing from the defaults)</h2>",
-                  table(["Parameter", "Value"], [[k, fmt_val(v)] for k, v in sorted(common.items())])]
+                  table(["Parameter", "Value"], [[k, fmt_val(v)] for k, v in sorted(common.items())], True)]
     if differ:
         parts += ["<h2>Parameters that differ between runs</h2>",
-                  table(["Parameter"] + ids, [[k] + [fmt_val(v.get(r)) for r in ids] for k, v in sorted(differ.items())])]
+                  table(["Parameter"] + ids, [[k] + [fmt_val(v.get(r)) for r in ids] for k, v in sorted(differ.items())], True)]
     if notes:
         parts += ["<h2>Discussion</h2>", md_to_html(notes)]
     parts.append("<h2>Figures</h2>")
     for n, (cap, png) in enumerate(figs, 1):
         b64 = base64.b64encode(png).decode()
-        parts.append(f"<figure><img src='data:image/png;base64,{b64}' alt='{html.escape(cap)}'>"
-                     f"<figcaption>Figure {n}. {html.escape(cap)}</figcaption></figure>")
+        parts.append(f"<figure><img src='data:image/png;base64,{b64}' alt='{html.escape(re.sub(r"[$\\{}]", "", cap))}'>"
+                     f"<figcaption>Figure {n}. {tex(cap)}</figcaption></figure>")
     parts.append("<h2>Appendix: parameter files</h2>")
     for i in infos:
         parts.append(f"<h3>{i['id']} · {html.escape(labels[i['id']])}</h3><pre>{html.escape(i.get('parameters_text') or '')}</pre>")
-    page = (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>{html.escape(title)}</title>"
+    page = (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><title>{html.escape(re.sub(r"[$\\{}]", "", title))}</title>"
             "<meta name='viewport' content='width=device-width,initial-scale=1'><style>"
             "body{font:15px/1.55 Georgia,'Times New Roman',serif;color:#1A1530;max-width:820px;margin:32px auto;padding:0 18px}"
             "h1{font-size:1.7rem;margin:0 0 4px}h2{font-size:1.15rem;margin:26px 0 8px;border-bottom:1px solid #E6DFF0;padding-bottom:4px}"
@@ -148,7 +167,7 @@ def build(run_ids, title="", notes="", author=""):
             "th,td{border:1px solid #E6DFF0;padding:5px 7px;text-align:left}th{background:#F8F4FB}"
             "figure{margin:18px 0;text-align:center}img{max-width:100%}figcaption{font-size:.9rem;color:#4A3D60;margin-top:4px}"
             "pre{background:#F8F4FB;padding:10px;border-radius:6px;font:12px/1.45 ui-monospace,monospace;white-space:pre-wrap}"
-            "code{font-family:ui-monospace,monospace}@media print{body{margin:0 auto}h2{break-after:avoid}figure{break-inside:avoid}}"
+            "code{font-family:ui-monospace,monospace}math{font-size:1.05em}math[display=block]{margin:10px 0}@media print{body{margin:0 auto}h2{break-after:avoid}figure{break-inside:avoid}}"
             "</style></head><body>" + "\n".join(parts) + "</body></html>")
 
     # ---- Markdown + figures
@@ -156,12 +175,12 @@ def build(run_ids, title="", notes="", author=""):
           "## Method", "", METHOD, "", "## Results", "", md_table(head, rows), ""]
     if common:
         md += ["## Parameters shared by all runs (differing from the defaults)", "",
-               md_table(["Parameter", "Value"], [[k, fmt_val(v)] for k, v in sorted(common.items())]), ""]
+               md_table(["Parameter", "Value"], [[f"`{k}`", fmt_val(v)] for k, v in sorted(common.items())]), ""]
     if differ:
         md += ["## Parameters that differ between runs", "",
-               md_table(["Parameter"] + ids, [[k] + [fmt_val(v.get(r)) for r in ids] for k, v in sorted(differ.items())]), ""]
+               md_table(["Parameter"] + ids, [[f"`{k}`"] + [fmt_val(v.get(r)) for r in ids] for k, v in sorted(differ.items())]), ""]
     if notes:
-        md += ["## Discussion", "", notes.strip(), ""]
+        md += ["## Discussion", "", mathtext.to_markdown(notes.strip()), ""]
     md += ["## Figures", ""] + [f"![Figure {n}. {cap}](figure{n}.png)\n" for n, (cap, _) in enumerate(figs, 1)]
     md += ["## Appendix: parameter files", ""]
     for i in infos:

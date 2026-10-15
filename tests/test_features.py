@@ -215,3 +215,14 @@ def test_transcribe_endpoint(http, monkeypatch):
     assert r.json() == {"text": "run AFM to FM"}
     assert got == {"size": 2004, "mime": "audio/webm", "language": "el", "key": "o"}
     assert http.post("/api/transcribe", files={"file": ("s.webm", b"", "audio/webm")}).status_code == 400
+
+
+def test_report_math_is_mathml():
+    from app import mathtext, reports
+    page = reports.md_to_html(r"**$n_z$ flips**, m_1z = -m_2z, A0 = 0.248e-12 J/m, `SOT_DC_Amp` and settle_time_s"
+                              "\n\n$$f = \\frac{\\gamma}{2\\pi}\n\\sqrt{2H_E H_K}$$")
+    assert "<b><math" in page and page.count("<math") == 5 and 'display="block"' in page
+    assert "<code>SOT_DC_Amp</code>" in page and "settle_time_s" in page          # identifiers untouched
+    assert "$" not in page
+    assert mathtext.to_markdown("n_z and --A0=1e-12") == "$n_{z}$ and --A0=1e-12"
+    assert "<code>" in mathtext.mathml(r"\frac{")                                  # bad LaTeX does not break the page

@@ -10,3 +10,4 @@ python-multipart==0.0.32
 anthropic==1.11.0
 # run catalog
 psycopg[binary]==3.2.13
+latex2mathml==3.81.0

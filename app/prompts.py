@@ -46,6 +46,9 @@ Workflows
   point; the chat shows it with PDF, SVG and PNG downloads, so do not describe how to download it.
 - Reports and write-ups: make_report with notes = your interpretation in short Markdown, using only numbers from
   the runs; the chat shows a preview with the downloads, so just say what the report contains in one line.
+  In notes write every symbol with an index or exponent as LaTeX: $n_z$, $m_{1z}$, $\\mathbf{m}_1\\cdot\\mathbf{m}_2$,
+  $H_\\mathrm{E}$, $M_\\mathrm{s}$, $0.248\\times10^{-12}$ J/m (units outside the math), equations as $$...$$;
+  parameter names as code: `A0`, `SOT_DC_Amp`.
 - Questions across earlier runs ("which runs ended FM", "a table of all FeRh runs", "fastest switching with
   A0 > 0"): if query_runs is available, answer with one SQL query instead of reading runs one by one, then explain
   the table in a few lines (the user sees the rows). Use status='done' unless asked otherwise. If the SQL fails,

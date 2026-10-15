@@ -173,7 +173,8 @@ TOOLS += [
         "name": "make_report",
         "description": "Write a report of 1-6 finished runs (method, results table, parameters, figures, appendix) "
                        "as an HTML page the user can print to PDF, plus a Markdown zip. Put your interpretation in "
-                       "notes (Markdown, a few short paragraphs or bullets, only numbers from the runs). Use it when "
+                       "notes (Markdown, a few short paragraphs or bullets, only numbers from the runs; symbols with indices "
+                       "or exponents in LaTeX such as $n_z$, $m_{1z}$, $0.248\\times10^{-12}$). Use it when "
                        "the user asks for a report or a write-up.",
         "input_schema": {"type": "object",
                          "properties": {"run_ids": {"type": "array", "items": TEXT}, "title": TEXT, "notes": TEXT},

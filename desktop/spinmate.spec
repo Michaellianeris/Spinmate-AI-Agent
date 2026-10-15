@@ -14,7 +14,7 @@ a = Analysis(
     pathex=[ROOT, os.path.join(ROOT, "macrospin")],
     datas=[(os.path.join(ROOT, "web"), "web"),
            (os.path.join(ROOT, "examples"), "examples")]
-          + collect_data_files("scienceplots"),
+          + collect_data_files("scienceplots") + collect_data_files("latex2mathml"),
     hiddenimports=MACROSPIN + collect_submodules("app") + collect_submodules("uvicorn")
                   + ["scipy.signal", "matplotlib.backends.backend_agg", "multipart"],
     excludes=["tkinter", "PyQt5", "PyQt6", "PySide2", "PySide6", "IPython", "pytest", "psycopg"],
