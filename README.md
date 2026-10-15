@@ -29,6 +29,7 @@ named `sublattice-agent`.
 - [Behind a corporate proxy](#behind-a-corporate-proxy)
 - [How it works](#how-it-works)
 - [Development](#development)
+- [License](#license)
 
 ## Quick start
 
@@ -379,3 +380,11 @@ tests/             smoke tests
 
 The server has no login. It is meant for local use; do not expose the port to the internet, since anyone
 who can reach it can start simulations and use the server-side API keys.
+
+## License
+
+SpinMate is free and open source under the [MIT License](LICENSE): anyone may use, copy, modify and
+share it, for research, teaching or commercial work, as long as the copyright notice is kept. It comes
+without warranty. If you use it in published work, a mention of SpinMate is appreciated.
+
+The API keys you add are yours; calls to Anthropic or OpenAI are billed to your own account.
