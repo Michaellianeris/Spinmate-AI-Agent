@@ -1,7 +1,8 @@
 """Accounts and the welcome email: logo, a greeting with the user's name and the PDF user guide.
 
-With SMTP_HOST set the email is sent over SMTP (STARTTLS on 587, SSL on 465). Without it the email is
-written to WORKSPACE/outbox/*.eml, so the flow can be tried without a mail server.
+With GMAIL_REFRESH_TOKEN set the email goes out through the Gmail API over HTTPS (for networks that block
+SMTP). Else, with SMTP_HOST set, over SMTP (STARTTLS on 587, SSL on 465). Without either it is written to
+WORKSPACE/outbox/*.eml, so the flow can be tried without a mail server.
 """
 import html
 import json
@@ -11,6 +12,9 @@ import smtplib
 import ssl
 import threading
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from email.message import EmailMessage
 from email.utils import formataddr, make_msgid
 
@@ -35,6 +39,42 @@ def smtp_settings():
     user = os.environ.get("SMTP_USER", "").strip()
     return {"host": host, "port": port, "user": user, "password": os.environ.get("SMTP_PASSWORD", ""),
             "sender": os.environ.get("SMTP_FROM", "").strip() or user, "tls": port != 465}
+
+
+def gmail_settings():
+    """Gmail API credentials from an OAuth client and a refresh token (see app/gmail_auth.py)."""
+    token = os.environ.get("GMAIL_REFRESH_TOKEN", "").strip()
+    if not token:
+        return None
+    return {"client_id": os.environ.get("GMAIL_CLIENT_ID", "").strip(),
+            "client_secret": os.environ.get("GMAIL_CLIENT_SECRET", "").strip(), "refresh_token": token}
+
+
+def mail_enabled():
+    return bool(gmail_settings() or smtp_settings())
+
+
+def sender_address():
+    return (os.environ.get("SMTP_FROM", "").strip() or os.environ.get("SMTP_USER", "").strip()
+            or "spinmate@localhost")
+
+
+def _gmail_send(msg, cfg):
+    """Sends the whole MIME message through the Gmail API (HTTPS only)."""
+    ctx = ssl.create_default_context()
+    body = urllib.parse.urlencode({"client_id": cfg["client_id"], "client_secret": cfg["client_secret"],
+                                   "refresh_token": cfg["refresh_token"], "grant_type": "refresh_token"}).encode()
+    try:
+        with urllib.request.urlopen(urllib.request.Request("https://oauth2.googleapis.com/token", body),
+                                    timeout=20, context=ctx) as r:
+            token = json.loads(r.read())["access_token"]
+        req = urllib.request.Request(
+            "https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send?uploadType=media", bytes(msg),
+            {"Authorization": f"Bearer {token}", "Content-Type": "message/rfc822"})
+        with urllib.request.urlopen(req, timeout=60, context=ctx) as r:
+            return json.loads(r.read()).get("id", "")
+    except urllib.error.HTTPError as e:            # keep Google's reason, e.g. invalid_grant
+        raise OSError(f"Gmail API {e.code}: {e.read().decode(errors='replace')[:300]}") from None
 
 
 def valid_email(email):
@@ -82,10 +122,9 @@ was created with this address in SpinMate. Free and open source under the MIT li
 
 
 def welcome_message(name, email, app_url="http://localhost:8421"):
-    cfg = smtp_settings() or {}
     msg = EmailMessage()
     msg["Subject"] = f"Welcome to SpinMate, {name}"
-    msg["From"] = formataddr(("SpinMate", cfg.get("sender") or "spinmate@localhost"))
+    msg["From"] = formataddr(("SpinMate", sender_address()))
     msg["To"] = formataddr((name, email))
     msg["Message-ID"] = make_msgid(domain="spinmate.local")
     msg.set_content(f"Welcome to SpinMate, {name}!\n\nYour account is ready. {attached()}.\n"
@@ -102,7 +141,10 @@ def welcome_message(name, email, app_url="http://localhost:8421"):
 
 
 def deliver(msg):
-    """Send over SMTP, or save to the outbox. Returns ("smtp" | "outbox", detail)."""
+    """Send through the Gmail API or SMTP, or save to the outbox. Returns ("gmail" | "smtp" | "outbox", detail)."""
+    gmail = gmail_settings()
+    if gmail:
+        return "gmail", _gmail_send(msg, gmail)
     cfg = smtp_settings()
     if not cfg:
         OUTBOX.mkdir(parents=True, exist_ok=True)
@@ -143,10 +185,11 @@ def create_account(name, email, app_url="http://localhost:8421"):
         mode, detail = deliver(welcome_message(name, email, app_url))
     except (smtplib.SMTPException, OSError) as e:
         return {"ok": True, "sent": False, "mode": "error", "message": f"The account is saved, but the email could not be sent: {e}"}
-    if mode == "smtp":                         # an outbox copy does not count as sent
+    sent = mode in ("gmail", "smtp")           # an outbox copy does not count as sent
+    if sent:
         with _lock:
             accounts = _load()
             accounts[key]["welcome_sent"] = time.time()
             ACCOUNTS.write_text(json.dumps(accounts, indent=1))
-    return {"ok": True, "sent": mode == "smtp", "mode": mode,
-            "message": "Welcome email sent." if mode == "smtp" else "No mail server is set up, so no email was sent."}
+    return {"ok": True, "sent": sent, "mode": mode,
+            "message": "Welcome email sent." if sent else "No mail server is set up, so no email was sent."}
