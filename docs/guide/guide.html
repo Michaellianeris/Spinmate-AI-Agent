@@ -1,174 +1,234 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>SpinMate User Guide</title>
 <style>
-@page{size:A4;margin:18mm 17mm 18mm 17mm}
+@page{size:A4;margin:15mm 15mm 16mm 15mm}
 *{box-sizing:border-box}
-body{font:10.5pt/1.55 Inter,"Segoe UI",Arial,sans-serif;color:#1A1530;margin:0}
-.cover{height:257mm;display:flex;flex-direction:column;justify-content:center;gap:10mm;page-break-after:always;position:relative}
-.cover img.logo{width:120mm}
-.cover h1{font-size:30pt;line-height:1.15;margin:0;letter-spacing:-.01em}
-.cover p{font-size:13pt;color:#4A3D60;margin:0;max-width:150mm}
-.cover .bar{position:absolute;left:0;right:0;bottom:0;height:3mm;background:linear-gradient(90deg,#E5341B,#8A3FB5 55%,#1D1DD8)}
-.cover .meta{position:absolute;bottom:10mm;left:0;font-size:9.5pt;color:#6B5A86}
-h2{font-size:16pt;margin:0 0 3mm;padding-top:2mm;border-bottom:.4mm solid #E6DFF0;padding-bottom:2mm;break-after:avoid}
-h3{font-size:11.5pt;margin:5mm 0 1.5mm;break-after:avoid;color:#2A1F45}
-section{margin-bottom:7mm}
-.new{page-break-before:always}
-p{margin:0 0 2.5mm}
-ul,ol{margin:0 0 3mm;padding-left:6mm}li{margin-bottom:1mm}
-code{font:9pt ui-monospace,Menlo,Consolas,monospace;background:#F3EEF9;padding:.3mm 1.2mm;border-radius:1mm}
-pre{font:8.8pt/1.45 ui-monospace,Menlo,Consolas,monospace;background:#F8F4FB;border:.3mm solid #E6DFF0;border-radius:2mm;padding:3mm 4mm;white-space:pre-wrap;margin:0 0 3mm}
-.ask{background:#F8F4FB;border-left:1mm solid #8A3FB5;border-radius:1.5mm;padding:2mm 4mm;margin:0 0 2mm;font-style:italic}
-table{border-collapse:collapse;width:100%;margin:1mm 0 4mm;font-size:9.5pt}
-th,td{border:.3mm solid #E6DFF0;padding:1.6mm 2.4mm;text-align:left;vertical-align:top}th{background:#F8F4FB}
-figure{margin:2mm 0 5mm;text-align:center;break-inside:avoid}figure img{max-width:100%;border:.3mm solid #E6DFF0;border-radius:2mm}
-figcaption{font-size:8.8pt;color:#6B5A86;margin-top:1.5mm}
-.tip{background:#EEF6F7;border:.3mm solid #CBE6E9;border-radius:2mm;padding:2.5mm 4mm;margin:2mm 0 4mm}
-.toc li{margin-bottom:1.2mm}
+body{font:9.6pt/1.5 Inter,"Segoe UI",Arial,sans-serif;color:#1A1530;margin:0}
+.head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:.5mm solid #E6DFF0;padding-bottom:4mm;margin-bottom:5mm}
+.head img{height:15mm}.head .t{text-align:right}.head h1{font-size:20pt;margin:0;line-height:1.1}
+.head .sub{font-size:9pt;color:#6B5A86;margin-top:1mm}
+.lead{font-size:11pt;line-height:1.5;color:#2A2140;margin:0 0 4mm}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+.box{background:#F8F4FB;border:.3mm solid #E6DFF0;border-radius:2mm;padding:3mm 4mm}
+.box h3{margin-top:0}
+h2{font-size:13.5pt;margin:6mm 0 2mm;padding-bottom:1.2mm;border-bottom:.4mm solid #E6DFF0;break-after:avoid;color:#1A1530}
+h2 .n{color:#8A3FB5;margin-right:2mm}
+h3{font-size:10.5pt;margin:3.5mm 0 1mm;break-after:avoid;color:#2A1F45}
+p{margin:0 0 2mm}
+ul,ol{margin:0 0 2.5mm;padding-left:5mm}li{margin-bottom:.6mm}
+code{font:8.6pt ui-monospace,Menlo,Consolas,monospace;background:#F3EEF9;padding:.2mm 1mm;border-radius:.8mm}
+pre{font:8.4pt/1.45 ui-monospace,Menlo,Consolas,monospace;background:#F8F4FB;border:.3mm solid #E6DFF0;border-radius:1.5mm;padding:2.5mm 3.5mm;white-space:pre-wrap;margin:0 0 2.5mm;break-inside:avoid}
+.ask{background:#F8F4FB;border-left:.9mm solid #8A3FB5;border-radius:1mm;padding:1.3mm 3mm;margin:0 0 1.4mm;font-style:italic}
+table{border-collapse:collapse;width:100%;margin:1mm 0 3mm;font-size:8.8pt}tr{break-inside:avoid}thead{display:table-header-group}
+th,td{border:.25mm solid #E6DFF0;padding:1.2mm 2mm;text-align:left;vertical-align:top}th{background:#F8F4FB;font-weight:600}
+figure{margin:1mm 0 3mm;text-align:center;break-inside:avoid}figure img{max-width:100%;border:.25mm solid #E6DFF0;border-radius:1.5mm}
+figcaption{font-size:8pt;color:#6B5A86;margin-top:1mm}
+.side{display:grid;grid-template-columns:1fr 72mm;gap:5mm;align-items:start}
+.side figure{margin:0}
+.god{display:flex;align-items:center;gap:2mm}.god img{width:8mm;height:8mm}
+.tip{background:#EEF6F7;border:.3mm solid #CBE6E9;border-radius:1.5mm;padding:2mm 3.5mm;margin:1mm 0 3mm;break-inside:avoid}
+.toc{columns:2;column-gap:6mm;margin:0;padding-left:5mm}
+.keep{break-inside:avoid}
 </style></head><body>
 
-<div class="cover">
-  <img class="logo" src="../logo-light.png" alt="SpinMate">
-  <h1>User Guide</h1>
-  <p>An AI agent for spintronics simulation. Describe a setup in plain language or upload a parameter file; SpinMate
-  validates it, runs the two-sublattice macrospin model and explains the result from the actual magnetization dynamics.</p>
-  <div class="meta">Version 1.0 · Free and open source (MIT) · github.com/Michaellianeris/sublattice-agent</div>
-  <div class="bar"></div>
+<div class="head">
+  <img src="../logo-light.png" alt="SpinMate">
+  <div class="t"><h1>User Guide</h1><div class="sub">Version 1.0 · free and open source (MIT) · github.com/Michaellianeris/sublattice-agent</div></div>
 </div>
 
-<section>
-<h2>Contents</h2>
-<ol class="toc">
-<li>Getting started</li><li>Asking for a simulation</li><li>Reading a run card</li><li>Fast and Deep</li>
-<li>Models and the guide</li><li>Sweeps, threshold searches and continuing runs</li>
-<li>Comparing runs, figures and reports</li><li>The Runs panel and questions across runs</li>
-<li>Settings, cost and conversations</li><li>Parameter reference</li><li>Troubleshooting</li>
-</ol>
-</section>
+<p class="lead"><b>An AI agent for spintronics simulation.</b> Describe the setup in plain language or provide a parameter
+file. SpinMate validates the input with the solver's own parser, runs two-sublattice macrospin simulations, and explains the
+results from the actual magnetization dynamics, with figures and reports ready to share.</p>
 
-<section>
-<h2>1. Getting started</h2>
-<ol>
-<li><b>Start the app.</b> With Docker: <code>docker compose up -d</code>, then open <code>http://localhost:8421</code>.
-On Windows you can also run <code>SpinMate.exe</code>, which opens the app in your browser.</li>
-<li><b>Meet Athena.</b> The first time, Athena (the owl) asks for your name and email. The email creates your account
-and brings you this guide; you can skip it.</li>
-<li><b>Add an API key.</b> Open Settings (gear icon) and paste an Anthropic and/or OpenAI key. A key in the page stays in
-that browser tab; a key in <code>.env</code> is used by the server for everyone on it.</li>
-<li><b>Ask.</b> Type a request in the message box and press Enter, or pick one of the cards under <i>Find a skill</i>.</li>
-</ol>
-<div class="tip">The simulator also works without a key: the play icon in the left bar (<i>Run setup</i>) runs a
-preset or your own parameter file directly. Only the chat needs a model.</div>
-</section>
+<div class="grid2">
+<div class="box"><h3>At a glance</h3><ul>
+<li>Chat-driven runs, sweeps and threshold searches on the original macrospin (LLG) code, unchanged</li>
+<li>Answers grounded in computed metrics: switches, settling, frequencies</li>
+<li>Claude and OpenAI behind four personas, chosen per request by capability and price</li>
+<li>Figures (IEEE, Nature), reports with LaTeX math, a searchable run catalog</li>
+<li>Runs locally: Docker or a Windows app; your keys, your data</li></ul></div>
+<div class="box"><h3>Contents</h3><ol class="toc">
+<li>Getting started</li><li>Your first simulation</li><li>Reading a run card</li><li>Fast, Deep and next steps</li>
+<li>Models and personas</li><li>The tools</li><li>Architecture</li><li>Sweeps and continuing runs</li>
+<li>Compare, figures, reports</li><li>Runs panel and catalog</li><li>Settings and conversations</li>
+<li>Data, privacy and security</li><li>Configuration</li><li>Parameters</li><li>Troubleshooting</li></ol></div>
+</div>
 
-<section class="new">
-<h2>2. Asking for a simulation</h2>
-<p>Describe the starting state, the exchange, any field, current or temperature, and the duration. Units follow the solver
-(SI; currents in A/cm²). Examples:</p>
-<div class="ask">Start antiferromagnetic with a positive exchange A0 = 0.248e-12, no current, 50 ps. Does it end ferromagnetic?</div>
-<div class="ask">Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937) and A0 = -0.248e-12, 50 ps.</div>
+<h2><span class="n">1</span>Getting started</h2>
+<div class="grid2">
+<div><h3>Docker (Linux, macOS, Windows/WSL)</h3>
+<pre>cp .env.example .env      # add ANTHROPIC_API_KEY and/or OPENAI_API_KEY
+docker compose up -d      # then open http://localhost:8421</pre>
+<h3>Windows desktop app</h3>
+<p>Run <code>SpinMate.exe</code>; it starts the server and opens the browser. Runs are kept in
+<code>%LOCALAPPDATA%\SpinMate\data</code> and the catalog is SQLite.</p></div>
+<div><h3>First start</h3><ol>
+<li><b>Athena</b>, the owl, asks your name and, optionally, your email. The email creates an account and, if a mail
+server is set up, brings this guide as a welcome email; otherwise she gives you the download link.</li>
+<li><b>API key:</b> Settings (gear) → paste an Anthropic and/or OpenAI key. A pasted key stays in that browser tab;
+a key in <code>.env</code> serves everyone on the server.</li>
+<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i>.</li></ol>
+<div class="tip">No key? <i>Run setup</i> (play icon) runs a preset or your parameter file directly; only the chat needs a model.</div></div>
+</div>
+
+<h2><span class="n">2</span>Your first simulation</h2>
+<div class="side">
+<div>
+<p>Describe the starting state, exchange, fields, current or temperature, and the duration (SI units, currents in A/cm²).</p>
+<div class="ask">Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937), A0 = −0.248e-12, 50 ps. Does it become antiferromagnetic?</div>
+<div class="ask">Start antiferromagnetic with a positive exchange A0 = 0.248e-12, 120 ps. Does it end ferromagnetic?</div>
 <div class="ask">Apply a DC spin-orbit current of 100e6 A/cm² for 2 ns to the default AFM state. What happens?</div>
 <div class="ask">Heat a FeRh layer through its transition: positive A0, 370 K ± 60 K at 0.25 GHz, 2 ns.</div>
-<p>SpinMate checks the parameters with the solver's own parser before anything runs. A suspicious value (for example
-<code>A0 = 0.248</code> without the <code>e-12</code>) is pointed out instead of being run. Large requests
-(many runs or long runtimes) wait for your <b>Run it</b> button.</p>
-<figure><img src="../screenshot.png" style="width:150mm"><figcaption>A request in plain language, the run card and the answer with suggested next steps.</figcaption></figure>
-</section>
+<p>The parameters are checked with the solver's own parser before anything runs; a suspicious value (for example
+<code>A0 = 0.248</code> without <code>e-12</code>) is pointed out instead of run. Large requests (many runs or long
+runtimes) wait for your <b>Run it</b> button. The answer ends with suggested next steps as buttons.</p>
+<h3>What happens behind one question</h3>
+<ol><li>The router picks a model for the persona and the request.</li>
+<li>The model calls <code>validate_parameters</code>, then <code>start_simulation</code>.</li>
+<li>The run queue starts the solver in its own process; the card shows live progress.</li>
+<li><code>wait_for_run</code> returns the summary metrics; the model writes the answer from them.</li></ol>
+</div>
+<figure><img src="../screenshot.png"><figcaption>Question, run card and answer with next steps.</figcaption></figure>
+</div>
 
-<section class="new">
-<h2>3. Reading a run card</h2>
+<h2><span class="n">3</span>Reading a run card</h2>
 <table>
-<tr><th>Field</th><th>Meaning</th></tr>
-<tr><td>order</td><td>Initial and final order from m₁·m₂: AFM below −0.9, FM above +0.9.</td></tr>
-<tr><td>m₁, m₂ final, Néel vector</td><td>Final unit vectors and n = (m₁ − m₂)/2.</td></tr>
-<tr><td>n<sub>z</sub> switches</td><td>Real reversals of n<sub>z</sub> (from below −0.5 to above +0.5 or back), with the time of the first one. Ringing around zero is not counted.</td></tr>
-<tr><td>settled after</td><td>When m₁ and m₂ stop changing (within 2 %). “–” if they did not settle in the run.</td></tr>
-<tr><td>dominant f</td><td>Main frequency of m₁ₓ, given only if at least five periods fit in the second half of the run.</td></tr>
+<tr><th style="width:30mm">Field</th><th>Meaning</th></tr>
+<tr><td>order</td><td>Initial and final order from m₁·m₂: AFM below −0.9, FM above +0.9, otherwise canted.</td></tr>
+<tr><td>m₁, m₂, Néel final</td><td>Final unit vectors and the Néel vector n = (m₁ − m₂)/2.</td></tr>
+<tr><td>n<sub>z</sub> switches</td><td>Real reversals of n<sub>z</sub> (from below −0.5 to above +0.5 or back) and the time of the first; ringing around zero is not counted.</td></tr>
+<tr><td>settled after</td><td>When m₁ and m₂ stop changing within 2 %; “–” if they did not settle within the run.</td></tr>
+<tr><td>dominant f</td><td>Main frequency of m₁ₓ, reported only if at least five periods fit in the second half of the run.</td></tr>
 </table>
-<p>The <b>sphere</b> shows the trajectories of m₁ (blue) and m₂ (magenta) in 3D, or as an x–z dial. The <b>chart</b>
-shows m₁, m₂, z-components only, or the Néel vector; drag to zoom, double-click to reset, click to move the playhead.
-<b>Play</b> animates the run. The card also links the raw files, CSV export and a zip of all data.</p>
-</section>
+<p>The <b>sphere</b> shows the trajectories of m₁ (blue) and m₂ (magenta) in 3D or as an x–z dial. The <b>chart</b> shows m₁/m₂,
+z-components only, or the Néel vector: drag to zoom, double-click to reset, click to move the playhead; <b>Play</b> animates the
+run. The card links the raw files and exports CSV or a zip of all data.</p>
 
-<section>
-<h2>4. Fast and Deep</h2>
-<p><b>Fast</b> uses the default parameters, changes only what you name and answers in a few lines.
-<b>Deep</b> works from the full parameter set or your file, mentions the caveats that apply and gives a quantitative
-explanation. Both end with up to three suggested next steps as buttons.</p>
-</section>
+<h2><span class="n">4</span>Fast, Deep and next steps</h2>
+<p><b>Fast</b> uses the default parameters, changes only what you name and answers in a few lines. <b>Deep</b> works from the full
+parameter set or your file, states the caveats that apply and gives a quantitative explanation. Both end with up to three
+suggested follow-ups. Requests estimated above <code>CONFIRM_MINUTES</code> or <code>CONFIRM_RUNS</code> pause for <b>Run it</b>.</p>
 
-<section class="new">
-<h2>5. Models and the guide</h2>
-<p>Under the message box you pick a persona, not a model. On <i>Auto</i> each request is scored on capability against
-price across your Claude and OpenAI keys; the strongest model of the persona wins unless a cheaper one is clearly
-enough. Every answer shows the model, the reason and the cost in €. To always use one model, pick it in
-Settings → <i>Model behind each god</i>.</p>
-<figure><img src="../personas.png" style="width:165mm"></figure>
-</section>
+<h2><span class="n">5</span>Models and personas</h2>
+<p>Under the message box you pick a persona, not a model. Each persona groups models of one level from both providers.</p>
+<table>
+<tr><th style="width:36mm">Persona</th><th>Best for</th><th style="width:48mm">Typical models</th></tr>
+<tr><td><div class="god"><img src="../../web/gods/hermes.png"><b>Hermes</b></div></td><td>Single runs, presets, short answers</td><td>Claude Haiku · GPT nano / mini</td></tr>
+<tr><td><div class="god"><img src="../../web/gods/dionysus.png"><b>Dionysus</b> (default)</div></td><td>Everyday runs with a clear explanation, sweeps, comparisons</td><td>Claude Sonnet · GPT-5.x</td></tr>
+<tr><td><div class="god"><img src="../../web/gods/zeus.png"><b>Zeus</b></div></td><td>Deep mode, goal searches, careful curve reading, reports</td><td>Claude Opus · OpenAI o-series</td></tr>
+<tr><td><div class="god"><img src="../../web/gods/apollo.png"><b>Apollo</b></div></td><td>New or special models as they appear</td><td>Claude Fable / Mythos · new models</td></tr>
+<tr><td><div class="god"><img src="../../web/athena.png"><b>Athena</b></div></td><td>The how-to guide: where things are, what buttons do</td><td>Selected provider · built-in answers offline</td></tr>
+</table>
+<h3>How the model is chosen</h3>
+<p>On <i>Auto</i> each request is scored for every model of the persona whose key is present:</p>
+<pre>score = capability + bonus(strongest of the persona) − λ(persona, request) × log₁₀(price / cheapest) − shortfall</pre>
+<p>Capability comes from the model family and generation; price from list prices; λ is largest for Hermes and smallest for Zeus
+and shrinks for demanding requests (Deep mode, sweeps, comparisons, reports, long messages). So the strongest model wins unless
+a cheaper one is clearly enough. There is no fixed provider order; on an API error the next model by score is used. Pro models
+run only when pinned (Settings → <i>Model behind each god</i>). Every answer shows the model, the reason and the cost in €,
+converted with the daily ECB reference rate.</p>
 
-<section>
-<h2>6. Sweeps, threshold searches and continuing runs</h2>
+<h2><span class="n">6</span>The tools</h2>
+<table>
+<tr><th style="width:30mm">Group</th><th>Tools</th></tr>
+<tr><td>Inputs</td><td><code>list_input_files</code>, <code>read_input_file</code>, <code>save_input_file</code>, <code>validate_parameters</code></td></tr>
+<tr><td>Runs</td><td><code>start_simulation</code>, <code>wait_for_run</code>, <code>get_run</code>, <code>list_runs</code>, <code>cancel_run</code></td></tr>
+<tr><td>Sweeps</td><td><code>start_sweep</code>, <code>wait_for_sweep</code>, <code>get_sweep</code></td></tr>
+<tr><td>Continuation</td><td><code>continue_run</code>, <code>combine_runs</code></td></tr>
+<tr><td>Analysis &amp; output</td><td><code>compare_runs</code>, <code>make_figure</code>, <code>make_report</code>, <code>query_runs</code> (SQL on the catalog)</td></tr>
+</table>
+
+<h2><span class="n">7</span>Architecture</h2>
+<figure><img src="../architecture.png" style="width:92%"></figure>
+<table>
+<tr><th style="width:34mm">Component</th><th>Role</th></tr>
+<tr><td>Browser (<code>web/index.html</code>)</td><td>Chat, run cards, sphere and charts, Runs panel, figure and report cards, voice input. Conversations are kept in the browser.</td></tr>
+<tr><td>FastAPI server (<code>app/server.py</code>)</td><td>REST endpoints for runs, sweeps, figures, reports, accounts, transcription; streams the agent's events to the page.</td></tr>
+<tr><td>Agent loop (<code>app/agent.py</code>)</td><td>Provider-neutral tool loop for Claude and OpenAI, with prompt caching, token budget and cost accounting.</td></tr>
+<tr><td>Model router (<code>app/router.py</code>)</td><td>Scores the persona's models on capability and price for each request.</td></tr>
+<tr><td>Tools (<code>app/tools.py</code>)</td><td>18 tools the model can call (section 6); large requests return a confirmation instead of starting.</td></tr>
+<tr><td>Run queue (<code>app/simulations.py</code>)</td><td>Parallel workers, sweeps, continuation and combination of runs, summaries.</td></tr>
+<tr><td>Runner (<code>app/runner.py</code>)</td><td>Runs the original <code>macrospin/</code> code in its own process and computes the metrics of the run card.</td></tr>
+<tr><td>Run catalog (<code>app/catalog.py</code>)</td><td>Postgres in Docker, SQLite in the desktop app: one row per run, queried with read-only SQL.</td></tr>
+<tr><td>Figures, reports</td><td>matplotlib/SciencePlots figures; HTML/PDF reports with MathML math and a Markdown zip.</td></tr>
+<tr><td>Data volume</td><td><code>/data</code>: runs, sweeps, figures, reports, accounts, exchange-rate cache.</td></tr>
+</table>
+
+<h2><span class="n">8</span>Sweeps, threshold searches and continuing runs</h2>
 <ul>
 <li><b>Sweep:</b> “Sweep A0 from −0.25e-12 to +0.25e-12 in 11 steps, 0.5 ns each.” Runs go in parallel; the card shows a table and an overlay.</li>
-<li><b>Threshold search:</b> “Find the smallest SOT current between 50e6 and 150e6 A/cm² that makes the Néel vector rotate.” SpinMate brackets the threshold with a few rounds of sweeps and reports the interval.</li>
-<li><b>Continue a run:</b> “Continue r0003 for another 0.5 ns.” Time does not restart; <i>combine</i> joins the segments into one curve.</li>
+<li><b>Threshold search:</b> “Find the smallest SOT current between 50e6 and 150e6 A/cm² that makes the Néel vector rotate.” A few rounds of bracketing sweeps narrow the interval.</li>
+<li><b>Continue:</b> “Continue r0003 for another 0.5 ns.” Time does not restart; <i>combine</i> joins the segments into one curve.</li>
 </ul>
-</section>
 
-<section class="new">
-<h2>7. Comparing runs, figures and reports</h2>
+<h2><span class="n">9</span>Comparing runs, figures and reports</h2>
 <ul>
-<li><b>Compare:</b> “Compare r0003 and r0005.” Lists the parameters that differ and overlays the curves.</li>
-<li><b>Figures:</b> “Make an IEEE figure of n<sub>z</sub> for r0001 and r0003, first 60 ps.” Styles: science, IEEE, Nature. The figure appears in the chat with PDF, SVG and PNG downloads, and <i>Change…</i> to adjust it.</li>
-<li><b>Reports:</b> “Write a short report of these runs with your interpretation.” The report has the SpinMate header, method,
-results table, parameters, figures and appendix, with LaTeX math. Print it to PDF or download the Markdown version.</li>
+<li><b>Compare:</b> lists the parameters that differ and overlays the curves.</li>
+<li><b>Figures:</b> “Make an IEEE figure of n<sub>z</sub> for r0001 and r0003, first 60 ps.” Styles science, IEEE, Nature; PDF, SVG and PNG downloads; <i>Change…</i> to adjust.</li>
+<li><b>Reports:</b> SpinMate header, method, results, parameters, figures and appendix, with LaTeX math; print to PDF or download the Markdown version.</li>
 </ul>
-<h2 style="margin-top:6mm">8. The Runs panel and questions across runs</h2>
-<p>The list icon in the left bar opens every run: search by id, label, #tag or parameter, filter by status and end state,
-star and tag runs, select several to compare, plot or report, or delete them. With the run catalog enabled, the
-assistant answers questions across runs with one read-only SQL query:</p>
+
+<h2><span class="n">10</span>The Runs panel and questions across runs</h2>
+<p>The list icon opens every run: search by id, label, #tag or parameter; filter by status and end state; star and tag; select several
+to compare, plot, report or delete. With the catalog the assistant answers questions across runs in one read-only query:</p>
 <div class="ask">Make me a table of all finished runs: id, A0, initial and final order, first n_z switch in ps.</div>
-</section>
 
-<section>
-<h2>9. Settings, cost and conversations</h2>
+<h2><span class="n">11</span>Settings and conversations</h2>
 <ul>
-<li><b>Theme:</b> Spin (default), Light or Dark in Settings.</li>
-<li><b>Default parameters:</b> saved per user and used as the base of every run.</li>
-<li><b>Cost:</b> the counter next to the mode buttons shows tokens and the estimated cost in €, converted with the daily ECB rate.</li>
-<li><b>Conversations:</b> the clock icon lists your chats; select several or all and delete them. Runs are kept.</li>
+<li><b>Theme:</b> Spin (default), Light or Dark. <b>Default parameters:</b> saved per user and used as the base of every run.</li>
+<li><b>Cost:</b> tokens and the estimated € next to the mode buttons; hover for the exchange rate.</li>
+<li><b>Conversations:</b> the clock icon lists your chats; select one, several or all and delete them (runs are kept).</li>
 <li><b>Voice:</b> the microphone records a request; the arrow next to it chooses the microphone and language.</li>
 </ul>
-</section>
 
-<section class="new">
-<h2>10. Parameter reference (most used)</h2>
+<h2><span class="n">12</span>Data, privacy and security</h2>
+<ul>
+<li>The app listens on this computer only (<code>BIND_ADDRESS=127.0.0.1</code>). There is no password; expose it only behind a proxy with real authentication.</li>
+<li>API keys stay in <code>.env</code> (never committed) or in the browser tab. Calls are billed to your own provider account; set <code>TOKEN_BUDGET</code> and a monthly limit in the provider console.</li>
+<li>Accounts (name and email) are stored only in <code>/data/accounts.json</code> on your machine; nothing is sent to the authors.</li>
+<li>The assistant reads the catalog with read-only SQL and a timeout, and starts runs only through the solver's parser.</li>
+</ul>
+
+<h2><span class="n">13</span>Configuration (<code>.env</code>)</h2>
 <table>
-<tr><th>Parameter</th><th>Meaning</th><th>Example</th></tr>
-<tr><td><code>--t</code></td><td>Duration (s)</td><td><code>--t=5e-11</code></td></tr>
-<tr><td><code>--A0</code></td><td>Inter-sublattice exchange (J/m); negative = AFM coupling</td><td><code>--A0=-0.248e-12</code></td></tr>
-<tr><td><code>--m1</code>, <code>--m2</code></td><td>Initial unit vectors</td><td><code>--m1=0.25,0.0,0.968</code></td></tr>
-<tr><td><code>--SOT_DC_Amp</code></td><td>DC spin-orbit current (A/cm²)</td><td><code>--SOT_DC_Amp=1e8</code></td></tr>
-<tr><td><code>--flagTempVarying</code>, <code>--Temp</code>, <code>--Fr</code></td><td>FeRh temperature cycle: on/off, amplitude (K), frequency (Hz)</td><td><code>--Temp=60 --Fr=0.25e9</code></td></tr>
+<tr><th style="width:52mm">Variable</th><th>Purpose</th></tr>
+<tr><td><code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code></td><td>Server-side keys (optional; can be pasted in Settings)</td></tr>
+<tr><td><code>HOST_PORT</code>, <code>BIND_ADDRESS</code></td><td>Port (8421) and who may open the app (127.0.0.1)</td></tr>
+<tr><td><code>TOKEN_BUDGET</code></td><td>Token limit per server session</td></tr>
+<tr><td><code>CONFIRM_MINUTES</code>, <code>CONFIRM_RUNS</code></td><td>When a request waits for <b>Run it</b></td></tr>
+<tr><td><code>MAX_PARALLEL</code>, <code>MAX_SWEEP_RUNS</code></td><td>Parallel runs and the largest sweep</td></tr>
+<tr><td><code>DATABASE_URL</code>, <code>POSTGRES_PASSWORD</code></td><td>Run catalog; empty URL switches it off</td></tr>
+<tr><td><code>EUR_PER_USD</code>, <code>PRICES_JSON</code></td><td>Fixed exchange rate (default: daily ECB) and price overrides</td></tr>
+<tr><td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code>, <code>SMTP_FROM</code></td><td>Mail server for the optional welcome email (Gmail: smtp.gmail.com, 587, App Password)</td></tr>
+<tr><td><code>SSL_CERT_FILE</code></td><td>Company CA bundle behind a corporate proxy</td></tr>
 </table>
-<p>A parameter file is plain text with one <code>--name=value</code> per line; attach it with the paper clip. Ask Athena
-or the assistant “Which parameters can I set?” for the full list with units.</p>
-<pre>--t=2e-9
+
+<h2><span class="n">14</span>Parameters (most used)</h2>
+<div class="grid2">
+<table>
+<tr><th>Parameter</th><th>Meaning</th></tr>
+<tr><td><code>--t</code></td><td>Duration (s)</td></tr>
+<tr><td><code>--A0</code></td><td>Inter-sublattice exchange (J/m); negative couples antiparallel</td></tr>
+<tr><td><code>--m1</code>, <code>--m2</code></td><td>Initial unit vectors</td></tr>
+<tr><td><code>--SOT_DC_Amp</code>, <code>--SOT_pol</code></td><td>DC spin-orbit current (A/cm²) and its polarisation</td></tr>
+<tr><td><code>--flagTempVarying</code>, <code>--Temp</code>, <code>--Fr</code></td><td>FeRh temperature cycle: on, amplitude (K), frequency (Hz)</td></tr>
+</table>
+<div><p>A parameter file is plain text, one <code>--name=value</code> per line; attach it with the paper clip. Ask “Which parameters can I set?” for the full list with units. Examples are in <code>examples/</code>.</p>
+<pre>--t=5e-11
 --A0=-0.248e-12
 --m1=0.25,0.0,0.968
---m2=0.35,0.0,0.937</pre>
-</section>
+--m2=0.35,0.0,0.937</pre></div>
+</div>
 
-<section>
-<h2>11. Troubleshooting</h2>
+<h2><span class="n">15</span>Troubleshooting</h2>
 <table>
-<tr><th>Symptom</th><th>What to do</th></tr>
-<tr><td>“Add an API key”</td><td>Paste a key in Settings, or set it in <code>.env</code> and restart.</td></tr>
-<tr><td>No answer, 401/429 errors</td><td>Check the key and the credit of the provider; on Auto the next model by score is tried.</td></tr>
-<tr><td>Page does not open from another computer</td><td>By design the app listens on this computer only (<code>BIND_ADDRESS=127.0.0.1</code>).</td></tr>
-<tr><td>Behind a corporate proxy</td><td>Put the company CA bundle in <code>./certs</code> and set <code>SSL_CERT_FILE</code> (see README).</td></tr>
-<tr><td>Microphone not listed</td><td>Allow the microphone in the browser once; open the app on localhost or https.</td></tr>
+<tr><th style="width:52mm">Symptom</th><th>What to do</th></tr>
+<tr><td>“Add an API key”</td><td>Paste a key in Settings, or set it in <code>.env</code> and run <code>docker compose up -d --force-recreate</code>.</td></tr>
+<tr><td>No answer, 401 / 429 errors</td><td>Check the key and the provider credit; on Auto the next model by score is tried.</td></tr>
+<tr><td>New features do not appear</td><td><code>git pull</code>, <code>docker compose up --build -d --force-recreate</code>, then Ctrl+Shift+R in the browser.</td></tr>
+<tr><td>No welcome email</td><td>Check <code>SMTP_*</code> in <code>.env</code>; <code>/api/config</code> must show <code>"email":true</code>. The guide is always at <code>/api/guide.pdf</code>.</td></tr>
+<tr><td>Page does not open from another computer</td><td>By design; see <code>BIND_ADDRESS</code> and section 12.</td></tr>
+<tr><td>Microphone not listed</td><td>Allow the microphone once; open the app on localhost or https.</td></tr>
 </table>
-<p>More in the README on GitHub. Feedback and issues are welcome.</p>
-</section>
+<p>More in the README on GitHub. Issues and feedback are welcome.</p>
 </body></html>
