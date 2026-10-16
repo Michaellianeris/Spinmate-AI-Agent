@@ -84,8 +84,8 @@ def welcome_message(name, email, app_url="http://localhost:8421"):
                     f"Open the app: {app_url}\n")
     msg.add_alternative(welcome_html(name, app_url), subtype="html")
     if LOGO.exists():
-        msg.get_payload()[1].add_related(LOGO.read_bytes(), "image", "png", cid="<spinmate-logo>",
-                                         filename="spinmate-logo.png", disposition="inline")
+        # no filename: Gmail then shows the logo only in the body, not as an attachment chip
+        msg.get_payload()[1].add_related(LOGO.read_bytes(), "image", "png", cid="<spinmate-logo>")
     if GUIDE.exists():
         msg.add_attachment(GUIDE.read_bytes(), maintype="application", subtype="pdf", filename="SpinMate-User-Guide.pdf")
     return msg
@@ -133,9 +133,10 @@ def create_account(name, email, app_url="http://localhost:8421"):
         mode, detail = deliver(welcome_message(name, email, app_url))
     except (smtplib.SMTPException, OSError) as e:
         return {"ok": True, "sent": False, "mode": "error", "message": f"The account is saved, but the email could not be sent: {e}"}
-    with _lock:
-        accounts = _load()
-        accounts[key]["welcome_sent"] = time.time()
-        ACCOUNTS.write_text(json.dumps(accounts, indent=1))
+    if mode == "smtp":                         # an outbox copy does not count as sent
+        with _lock:
+            accounts = _load()
+            accounts[key]["welcome_sent"] = time.time()
+            ACCOUNTS.write_text(json.dumps(accounts, indent=1))
     return {"ok": True, "sent": mode == "smtp", "mode": mode,
-            "message": "Welcome email sent." if mode == "smtp" else "Email is not configured on this server; the welcome email was saved to the outbox."}
+            "message": "Welcome email sent." if mode == "smtp" else "No mail server is set up, so no email was sent."}
