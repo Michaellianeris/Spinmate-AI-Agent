@@ -2088,7 +2088,7 @@ async function guideAsk(q) {
     try { localStorage.setItem("sublattice.name", v); } catch {}
     guide.awaitName = false; guide.awaitEmail = true; onLogin();
     $("#guideinput").placeholder = "you@example.com";
-    guideAdd("bot", `Nice to meet you, ${v}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide${state.config && state.config.presentation ? " and the presentation" : ""}. Or press Skip for now: you get them here either way.`);
+    guideAdd("bot", `Nice to meet you, ${v}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide${state.config && state.config.presentation ? " and the presentation" : ""}. Your email is used only for this welcome email. Or press Skip for now: you get them here either way.`);
     guideSkip(); return;
   }
   if (guide.awaitEmail) return guideEmail(q);

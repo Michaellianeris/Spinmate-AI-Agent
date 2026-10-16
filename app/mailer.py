@@ -1,8 +1,9 @@
 """Accounts and the welcome email: logo, a greeting with the user's name and the PDF user guide.
 
-With GMAIL_REFRESH_TOKEN set the email goes out through the Gmail API over HTTPS (for networks that block
-SMTP). Else, with SMTP_HOST set, over SMTP (STARTTLS on 587, SSL on 465). Without either it is written to
-WORKSPACE/outbox/*.eml, so the flow can be tried without a mail server.
+Order: GMAIL_REFRESH_TOKEN set -> Gmail API over HTTPS; SMTP_HOST set -> SMTP (STARTTLS on 587, SSL on 465);
+otherwise the SpinMate mail relay (relay/Code.gs, HTTPS, sends from the project's address with both PDFs), so a
+fresh install needs no mail settings. MAIL_RELAY=off turns the relay off; then the email is written to
+WORKSPACE/outbox/*.eml.
 """
 import html
 import json
@@ -23,6 +24,9 @@ from . import simulations as S
 WEB = S.REPO / "web"
 LOGO = WEB / "spinmate-lockup.png"
 GUIDE = WEB / "spinmate-guide.pdf"
+TEMPLATE = WEB / "welcome-email.html"
+# the project's mail relay (relay/Code.gs, a Google Apps Script web app); MAIL_RELAY=<url> or MAIL_RELAY=off overrides
+RELAY_DEFAULT = ""
 PRESENTATION = WEB / "spinmate-presentation.pdf"   # optional: attached and linked when present
 ACCOUNTS = S.WORKSPACE / "accounts.json"
 OUTBOX = S.WORKSPACE / "outbox"
@@ -50,8 +54,31 @@ def gmail_settings():
             "client_secret": os.environ.get("GMAIL_CLIENT_SECRET", "").strip(), "refresh_token": token}
 
 
+def relay_url():
+    v = os.environ.get("MAIL_RELAY", "").strip()
+    if v.lower() in ("off", "0", "false", "no"):
+        return None
+    return v or RELAY_DEFAULT or None
+
+
 def mail_enabled():
-    return bool(gmail_settings() or smtp_settings())
+    return bool(gmail_settings() or smtp_settings() or relay_url())
+
+
+def relay_send(name, email, app_url):
+    """Asks the SpinMate mail relay to send the welcome email. Only the name and the address leave this computer."""
+    req = urllib.request.Request(relay_url(), json.dumps({"name": name, "email": email, "app_url": app_url}).encode(),
+                                 {"Content-Type": "application/json"})
+    try:                                          # Apps Script answers through a redirect, which urllib follows
+        with urllib.request.urlopen(req, timeout=60, context=ssl.create_default_context()) as r:
+            out = json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        raise OSError(f"mail relay {e.code}") from None
+    except ValueError:
+        raise OSError("mail relay gave an unexpected answer") from None
+    if not out.get("ok"):
+        raise OSError(out.get("error") or "mail relay refused the request")
+    return "relay"
 
 
 def sender_address():
@@ -96,29 +123,12 @@ def attached():
 
 
 def welcome_html(name, app_url):
-    n = html.escape(name)
-    return f"""<!doctype html><html><body style="margin:0;background:#F8F4FB;font-family:Inter,Segoe UI,Arial,sans-serif;color:#1A1530">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8F4FB;padding:28px 0"><tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #E6DFF0;border-radius:16px;overflow:hidden">
-<tr><td style="height:6px;background:#8A3FB5;background:linear-gradient(90deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></td></tr>
-<tr><td style="padding:30px 36px 8px"><img src="cid:spinmate-logo" alt="SpinMate" width="230" style="display:block;width:230px;height:auto"></td></tr>
-<tr><td style="padding:14px 36px 0"><h1 style="margin:0;font-size:24px;line-height:1.3">Welcome to SpinMate, {n}!</h1></td></tr>
-<tr><td style="padding:12px 36px 0;font-size:15px;line-height:1.6;color:#2A2140">
-<p style="margin:0 0 12px">Your account is ready. SpinMate is an AI agent for spintronics simulation: describe a setup in plain
-language or upload a parameter file, and it validates the input, runs the two-sublattice macrospin model and explains
-the result from the actual magnetization dynamics.</p>
-<p style="margin:0 0 6px"><b>Three things to try first</b></p>
-<ul style="margin:0 0 14px;padding-left:20px">
-<li>Start antiferromagnetic with a positive exchange A0 = 0.248e-12, 50 ps. Does it end ferromagnetic?</li>
-<li>Sweep A0 from &minus;0.25e-12 to +0.25e-12 and tell me where the final order changes.</li>
-<li>Make an IEEE figure of n<sub>z</sub> for my last two runs.</li></ul>
-<p style="margin:0 0 18px">{attached()}. Athena, the owl in the corner of the app, answers questions about
-using it at any time.</p></td></tr>
-<tr><td style="padding:0 36px 28px"><a href="{html.escape(app_url)}" style="display:inline-block;background:#8A3FB5;color:#ffffff;text-decoration:none;
-font-weight:600;font-size:15px;padding:11px 22px;border-radius:999px">Open SpinMate</a></td></tr>
-<tr><td style="padding:16px 36px;border-top:1px solid #EEE7F5;font-size:12px;color:#6B5A86">You receive this email because an account
-was created with this address in SpinMate. Free and open source under the MIT license.</td></tr>
-</table></td></tr></table></body></html>"""
+    """The welcome email from web/welcome-email.html (the mail relay uses the same file)."""
+    text = TEMPLATE.read_text()
+    if text.startswith("<!--"):                   # drop the note at the top of the file
+        text = text.split("-->", 1)[1].lstrip()
+    return (text.replace("{{name}}", html.escape(name)).replace("{{app_url}}", html.escape(app_url))
+            .replace("{{attached}}", attached()))
 
 
 def welcome_message(name, email, app_url="http://localhost:8421"):
@@ -182,10 +192,13 @@ def create_account(name, email, app_url="http://localhost:8421"):
     if recent:
         return {"ok": True, "sent": False, "mode": "skipped", "message": "A welcome email was sent to this address recently."}
     try:
-        mode, detail = deliver(welcome_message(name, email, app_url))
+        if not (gmail_settings() or smtp_settings()) and relay_url():
+            mode, detail = "relay", relay_send(name, email, app_url)
+        else:
+            mode, detail = deliver(welcome_message(name, email, app_url))
     except (smtplib.SMTPException, OSError) as e:
         return {"ok": True, "sent": False, "mode": "error", "message": f"The account is saved, but the email could not be sent: {e}"}
-    sent = mode in ("gmail", "smtp")           # an outbox copy does not count as sent
+    sent = mode in ("gmail", "smtp", "relay")  # an outbox copy does not count as sent
     if sent:
         with _lock:
             accounts = _load()
