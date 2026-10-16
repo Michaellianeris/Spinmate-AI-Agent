@@ -26,7 +26,7 @@ LOGO = WEB / "spinmate-lockup.png"
 GUIDE = WEB / "spinmate-guide.pdf"
 TEMPLATE = WEB / "welcome-email.html"
 # the project's mail relay (relay/Code.gs, a Google Apps Script web app); MAIL_RELAY=<url> or MAIL_RELAY=off overrides
-RELAY_DEFAULT = ""
+RELAY_DEFAULT = "https://script.google.com/macros/s/AKfycbyHp49s9YAdI8Qj9FiWj7zDt59FQyFltVmA_ar5PuBh6PvQDJiF2XYBWy1n2iLVJPhlAg/exec"
 PRESENTATION = WEB / "spinmate-presentation.pdf"   # optional: attached and linked when present
 ACCOUNTS = S.WORKSPACE / "accounts.json"
 OUTBOX = S.WORKSPACE / "outbox"
