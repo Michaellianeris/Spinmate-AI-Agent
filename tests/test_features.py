@@ -344,3 +344,41 @@ def test_account_welcome_email_gmail_api(monkeypatch, tmp_path):
     assert out["sent"] and out["mode"] == "gmail" and mailer.mail_enabled()
     assert calls[0][0] == "https://oauth2.googleapis.com/token" and b"grant_type=refresh_token" in calls[0][2]
     assert calls[1][0].startswith("https://gmail.googleapis.com/upload/") and calls[1][1] == "message/rfc822"
+
+
+def test_account_welcome_email_relay(monkeypatch, tmp_path):
+    import json as _json
+    from app import mailer
+    seen = {}
+
+    class Resp:
+        def __init__(self, data): self.data = data
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return _json.dumps(self.data).encode()
+
+    def fake_urlopen(req, timeout=None, context=None):
+        seen["url"], seen["body"] = req.full_url, _json.loads(req.data)
+        return Resp({"ok": True})
+
+    for k in ("SMTP_HOST", "GMAIL_REFRESH_TOKEN"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("MAIL_RELAY", "https://relay.example/exec")
+    monkeypatch.setattr(mailer.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts.json")
+    out = mailer.create_account("Anna", "anna@example.com", "http://localhost:8421")
+    assert out["sent"] and out["mode"] == "relay" and mailer.mail_enabled()
+    assert seen == {"url": "https://relay.example/exec",
+                    "body": {"name": "Anna", "email": "anna@example.com", "app_url": "http://localhost:8421"}}
+    monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts2.json")
+    monkeypatch.setattr(mailer.urllib.request, "urlopen", lambda *a, **k: Resp({"ok": False, "error": "daily limit reached"}))
+    bad = mailer.create_account("Bo", "bo@example.com")
+    assert bad["mode"] == "error" and "daily limit reached" in bad["message"]
+    monkeypatch.setenv("MAIL_RELAY", "off")
+    assert mailer.relay_url() is None
+
+
+def test_welcome_template_fills_placeholders():
+    from app import mailer
+    page = mailer.welcome_html("<Ann>", "http://localhost:8421")
+    assert page.startswith("<!doctype html>") and "{{" not in page and "&lt;Ann&gt;" in page

@@ -28,6 +28,7 @@ services:
       - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID:-}
       - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET:-}
       - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN:-}
+      - MAIL_RELAY=${MAIL_RELAY:-}
       - APP_URL=${APP_URL:-}
       - PRICES_JSON=${PRICES_JSON:-}
     volumes:
