@@ -6,14 +6,10 @@
 # SpinMate
 
 **An AI agent for spintronics simulation.** Describe the setup in plain language or provide a parameter
-file. SpinMate validates the input with the solver's own parser, runs two-sublattice macrospin (LLG)
-simulations and parameter sweeps for antiferromagnets, FeRh and exchange-coupled ferromagnets, and
+file. SpinMate validates the input with the solver's own parser, runs two-sublattice macrospin simulations, and
 explains the results from the actual magnetization dynamics, with figures and reports ready to share.
 
 <img src="docs/screenshot.png" alt="SpinMate: a run started from a plain-language question, with the 3D sphere, the n_z curves, the answer and the suggested next steps" width="900">
-
-The physics code in `macrospin/` is the original code and has not been modified. The repository is
-named `sublattice-agent`.
 
 ## Contents
 
