@@ -9,7 +9,10 @@
 file. SpinMate validates the input with the solver's own parser, runs two-sublattice macrospin simulations, and
 explains the results from the actual magnetization dynamics, with figures and reports ready to share.
 
-<img src="docs/screenshot.png" alt="SpinMate: a run started from a plain-language question, with the 3D sphere, the n_z curves, the answer and the suggested next steps" width="900">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/hero-dark.png">
+  <img src="docs/screenshots/hero-light.png" alt="SpinMate: a run started from a plain-language question, with the 3D sphere, the n_z curves, the answer and the suggested next steps" width="900">
+</picture>
 
 ## Contents
 
@@ -104,6 +107,8 @@ model behind it is picked from the Claude and OpenAI keys you have.
 <td>How to use the app: where results are, what Fast and Deep do, what a tool does</td><td>The selected provider, with built-in answers offline</td></tr>
 </table>
 
+<img src="docs/screenshots/personas.png" alt="Athena's welcome on the first visit, and the persona menu with the models each god picks from" width="820">
+
 **How the model is chosen.** On *Auto* (the default), every request is scored over all models of the chosen
 god from both providers: `capability + bonus for the god's strongest model − price weight × cost`, where the
 price weight depends on the god (Hermes cares most about price, Zeus least) and shrinks when the request is
@@ -134,6 +139,8 @@ chat history and default parameters in the browser.
 
 By default a run is deterministic: temperature 0 and no current. See the note on `SOT_DC_Amp` below.
 
+<img src="docs/screenshots/figures-report.png" alt="An IEEE-style figure of n_z for two runs, next to the PDF report with the method, the results table and the parameters" width="820">
+
 ## Simple scenarios to try
 
 All of these use `--t=2e-9`, no current and T = 0. The default initial state is antiferromagnetic
@@ -150,6 +157,8 @@ All of these use `--t=2e-9`, no current and T = 0. The default initial state is 
 The first four are not phase transitions in the thermodynamic sense: the exchange sign decides which
 alignment is the ground state, and the start state relaxes towards it. The FeRh case is driven by
 temperature through the model's own switching point.
+
+<img src="docs/screenshots/sweep.png" alt="An 11-point A0 sweep: mean |n_z| against A0, the final order of each run and the answer that the order changes between -0.05e-12 and 0" width="520">
 
 The `examples/` folder has a file for each scenario, plus a few driven cases:
 
@@ -182,6 +191,8 @@ Ask questions across runs in the chat, for example "a table of all finished runs
 the first switch" or "which FeRh runs ended FM". The assistant writes one SQL query (`query_runs`), the
 result appears as a table with **Export CSV**, and the SQL is shown under it. Queries are read-only: one
 `SELECT` per call, in a read-only transaction, with a time limit (`QUERY_TIMEOUT_MS`) and at most 500 rows.
+
+<img src="docs/screenshots/runs.png" alt="The Runs panel filtered to runs that end FM, with starred runs and a tag, next to a catalog query answered as a table" width="820">
 
 To look at the data yourself:
 
