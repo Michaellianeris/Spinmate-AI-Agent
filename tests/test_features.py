@@ -273,7 +273,7 @@ def test_account_welcome_email_outbox(http, monkeypatch, tmp_path):
     html = next(p for p in msg.walk() if p.get_content_type() == "text/html").get_payload(decode=True).decode()
     assert "Welcome to SpinMate, Michalis!" in html and "cid:spinmate-logo" in html
     again = http.post("/api/account", json={"name": "Michalis", "email": "michalis@example.com"}).json()
-    assert again["mode"] == "skipped"                                       # no second email within the hour
+    assert again["mode"] == "outbox"                                        # an outbox copy does not block a real send
     assert http.post("/api/account", json={"name": "M", "email": "not-an-email"}).status_code == 400
 
 
@@ -294,5 +294,6 @@ def test_account_welcome_email_smtp(monkeypatch, tmp_path):
     monkeypatch.setattr(mailer.smtplib, "SMTP", FakeSMTP)
     monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts.json")
     out = mailer.create_account("Anna", "anna@example.com")
+    assert mailer.create_account("Anna", "anna@example.com")["mode"] == "skipped"   # one real email per hour
     assert out["sent"] and sent == {"host": ("smtp.example.com", 587), "tls": True, "login": "bot@example.com",
                                     "to": "Anna <anna@example.com>"}

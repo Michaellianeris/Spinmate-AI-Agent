@@ -2071,7 +2071,8 @@ async function guideEmail(q) {
     try { localStorage.setItem("sublattice.email." + userSlug(), email); } catch {}
     wait.remove(); guide.busy = false;
     guideEmailDone(out.sent ? `Your account is ready! I've sent a welcome email to **${email}** with the user guide attached. Ask me anything, or pick a question:`
-      : `Your account is ready! ${out.message} You can also [download the user guide](/api/guide.pdf). Ask me anything, or pick a question:`);
+      : out.mode === "error" ? `Your account is ready, but the welcome email could not be sent. Here is your [user guide (PDF)](/api/guide.pdf). Ask me anything, or pick a question:`
+      : `Your account is ready! Here is your [user guide (PDF)](/api/guide.pdf). Ask me anything, or pick a question:`);
   } catch (e) {
     wait.remove(); guide.busy = false; guideAdd("bot", `I couldn't create the account: ${e.message}. Try again, or press Skip for now.`);
   }
