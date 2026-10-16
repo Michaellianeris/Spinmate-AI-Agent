@@ -143,6 +143,7 @@ def config():
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
             "catalog": catalog.status(), **fx.info(), "email": bool(mailer.smtp_settings()),
+            "presentation": mailer.PRESENTATION.exists(),
             "confirm": {"minutes": tools.CONFIRM_MINUTES, "runs": tools.CONFIRM_RUNS}}
 
 
@@ -242,7 +243,17 @@ def account(body: AccountIn, request: Request):
 def guide_pdf():
     if not mailer.GUIDE.exists():
         raise HTTPException(404, "guide not built")
-    return FileResponse(mailer.GUIDE, media_type="application/pdf", filename="SpinMate-User-Guide.pdf")
+    # inline and uncached: the browser always shows the current guide instead of an old download
+    return FileResponse(mailer.GUIDE, media_type="application/pdf", filename="SpinMate-User-Guide.pdf",
+                        content_disposition_type="inline", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/presentation.pdf")
+def presentation():
+    if not mailer.PRESENTATION.exists():
+        raise HTTPException(404, "presentation not added")
+    return FileResponse(mailer.PRESENTATION, media_type="application/pdf", filename="SpinMate-Presentation.pdf",
+                        content_disposition_type="inline", headers={"Cache-Control": "no-store"})
 
 
 # ---- voice input

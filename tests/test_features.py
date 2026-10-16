@@ -272,6 +272,7 @@ def test_account_welcome_email_outbox(http, monkeypatch, tmp_path):
     assert "image/png" in kinds and "application/pdf" in kinds and "text/html" in kinds
     html = next(p for p in msg.walk() if p.get_content_type() == "text/html").get_payload(decode=True).decode()
     assert "Welcome to SpinMate, Michalis!" in html and "cid:spinmate-logo" in html
+    assert http.get("/api/guide.pdf").headers["content-disposition"].startswith("inline")
     again = http.post("/api/account", json={"name": "Michalis", "email": "michalis@example.com"}).json()
     assert again["mode"] == "outbox"                                        # an outbox copy does not block a real send
     assert http.post("/api/account", json={"name": "M", "email": "not-an-email"}).status_code == 400
@@ -297,3 +298,22 @@ def test_account_welcome_email_smtp(monkeypatch, tmp_path):
     assert mailer.create_account("Anna", "anna@example.com")["mode"] == "skipped"   # one real email per hour
     assert out["sent"] and sent == {"host": ("smtp.example.com", 587), "tls": True, "login": "bot@example.com",
                                     "to": "Anna <anna@example.com>"}
+
+
+def test_presentation_attached_and_served(http, monkeypatch, tmp_path):
+    import email
+    from app import mailer
+    monkeypatch.delenv("SMTP_HOST", raising=False)
+    monkeypatch.setattr(mailer, "OUTBOX", tmp_path / "outbox")
+    monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts.json")
+    monkeypatch.setattr(mailer, "PRESENTATION", tmp_path / "missing.pdf")
+    assert http.get("/api/presentation.pdf").status_code == 404 and not http.get("/api/config").json()["presentation"]
+    deck = tmp_path / "deck.pdf"
+    deck.write_bytes(b"%PDF-1.7 fake deck")
+    monkeypatch.setattr(mailer, "PRESENTATION", deck)
+    assert http.get("/api/config").json()["presentation"]
+    assert http.get("/api/presentation.pdf").content.startswith(b"%PDF")
+    http.post("/api/account", json={"name": "Eva", "email": "eva@example.com"})
+    msg = email.message_from_bytes(next((tmp_path / "outbox").glob("*.eml")).read_bytes())
+    names = [p.get_filename() for p in msg.walk() if p.get_filename()]
+    assert names == ["SpinMate-User-Guide.pdf", "SpinMate-Presentation.pdf"]
