@@ -2018,11 +2018,13 @@ const GUIDE_FAQ = [
   [/graph|plot|zoom|play|viewer|γράφημα/i, "In the run card: click the plot to move the playhead, drag to zoom, double-click to reset, Play to animate. The toggles above the plot show or hide m1, m2 and the Néel vector."],
   [/cancel|stop|ακύρ/i, "Press Cancel run on the run card."],
   [/sweep|scan/i, "Ask for it in the main chat, for example: sweep A0 from -1e-12 to 1e-12 in 8 steps. The sweep chart appears in the chat."],
-  [/guide|manual|pdf|documentation|οδηγ/i, "The user guide is a PDF you can [download here](/api/guide.pdf). It is also attached to the welcome email you get when you create your account."],
+  [/guide|manual|pdf|documentation|present|slides|ppt|οδηγ|παρουσ/i, "Here is the " + "DOCS" + ". The welcome email you get when you create an account has them attached too."],
   [/new|reset|clear|νέα/i, "The pencil icon in the left bar starts a new conversation."],
   [/run|simul|start|τρέξ|εκτέλ/i, "Type your request in the main chat (centre) and press Enter, or press the play icon in the left bar (Run setup), pick a preset and press Run. A card with the steps and the graph appears in the chat."],
 ];
 const ATHENA_INTRO = "In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship. Born fully armed from the head of Zeus, she was the protector of Athens, and the owl was her symbol.\n\nInspired by her spirit, I am Athena, SpinMate's AI assistant for two-sublattice macrospin simulations. Simply describe the simulation you want in plain language or upload a parameter file. I'll validate the inputs, run the simulation, and help you interpret the results using the actual magnetization curves produced by the model.";
+// links to the user guide and, when it was added, the presentation
+const docLinks = () => "[user guide (PDF)](/api/guide.pdf)" + (state.config && state.config.presentation ? " and the [presentation (PDF)](/api/presentation.pdf)" : "");
 const guide = {open: false, msgs: [], started: false, awaitName: false, awaitEmail: false, busy: false};
 const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
 
@@ -2054,7 +2056,7 @@ function openGuide(open) {
 function guideSkip() {
   const box = document.createElement("div"); box.className = "gchips";
   const b = document.createElement("button"); b.type = "button"; b.textContent = "Skip for now";
-  b.onclick = () => { box.remove(); guideEmailDone("No problem. You can download the user guide any time from Help. Ask me anything about using SpinMate, or pick a question:"); };
+  b.onclick = () => { box.remove(); guideEmailDone(`No problem, no account needed. Here is your ${docLinks()}; you can also ask me for them any time. Ask me anything about using SpinMate, or pick a question:`); };
   box.appendChild(b); $("#guidelog").appendChild(box);
 }
 function guideEmailDone(text) {
@@ -2070,14 +2072,14 @@ async function guideEmail(q) {
     const out = await postJson("/api/account", {name: getName(), email});
     try { localStorage.setItem("sublattice.email." + userSlug(), email); } catch {}
     wait.remove(); guide.busy = false;
-    guideEmailDone(out.sent ? `Your account is ready! I've sent a welcome email to **${email}** with the user guide attached. Ask me anything, or pick a question:`
-      : out.mode === "error" ? `Your account is ready, but the welcome email could not be sent. Here is your [user guide (PDF)](/api/guide.pdf). Ask me anything, or pick a question:`
-      : `Your account is ready! Here is your [user guide (PDF)](/api/guide.pdf). Ask me anything, or pick a question:`);
+    guideEmailDone(out.sent ? `Your account is ready! I've sent a welcome email to **${email}** with the documents attached. You can also open the ${docLinks()} here. Ask me anything, or pick a question:`
+      : out.mode === "error" ? `Your account is ready, but the welcome email could not be sent (${out.message || "mail server error"}). Here is your ${docLinks()}. Ask me anything, or pick a question:`
+      : `Your account is ready! Here is your ${docLinks()}. Ask me anything, or pick a question:`);
   } catch (e) {
     wait.remove(); guide.busy = false; guideAdd("bot", `I couldn't create the account: ${e.message}. Try again, or press Skip for now.`);
   }
 }
-function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1] : "I can only help with using SpinMate: the chat, Fast and Deep modes, run setup, runs and results, settings and the API key. Ask me about any of those."; }
+function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1].replace("DOCS", docLinks()) : "I can only help with using SpinMate: the chat, Fast and Deep modes, run setup, runs and results, settings and the API key. Ask me about any of those."; }
 async function guideAsk(q) {
   q = q.trim(); if (!q || guide.busy) return;
   guideAdd("user", q);
@@ -2086,7 +2088,7 @@ async function guideAsk(q) {
     try { localStorage.setItem("sublattice.name", v); } catch {}
     guide.awaitName = false; guide.awaitEmail = true; onLogin();
     $("#guideinput").placeholder = "you@example.com";
-    guideAdd("bot", `Nice to meet you, ${v}! Let's create your account. What's your email? I'll send you a welcome email with the SpinMate user guide (PDF).`);
+    guideAdd("bot", `Nice to meet you, ${v}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide${state.config && state.config.presentation ? " and the presentation" : ""}. Or press Skip for now: you get them here either way.`);
     guideSkip(); return;
   }
   if (guide.awaitEmail) return guideEmail(q);

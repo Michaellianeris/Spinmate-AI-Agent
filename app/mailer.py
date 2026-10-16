@@ -19,6 +19,7 @@ from . import simulations as S
 WEB = S.REPO / "web"
 LOGO = WEB / "spinmate-lockup.png"
 GUIDE = WEB / "spinmate-guide.pdf"
+PRESENTATION = WEB / "spinmate-presentation.pdf"   # optional: attached and linked when present
 ACCOUNTS = S.WORKSPACE / "accounts.json"
 OUTBOX = S.WORKSPACE / "outbox"
 EMAIL_RE = re.compile(r"^[^@\s<>\"']{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$")
@@ -47,6 +48,13 @@ def _load():
         return {}
 
 
+def attached():
+    """One sentence naming the attachments."""
+    if PRESENTATION.exists():
+        return "The user guide and the SpinMate presentation are attached as PDFs"
+    return "The user guide is attached as a PDF"
+
+
 def welcome_html(name, app_url):
     n = html.escape(name)
     return f"""<!doctype html><html><body style="margin:0;background:#F8F4FB;font-family:Inter,Segoe UI,Arial,sans-serif;color:#1A1530">
@@ -64,7 +72,7 @@ the result from the actual magnetization dynamics.</p>
 <li>Start antiferromagnetic with a positive exchange A0 = 0.248e-12, 50 ps. Does it end ferromagnetic?</li>
 <li>Sweep A0 from &minus;0.25e-12 to +0.25e-12 and tell me where the final order changes.</li>
 <li>Make an IEEE figure of n<sub>z</sub> for my last two runs.</li></ul>
-<p style="margin:0 0 18px">The user guide is attached as a PDF. Athena, the owl in the corner of the app, answers questions about
+<p style="margin:0 0 18px">{attached()}. Athena, the owl in the corner of the app, answers questions about
 using it at any time.</p></td></tr>
 <tr><td style="padding:0 36px 28px"><a href="{html.escape(app_url)}" style="display:inline-block;background:#8A3FB5;color:#ffffff;text-decoration:none;
 font-weight:600;font-size:15px;padding:11px 22px;border-radius:999px">Open SpinMate</a></td></tr>
@@ -80,7 +88,7 @@ def welcome_message(name, email, app_url="http://localhost:8421"):
     msg["From"] = formataddr(("SpinMate", cfg.get("sender") or "spinmate@localhost"))
     msg["To"] = formataddr((name, email))
     msg["Message-ID"] = make_msgid(domain="spinmate.local")
-    msg.set_content(f"Welcome to SpinMate, {name}!\n\nYour account is ready. The user guide is attached as a PDF.\n"
+    msg.set_content(f"Welcome to SpinMate, {name}!\n\nYour account is ready. {attached()}.\n"
                     f"Open the app: {app_url}\n")
     msg.add_alternative(welcome_html(name, app_url), subtype="html")
     if LOGO.exists():
@@ -88,6 +96,8 @@ def welcome_message(name, email, app_url="http://localhost:8421"):
         msg.get_payload()[1].add_related(LOGO.read_bytes(), "image", "png", cid="<spinmate-logo>")
     if GUIDE.exists():
         msg.add_attachment(GUIDE.read_bytes(), maintype="application", subtype="pdf", filename="SpinMate-User-Guide.pdf")
+    if PRESENTATION.exists():
+        msg.add_attachment(PRESENTATION.read_bytes(), maintype="application", subtype="pdf", filename="SpinMate-Presentation.pdf")
     return msg
 
 
