@@ -142,7 +142,7 @@ def config():
             "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
-            "catalog": catalog.status(), **fx.info(), "email": bool(mailer.smtp_settings()),
+            "catalog": catalog.status(), **fx.info(), "email": mailer.mail_enabled(),
             "presentation": mailer.PRESENTATION.exists(),
             "confirm": {"minutes": tools.CONFIRM_MINUTES, "runs": tools.CONFIRM_RUNS}}
 

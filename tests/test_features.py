@@ -317,3 +317,30 @@ def test_presentation_attached_and_served(http, monkeypatch, tmp_path):
     msg = email.message_from_bytes(next((tmp_path / "outbox").glob("*.eml")).read_bytes())
     names = [p.get_filename() for p in msg.walk() if p.get_filename()]
     assert names == ["SpinMate-User-Guide.pdf", "SpinMate-Presentation.pdf"]
+
+
+def test_account_welcome_email_gmail_api(monkeypatch, tmp_path):
+    import json as _json
+    from app import mailer
+    calls = []
+
+    class Resp:
+        def __init__(self, data): self.data = data
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return _json.dumps(self.data).encode()
+
+    def fake_urlopen(req, timeout=None, context=None):
+        calls.append((req.full_url, req.headers.get("Content-type"), req.data))
+        return Resp({"access_token": "tok"} if "oauth2" in req.full_url else {"id": "msg123"})
+
+    monkeypatch.setenv("GMAIL_REFRESH_TOKEN", "refresh")
+    monkeypatch.setenv("GMAIL_CLIENT_ID", "cid")
+    monkeypatch.setenv("GMAIL_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("SMTP_FROM", "spinmate.ai.agent@gmail.com")
+    monkeypatch.setattr(mailer.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(mailer, "ACCOUNTS", tmp_path / "accounts.json")
+    out = mailer.create_account("Anna", "anna@example.com")
+    assert out["sent"] and out["mode"] == "gmail" and mailer.mail_enabled()
+    assert calls[0][0] == "https://oauth2.googleapis.com/token" and b"grant_type=refresh_token" in calls[0][2]
+    assert calls[1][0].startswith("https://gmail.googleapis.com/upload/") and calls[1][1] == "message/rfc822"
