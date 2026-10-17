@@ -52,6 +52,7 @@ class ChatIn(BaseModel):
     auto: bool = False       # no model pinned for the persona: the router picks from candidates
     god: str | None = None
     candidates: list = []
+    lang: str | None = None   # interface language from Settings
 
 
 class AccountIn(BaseModel):
@@ -64,6 +65,7 @@ class GuideIn(BaseModel):
     model: str | None = None
     name: str | None = None
     provider: str = "anthropic"
+    lang: str | None = None
 
 
 class ParamsIn(BaseModel):
@@ -122,6 +124,11 @@ def index():
     return FileResponse(WEB / "index.html")
 
 
+@app.get("/i18n.js")
+def i18n_js():
+    return FileResponse(WEB / "i18n.js", media_type="text/javascript")
+
+
 @app.get("/athena.png")
 def athena():
     return FileResponse(WEB / "athena.png")
@@ -153,7 +160,7 @@ def guide_answer(body: GuideIn, x_api_key: str | None = Header(default=None),
     try:
         name = re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()
         key = x_openai_api_key if body.provider == "openai" else x_api_key
-        return {"text": guide.answer(body.messages, key, body.model, name, body.provider)}
+        return {"text": guide.answer(body.messages, key, body.model, name, body.provider, body.lang)}
     except agent.AgentError as e:
         return JSONResponse({"error": str(e)}, status_code=e.status)
 
@@ -205,7 +212,7 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
                 events = agent.chat_stream(body.messages, api_key=given[t["provider"]], model=t["model"], mode=body.mode,
                                            name=re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip(),
                                            defaults_text=(body.defaults or "")[:2000], provider=t["provider"],
-                                           approved=body.approve)
+                                           approved=body.approve, lang=body.lang)
                 first = next(events, None)
                 if first and first.get("type") == "error" and first.get("status") in retry and i < len(tries) - 1:
                     continue

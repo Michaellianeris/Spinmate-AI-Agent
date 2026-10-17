@@ -166,6 +166,21 @@ MODE_NOTES = {
 }
 
 
+# interface languages of the web app
+LANGUAGES = {"en-US": "American English", "en-GB": "British English", "el": "Greek", "es": "Spanish",
+             "de": "German", "it": "Italian"}
+
+
+def lang_note(lang):
+    """The reply language chosen in Settings; it overrides 'reply in the user's language'."""
+    name = LANGUAGES.get(lang or "")
+    if not name:
+        return None
+    return (f"Interface language: {name}. Write every answer, and the NEXT: suggestions, in {name}, even if the "
+            "user writes in another language. Keep parameter names, flags, units, run ids and the NEXT: keyword as "
+            "they are.")
+
+
 def name_note(name, first_turn):
     if not name:
         return None

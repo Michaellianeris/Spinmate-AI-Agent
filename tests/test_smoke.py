@@ -188,7 +188,7 @@ def test_chat_falls_back_to_the_next_provider(client):
 
     seen = []
 
-    def fake_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, provider="anthropic", approved=False):
+    def fake_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, provider="anthropic", approved=False, lang=None):
         seen.append((provider, model))
         if provider == "anthropic":
             yield {"type": "error", "status": 429, "error": "no credit"}
