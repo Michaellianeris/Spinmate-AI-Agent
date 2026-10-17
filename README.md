@@ -386,6 +386,11 @@ SpinMate is meant to run on your own computer.
 - The agent can only read the run catalog (read-only SQL with a timeout) and only start runs through the
   solver's own parameter parser; uploads are limited to 200 kB of text.
 
+## Contact
+
+Questions, ideas or bug reports: [spinmate.ai.agent@gmail.com](mailto:spinmate.ai.agent@gmail.com).
+You can also open an issue on [GitHub](https://github.com/Michaellianeris/sublattice-agent/issues).
+
 ## License
 
 SpinMate is free and open source under the [MIT License](LICENSE): anyone may use, copy, modify and
