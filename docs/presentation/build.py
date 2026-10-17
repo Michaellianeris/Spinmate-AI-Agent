@@ -13,7 +13,7 @@ from playwright.async_api import async_playwright
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parent.parent / "web" / "spinmate-presentation.pdf"
-SCALE = 1.5                      # 2880 x 1620 px per slide
+SCALE = 1                        # Full HD, 1920 x 1080 px per slide
 
 FONTS = """
 @font-face{font-family:'Inter';font-weight:100 900;src:url(fonts/inter-latin-wght-normal.woff2) format('woff2');
@@ -48,8 +48,8 @@ async def main():
         await b.close()
     page_file.unlink(missing_ok=True)
     images = [Image.open(io.BytesIO(s)).convert("RGB") for s in shots]
-    # 216 dpi gives 13.33 x 7.5 in pages, the usual 16:9 slide size
-    images[0].save(OUT, "PDF", save_all=True, append_images=images[1:], resolution=216.0)
+    # 144 dpi gives 13.33 x 7.5 in pages, the usual 16:9 slide size
+    images[0].save(OUT, "PDF", save_all=True, append_images=images[1:], resolution=144.0)
     print("wrote", OUT, f"({len(images)} slides)")
 
 asyncio.run(main())
