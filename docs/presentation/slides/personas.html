@@ -1,0 +1,42 @@
+<section id="personas" data-transition="fade" style="background:radial-gradient(ellipse at 88% 92%, #1E2A6A 0%, #120D26 60%);color:#F4EEFF;font-family:'Inter', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-size:72px;font-weight:700;line-height:1.1;color:#FFFFFF">Five personas, one router</h2>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#1E1638;border:1px solid #3A2E5C;border-radius:20px;padding:28px">
+<img src="../../web/gods/hermes.png" alt="Hermes" style="width:72px;height:72px;object-fit:contain">
+<h3 style="font-size:36px;font-weight:700;color:#FFFFFF">Hermes</h3>
+<p style="font-size:24px;font-weight:600;color:#C79BFF">Quick and economical</p>
+<p style="font-size:24px;line-height:1.4;color:#BDB2DA">Claude Haiku, GPT nano / mini</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#2A1F4A;border:2px solid #8A3FB5;border-radius:20px;padding:28px">
+<img src="../../web/gods/dionysus.png" alt="Dionysus" style="width:72px;height:72px;object-fit:contain">
+<h3 style="font-size:36px;font-weight:700;color:#FFFFFF">Dionysus</h3>
+<p style="font-size:24px;font-weight:600;color:#C79BFF">Balanced, the default</p>
+<p style="font-size:24px;line-height:1.4;color:#BDB2DA">Claude Sonnet, GPT-5.x</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#1E1638;border:1px solid #3A2E5C;border-radius:20px;padding:28px">
+<img src="../../web/gods/zeus.png" alt="Zeus" style="width:72px;height:72px;object-fit:contain">
+<h3 style="font-size:36px;font-weight:700;color:#FFFFFF">Zeus</h3>
+<p style="font-size:24px;font-weight:600;color:#C79BFF">Deep, most capable</p>
+<p style="font-size:24px;line-height:1.4;color:#BDB2DA">Claude Opus, OpenAI o-series</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#1E1638;border:1px solid #3A2E5C;border-radius:20px;padding:28px">
+<img src="../../web/gods/apollo.png" alt="Apollo" style="width:72px;height:72px;object-fit:contain">
+<h3 style="font-size:36px;font-weight:700;color:#FFFFFF">Apollo</h3>
+<p style="font-size:24px;font-weight:600;color:#C79BFF">Specialised and new</p>
+<p style="font-size:24px;line-height:1.4;color:#BDB2DA">Claude Fable / Mythos, new models</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#2A2148;border:1px solid #3A2E5C;border-radius:20px;padding:28px">
+<img src="../../web/athena.png" alt="Athena" style="width:72px;height:72px;object-fit:contain">
+<h3 style="font-size:36px;font-weight:700;color:#FFFFFF">Athena</h3>
+<p style="font-size:24px;font-weight:600;color:#C79BFF">The guide</p>
+<p style="font-size:24px;line-height:1.4;color:#BDB2DA">How to use the app; built-in answers offline</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#0B0819;border:1px solid #3A2E5C;border-radius:16px;padding:32px 40px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#C79BFF">On Auto, every request is scored over the persona’s models</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;color:#F4EEFF">score = capability + bonus − λ(persona, request) × log₁₀(price / cheapest) − shortfall</p>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#CFC4EA">The strongest model wins unless a cheaper one is clearly enough. Every answer shows the model, the reason and the cost in €, at the daily ECB rate.</p>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between"><p style="font-size:24px;color:#9A8CC2">SpinMate</p><p style="font-size:24px;color:#9A8CC2">4</p></div>
+<aside>A persona is a level of model, not a fixed model. The router scores all models of that level from both providers. λ is largest for Hermes and smallest for Zeus, and it shrinks for demanding requests: Deep mode, sweeps, comparisons, reports. If a call fails, the next model by score is used. A model can also be pinned per persona in Settings.</aside>
+</section>
