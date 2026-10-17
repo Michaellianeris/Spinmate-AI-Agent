@@ -91,7 +91,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 4 | Left bar | **Default parameters.** The values Fast mode starts from, kept per name. |
 | 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. |
 | 6 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
-| 7 | Left bar | **Settings.** Colour theme (Light, Dark, Spin) and the Anthropic and OpenAI API keys. |
+| 7 | Left bar | **Settings.** Language, colour theme (Light, Dark, Spin) and the Anthropic and OpenAI API keys. |
 | 8 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). |
 | 9 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 10 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
@@ -153,7 +153,11 @@ built-in list.
 with your initial in the left bar shows who is signed in and lets you log out. Every name keeps its own
 chat history and default parameters in the browser.
 
-**Settings** (gear in the left bar): colour theme (Light, Dark, Spin), Anthropic API key and OpenAI API key.
+**Settings** (gear in the left bar): language, colour theme (Light, Dark, Spin), Anthropic API key and OpenAI API key.
+
+**Language.** English (US or UK), Greek, Spanish, German or Italian. It changes the buttons, menus and
+Athena, and the assistant answers in that language. Chosen once per browser; the first time it follows the
+browser's language.
 
 By default a run is deterministic: temperature 0 and no current. See the note on `SOT_DC_Amp` below.
 

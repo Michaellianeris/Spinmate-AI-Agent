@@ -94,7 +94,8 @@ def _dump(block):
     return d
 
 
-def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False):
+def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False,
+                      lang=None):
     """Run Claude until it answers without tool calls, yielding events as they happen.
 
     Events: text, tool_start, tool_done, then done (full message list) or error.
@@ -107,7 +108,7 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
     client = anthropic.Anthropic(api_key=key)
     model = model or DEFAULT_MODEL
     messages = list(messages)
-    parts = _system_parts(messages, mode, name, defaults_text)
+    parts = _system_parts(messages, mode, name, defaults_text, lang)
     # the long prompt is cached; the short per-request notes follow it
     system = [{"type": "text", "text": parts[0], "cache_control": {"type": "ephemeral"}}] + \
              [{"type": "text", "text": t} for t in parts[1:]]
@@ -203,7 +204,7 @@ def _first_turn(messages):
     return typed <= 1
 
 
-def _system_parts(messages, mode=None, name=None, defaults_text=None):
+def _system_parts(messages, mode=None, name=None, defaults_text=None, lang=None):
     parts = [prompts.SYSTEM_PROMPT]
     if mode in prompts.MODE_NOTES:
         parts.append(prompts.MODE_NOTES[mode])
@@ -213,18 +214,22 @@ def _system_parts(messages, mode=None, name=None, defaults_text=None):
     if defaults_text and defaults_text.strip():
         parts.append("The user's saved default parameters (priority 3). Use them as the base of every run unless "
                      "the message asks for something else:\n" + defaults_text.strip())
+    note = prompts.lang_note(lang)
+    if note:
+        parts.append(note)
     return parts
 
 
-def _system_text(messages, mode=None, name=None, defaults_text=None):
-    return "\n\n".join(_system_parts(messages, mode, name, defaults_text))
+def _system_text(messages, mode=None, name=None, defaults_text=None, lang=None):
+    return "\n\n".join(_system_parts(messages, mode, name, defaults_text, lang))
 
 
-def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False):
+def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False,
+                   lang=None):
     model = model or openai_provider.DEFAULT_MODEL
     messages = list(messages)
     input_items = openai_provider.to_input(messages)
-    instructions = _system_text(messages, mode, name, defaults_text)
+    instructions = _system_text(messages, mode, name, defaults_text, lang)
     turn_in = turn_out = 0
     turn_cost = 0.0
     priced = pricing.price(model) is not None
@@ -298,10 +303,10 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
 
 def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None,
                 approved=False,
-                provider="anthropic"):
+                provider="anthropic", lang=None):
     """Provider-neutral tool loop; yields the same events for Anthropic and OpenAI."""
     stream = _openai_stream if provider == "openai" else _anthropic_stream
-    yield from stream(messages, api_key, model, mode, name, defaults_text, approved)
+    yield from stream(messages, api_key, model, mode, name, defaults_text, approved, lang=lang)
 
 
 def chat(messages, api_key=None, model=None, provider="anthropic"):

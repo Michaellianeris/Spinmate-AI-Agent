@@ -382,3 +382,31 @@ def test_welcome_template_fills_placeholders():
     from app import mailer
     page = mailer.welcome_html("<Ann>", "http://localhost:8421")
     assert page.startswith("<!doctype html>") and "{{" not in page and "&lt;Ann&gt;" in page
+
+
+def test_interface_language_reaches_the_prompt(http, monkeypatch):
+    import types
+    from app import agent, prompts
+    assert prompts.lang_note("xx") is None
+    assert "German" in agent._system_parts([{"role": "user", "content": "hi"}], "fast", "", None, "de")[-1]
+    seen = []
+
+    def fake_client(api_key):
+        def create(**kw):
+            seen.append(" ".join(b["text"] for b in kw["system"]))
+            return types.SimpleNamespace(stop_reason="end_turn", usage=None,
+                                         content=[types.SimpleNamespace(type="text", text="ok",
+                                                                        model_dump=lambda exclude_none=True: {"type": "text", "text": "ok"})])
+        return types.SimpleNamespace(messages=types.SimpleNamespace(create=create))
+
+    monkeypatch.setattr(agent.anthropic, "Anthropic", fake_client)
+    with http.stream("POST", "/api/chat", headers={"x-api-key": "k"},
+                     json={"messages": [{"role": "user", "content": "hi"}], "lang": "el"}) as r:
+        list(r.iter_lines())
+    assert "Interface language: Greek" in seen[-1]
+
+
+def test_translations_file_is_served(http):
+    r = http.get("/i18n.js")
+    assert r.status_code == 200 and "javascript" in r.headers["content-type"]
+    assert '"el"' in r.text and '"de"' in r.text and '"es"' in r.text and '"it"' in r.text

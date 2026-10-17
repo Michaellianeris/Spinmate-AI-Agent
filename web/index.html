@@ -557,6 +557,7 @@ main{grid-template-columns:minmax(0,1fr)}
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
     </button>
     <div class="popover" id="settingspanel" role="dialog" aria-label="Settings" hidden>
+      <label>Language <select id="uilang"></select></label>
       <div class="lbl-t">Colour theme</div>
       <div class="themes" id="themes">
         <button type="button" data-theme="light" aria-pressed="false"><i style="background:#fff"></i>Light</button>
@@ -594,7 +595,7 @@ main{grid-template-columns:minmax(0,1fr)}
             <span class="mictime" id="mictime" hidden></span>
             <div class="micmenu" id="micmenu" role="dialog" aria-label="Voice input settings" hidden>
               <label>Microphone<select id="micdev"></select></label>
-              <label>Language<select id="miclang"><option value="">Auto</option><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
+              <label>Language<select id="miclang"><option value="">Auto</option><option value="en">English</option><option value="el">Ελληνικά</option><option value="es">Español</option><option value="de">Deutsch</option><option value="it">Italiano</option></select></label>
               <p class="micnote" id="micnote"></p>
             </div>
           </div>
@@ -643,7 +644,7 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></span><div><h4>Model gods</h4><p>Opens a comparison of the four model levels (Hermes, Dionysus, Zeus, Apollo): what each one is good for, how fast and how deep it is, and which model it will use and what it falls back to. Each card has a button to choose it.</p></div></div>
 <div class="tool"><span class="ti"><span class="dotstatus"></span></span><div><h4>API key status</h4><p>Green when a key is available (on the server or in this tab), amber when it is missing. Click it to open the settings.</p></div></div>
 <div class="tool"><span class="ti"><span class="avatar"><span>M</span></span></span><div><h4>Account</h4><p>Shows who is signed in. Log out, then type another name in Athena&rsquo;s window to log in. Each name keeps its own history and default parameters. There is no password.</p></div></div>
-<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Colour theme (Light, Dark, Spin), your Anthropic and OpenAI API keys, and the model each god uses (Auto by default). The keys stay in this browser tab and are only sent to your own server.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Language (English US or UK, Greek, Spanish, German, Italian), colour theme (Light, Dark, Spin), your Anthropic and OpenAI API keys, and the model each god uses (Auto by default). The keys stay in this browser tab and are only sent to your own server.</p></div></div>
 <div class="toolsec">Under the message box</div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></span><div><h4>Attach</h4><p>Adds a parameter .txt file to your message. Dragging a file onto the chat works too.</p></div></div>
 <div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model picker</h4><p>Choose a god: <b>Hermes</b> (quick), <b>Dionysus</b> (balanced), <b>Zeus</b> (most capable) or <b>Apollo</b> (specialised). The exact Claude or OpenAI model behind it is chosen automatically, and each god shows which one it will use. To fix a specific model, use Settings &gt; Model behind each god.</p></div></div>
@@ -773,8 +774,13 @@ main{grid-template-columns:minmax(0,1fr)}
   <form class="guide-form" id="guideform"><input id="guideinput" placeholder="Type here…" autocomplete="off" aria-label="Ask the guide"><button class="send" type="submit" aria-label="Send">&rarr;</button></form>
 </section>
 
+<script src="/i18n.js"></script>
 <script>
 const $ = s => document.querySelector(s);
+i18n.start();
+for (const [v, n] of LANGS) { const o = document.createElement("option"); o.value = v; o.textContent = n; o.dataset.noi18n = ""; $("#uilang").appendChild(o); }
+$("#uilang").value = i18n.lang();
+$("#uilang").onchange = e => i18n.set(e.target.value);
 const state = {messages: [], live: [], busy: false, pending: null, selected: null, runs: [], sweeps: [],
                config: {}, examples: [], error: null, discard: 0, cards: [],
                chatId: null, usage: {input: 0, output: 0}, usages: {}, turnUsage: null};
@@ -1012,7 +1018,7 @@ function emptyState() {
   for (const [title, s] of starters) {
     const b = document.createElement("button"); b.type = "button";
     b.innerHTML = `<b>${esc(title)}</b><span>${esc(s)}</span>`;
-    b.onclick = () => { $("#input").value = s; send(); };
+    b.onclick = () => { $("#input").value = t(s); send(); };
     box.appendChild(b);
   }
   return d;
@@ -1093,7 +1099,7 @@ async function send() {
     const ak = $("#apikey").value.trim(), ok = $("#openaikey").value.trim();
     if (ak) headers["X-Api-Key"] = ak;
     if (ok) headers["X-OpenAI-Api-Key"] = ok;
-    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, auto: picked.auto, god: picked.god, candidates: picked.candidates, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText(), approve})});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: state.messages, model: picked.id, provider: picked.provider, fallbacks: picked.fallbacks, auto: picked.auto, god: picked.god, candidates: picked.candidates, mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText(), approve, lang: i18n.lang()})});
     if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
     await readStream(res);
     if (!state.finished) throw new Error("The connection closed before the answer was complete.");
@@ -1409,10 +1415,11 @@ class RunView {
     this.dial.t1.setAttribute("d", trail("m1")); this.dial.t2.setAttribute("d", trail("m2"));
     this.q("[data-v=scrub]").max = d.t_ns.length - 1; this.hover = null; this.pos = d.t_ns.length - 1; this.stopPlay(); this.setIdx(this.pos);
     this.q("[data-v=resetzoom]").hidden = !zoom;
-    note.textContent = (zoom ? `Window ${zoom[0].toFixed(3)}–${zoom[1].toFixed(3)} ns. ` : "") +
-      (d.n_returned < d.n_window ? `Showing ${d.n_returned.toLocaleString()} of ${d.n_window.toLocaleString()} points; drag to zoom for detail. ` : "") +
-      (gaps ? "Parts of the dial trail are not drawn where the motion is faster than the sampling; zoom in to resolve them. " : "") +
-      "Click to move the playhead, drag to zoom, double-click to reset.";
+    // one span per sentence, so each is translated on its own
+    note.innerHTML = [zoom ? `Window ${zoom[0].toFixed(3)}–${zoom[1].toFixed(3)} ns.` : "",
+      d.n_returned < d.n_window ? `Showing ${d.n_returned.toLocaleString()} of ${d.n_window.toLocaleString()} points; drag to zoom for detail.` : "",
+      gaps ? "Parts of the dial trail are not drawn where the motion is faster than the sampling; zoom in to resolve them." : "",
+      "Click to move the playhead, drag to zoom, double-click to reset."].filter(Boolean).map(x => `<span>${x}</span>`).join(" ");
   }
   destroy() { this.stopPlay(); if (this.chart) { this.chart.destroy(); this.chart = null; } }
 }
@@ -1445,7 +1452,7 @@ async function runText(text, label, show) {
 }
 $("#run").onclick = () => runText($("#params").value, $("#label").value, r => showCheck(r));
 $("#save").onclick = async () => {
-  const name = prompt("File name", ($("#label").value || "parameters").replace(/\s+/g, "_") + ".txt");
+  const name = prompt(t("File name"), ($("#label").value || "parameters").replace(/\s+/g, "_") + ".txt");
   if (!name) return;
   const out = await postJson("/api/files/save", {name, parameters_text: $("#params").value});
   window.location = `/api/files/${encodeURIComponent(out.name)}`;
@@ -1537,15 +1544,18 @@ async function paintSweepCard(id, c, s) {
   el.querySelector("[data-r=sum]").innerHTML = `sweep of <b>${esc(s.parameter)}</b> · ${done}/${total} runs done` + (failed ? `, ${failed} failed` : "");
   if (done + failed < total) return;
   c.final = true; if (state.cards[state.cards.length - 1] !== id) setFold(c, true);
-  const a = el.querySelector("[data-r=analyse]"); a.hidden = false; a.onclick = () => { $("#input").value = `Analyse sweep ${id}.`; send(); };
+  const a = el.querySelector("[data-r=analyse]"); a.hidden = false; a.onclick = () => { $("#input").value = t("Analyse sweep {id}.", {id}); send(); };
   const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
   if (!rows.length) return;
   const isFreq = /Fr$/.test(s.parameter), scale = isFreq ? 1e9 : 1, plot = el.querySelector(".rc-plot"); plot.hidden = false;
   c.chart = new Chart(plot.querySelector("canvas"), {height: 200, points: true, xLabel: s.parameter + (isFreq ? " (GHz)" : ""), yLabel: "mean |n_z|", xFmt: isFreq ? null : eng,
     onClick: i => openRunCard(rows[i].run_id)});
   c.chart.setData(rows.map(r => r.value / scale), [{k: "y", c: "#1F4FD1", y: rows.map(r => r.neel_z_abs_mean), width: 1.4}]);
-  plot.querySelector(".rc-meta").textContent = "Click a point to open that run.\n" +
-    rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${(r.neel_z_switches ?? r.neel_z_sign_changes) ? ", " + (r.neel_z_switches ?? r.neel_z_sign_changes) + " switches" : ""}`).join("\n");
+  plot.querySelector(".rc-meta").innerHTML = "<div>Click a point to open that run.</div>";
+  const lines = document.createElement("span"); lines.dataset.noi18n = "";
+  plot.querySelector(".rc-meta").append(lines);
+  lines.textContent = (
+    rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${(r.neel_z_switches ?? r.neel_z_sign_changes) ? ", " + (r.neel_z_switches ?? r.neel_z_sign_changes) + " switches" : ""}`).join("\n"));
 }
 async function paintCard(id, c, r) {
   const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
@@ -1573,7 +1583,7 @@ async function paintCard(id, c, r) {
   const csv = el.querySelector("[data-r=csv]"), zip = el.querySelector("[data-r=zip]");
   csv.href = `/api/runs/${id}/export.csv`; zip.href = `/api/runs/${id}/export.zip`;
   for (const k of ["csv", "zip", "analyse", "edit"]) show(k, true);
-  el.querySelector("[data-r=analyse]").onclick = () => { $("#input").value = `Analyse run ${id}.`; send(); };
+  el.querySelector("[data-r=analyse]").onclick = () => { $("#input").value = t("Analyse run {id}.", {id}); send(); };
   el.querySelector("[data-r=edit]").onclick = () => { openSetup("deep"); $("#params").value = r.parameters_text; $("#label").value = r.label || ""; $("#check").click(); };
   show("cont", true); show("join", !!r.parent_run);
   el.querySelector("[data-r=cont]").onclick = async () => {
@@ -1727,7 +1737,7 @@ function renderHistory() {
   if (!list.length) ul.innerHTML = `<li class="nothing">No conversations yet.</li>`;
   for (const c of list) {
     const li = document.createElement("li"); li.tabIndex = 0; li.className = "sel"; if (c.id === state.chatId) li.classList.add("active");
-    li.innerHTML = `<input type="checkbox" class="hc" aria-label="Select conversation"${histSel.has(c.id) ? " checked" : ""}><span class="ht">${esc(c.title)}</span><span class="hd">${new Date(c.ts).toLocaleString([], {dateStyle: "medium", timeStyle: "short"})}</span><button type="button" class="hx" title="Delete" aria-label="Delete conversation">✕</button>`;
+    li.innerHTML = `<input type="checkbox" class="hc" aria-label="Select conversation"${histSel.has(c.id) ? " checked" : ""}><span class="ht">${esc(c.title)}</span><span class="hd">${new Date(c.ts).toLocaleString(i18n.lang(), {dateStyle: "medium", timeStyle: "short"})}</span><button type="button" class="hx" title="Delete" aria-label="Delete conversation">✕</button>`;
     li.onclick = e => {
       if (e.target.closest(".hc")) { e.target.checked ? histSel.add(c.id) : histSel.delete(c.id); histFoot(); return; }
       if (e.target.closest(".hx")) delChat(c.id); else if (!state.busy) openChat(c.id);
@@ -1750,7 +1760,7 @@ $("#histall").onclick = () => {
 };
 $("#histdel").onclick = () => {
   const k = histSel.size; if (!k || state.busy) return;
-  if (!confirm(`Delete ${k} conversation${k > 1 ? "s" : ""}? This cannot be undone. Runs stay in the Runs panel.`)) return;
+  if (!confirm(t(k > 1 ? "Delete {k} conversations? This cannot be undone. Runs stay in the Runs panel." : "Delete 1 conversation? This cannot be undone. Runs stay in the Runs panel.", {k}))) return;
   const current = histSel.has(state.chatId);
   saveChats(loadChats().filter(c => !histSel.has(c.id))); histSel.clear();
   if (current) { state.messages = []; newChat(); toggleHistory(true); } else renderHistory();
@@ -1992,6 +2002,7 @@ $("#godsback").onclick = closeGods;
 
 // ---------------------------------------------------------------- Guide robot (bottom right)
 const GUIDE_FAQ = [
+  [/language|γλώσσ|idioma|sprache|lingua/i, "Settings (gear, left bar) > Language: English (US or UK), Greek, Spanish, German or Italian. The buttons, Athena and the assistant's answers follow it."],
   [/compare (runs|two|them)|overlay|side by side|σύγκρι/i, "Open Runs (the list icon in the left bar), tick 2 to 6 runs and press Compare: they appear overlaid in one chart, with a table of results and of the parameters that differ. You can also ask the assistant to compare runs."],
   [/figure|paper|publication|\bpdf\b|\bsvg\b|δημοσί|γράφημα/i, "Every run card and comparison has a Figure… button: choose the quantities, the time window, the style (Science, IEEE or Nature) and PDF, SVG or PNG. Preview shows it before you download."],
   [/report|write-?up|αναφορ/i, "In Runs, tick the runs and press Report, or use Report… on a comparison. It writes a page with method, results, parameters, figures and the parameter files; open it and print it to PDF. 'Ask the assistant to write it' adds an interpretation."],
@@ -2024,7 +2035,7 @@ const GUIDE_FAQ = [
 ];
 const ATHENA_INTRO = "In Greek mythology, Athena was the goddess of wisdom, strategy, and craftsmanship. Born fully armed from the head of Zeus, she was the protector of Athens, and the owl was her symbol.\n\nInspired by her spirit, I am Athena, SpinMate's AI assistant for two-sublattice macrospin simulations. Simply describe the simulation you want in plain language or upload a parameter file. I'll validate the inputs, run the simulation, and help you interpret the results using the actual magnetization curves produced by the model.";
 // links to the user guide and, when it was added, the presentation
-const docLinks = () => "[user guide (PDF)](/api/guide.pdf)" + (state.config && state.config.presentation ? " and the [presentation (PDF)](/api/presentation.pdf)" : "");
+const docLinks = () => `[${t("user guide (PDF)")}](/api/guide.pdf)` + (state.config && state.config.presentation ? ` ${t("and the")} [${t("presentation (PDF)")}](/api/presentation.pdf)` : "");
 const guide = {open: false, msgs: [], started: false, awaitName: false, awaitEmail: false, busy: false};
 const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
 
@@ -2035,7 +2046,7 @@ function guideAdd(role, text) {
 }
 function guideChips() {
   const box = document.createElement("div"); box.className = "gchips";
-  for (const c of GUIDE_CHIPS) { const b = document.createElement("button"); b.type = "button"; b.textContent = c; b.onclick = () => { box.remove(); guideAsk(c); }; box.appendChild(b); }
+  for (const c of GUIDE_CHIPS) { const b = document.createElement("button"); b.type = "button"; b.textContent = c; b.onclick = () => { box.remove(); guideAsk(c, t(c)); }; box.appendChild(b); }
   $("#guidelog").appendChild(box);
 }
 function setCentered(on) {
@@ -2047,8 +2058,8 @@ function openGuide(open) {
   setCentered(open && !getName());
   if (open && !guide.started) {
     guide.started = true; const n = getName();
-    guideAdd("bot", n ? `Welcome back, ${n}! I'm Athena, your guide.\n\n${ATHENA_INTRO}\n\nI can also show you around the app: where things are and what the buttons do.` :
-      `Welcome to SpinMate! I'm Athena, your guide.\n\n${ATHENA_INTRO}\n\nBefore we begin, what's your name?`);
+    guideAdd("bot", n ? t("Welcome back, {name}! I'm Athena, your guide.", {name: n}) + "\n\n" + t(ATHENA_INTRO) + "\n\n" + t("I can also show you around the app: where things are and what the buttons do.") :
+      t("Welcome to SpinMate! I'm Athena, your guide.") + "\n\n" + t(ATHENA_INTRO) + "\n\n" + t("Before we begin, what's your name?"));
     if (n) guideChips(); else guide.awaitName = true;
   }
   if (open) setTimeout(() => $("#guideinput").focus(), 0);
@@ -2056,7 +2067,7 @@ function openGuide(open) {
 function guideSkip() {
   const box = document.createElement("div"); box.className = "gchips";
   const b = document.createElement("button"); b.type = "button"; b.textContent = "Skip for now";
-  b.onclick = () => { box.remove(); guideEmailDone(`No problem, no account needed. Here is your ${docLinks()}; you can also ask me for them any time. Ask me anything about using SpinMate, or pick a question:`); };
+  b.onclick = () => { box.remove(); guideEmailDone(t("No problem, no account needed. Here is your {docs}; you can also ask me for them any time. Ask me anything about using SpinMate, or pick a question:", {docs: docLinks()})); };
   box.appendChild(b); $("#guidelog").appendChild(box);
 }
 function guideEmailDone(text) {
@@ -2066,40 +2077,42 @@ function guideEmailDone(text) {
 }
 async function guideEmail(q) {
   const email = q.trim();
-  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) { guideAdd("bot", "That doesn't look like an email address. Try again, or press Skip for now."); return; }
-  guide.busy = true; const wait = guideAdd("bot", "Creating your account…");
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) { guideAdd("bot", t("That doesn't look like an email address. Try again, or press Skip for now.")); return; }
+  guide.busy = true; const wait = guideAdd("bot", t("Creating your account…"));
   try {
     const out = await postJson("/api/account", {name: getName(), email});
     try { localStorage.setItem("sublattice.email." + userSlug(), email); } catch {}
     wait.remove(); guide.busy = false;
-    guideEmailDone(out.sent ? `Your account is ready! I've sent a welcome email to **${email}** with the documents attached. You can also open the ${docLinks()} here. Ask me anything, or pick a question:`
-      : out.mode === "error" ? `Your account is ready, but the welcome email could not be sent (${out.message || "mail server error"}). Here is your ${docLinks()}. Ask me anything, or pick a question:`
-      : `Your account is ready! Here is your ${docLinks()}. Ask me anything, or pick a question:`);
+    guideEmailDone(out.sent ? t("Your account is ready! I've sent a welcome email to **{email}** with the documents attached. You can also open the {docs} here. Ask me anything, or pick a question:", {email, docs: docLinks()})
+      : out.mode === "error" ? t("Your account is ready, but the welcome email could not be sent ({error}). Here is your {docs}. Ask me anything, or pick a question:", {error: out.message || "mail server error", docs: docLinks()})
+      : t("Your account is ready! Here is your {docs}. Ask me anything, or pick a question:", {docs: docLinks()}));
   } catch (e) {
-    wait.remove(); guide.busy = false; guideAdd("bot", `I couldn't create the account: ${e.message}. Try again, or press Skip for now.`);
+    wait.remove(); guide.busy = false; guideAdd("bot", t("I couldn't create the account: {error}. Try again, or press Skip for now.", {error: e.message}));
   }
 }
-function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? hit[1].replace("DOCS", docLinks()) : "I can only help with using SpinMate: the chat, Fast and Deep modes, run setup, runs and results, settings and the API key. Ask me about any of those."; }
-async function guideAsk(q) {
+function guideFaq(q) { const hit = GUIDE_FAQ.find(([re]) => re.test(q)); return hit ? t(hit[1]).replace("DOCS", docLinks()) : t("I can only help with using SpinMate: the chat, Fast and Deep modes, run setup, runs and results, settings and the API key. Ask me about any of those."); }
+// shown: the question as displayed (a translated chip); q is matched against the built-in answers
+async function guideAsk(q, shown) {
   q = q.trim(); if (!q || guide.busy) return;
-  guideAdd("user", q);
+  guideAdd("user", shown || q);
   if (guide.awaitName) {
-    const v = cleanName(q); if (!v) { guideAdd("bot", "I couldn't read that. Please type just your first name."); return; }
+    const v = cleanName(q); if (!v) { guideAdd("bot", t("I couldn't read that. Please type just your first name.")); return; }
     try { localStorage.setItem("sublattice.name", v); } catch {}
     guide.awaitName = false; guide.awaitEmail = true; onLogin();
     $("#guideinput").placeholder = "you@example.com";
-    guideAdd("bot", `Nice to meet you, ${v}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide${state.config && state.config.presentation ? " and the presentation" : ""}. Your email is used only for this welcome email. Or press Skip for now: you get them here either way.`);
+    guideAdd("bot", t(state.config && state.config.presentation ? "Nice to meet you, {name}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide and the presentation. Your email is used only for this welcome email. Or press Skip for now: you get them here either way."
+      : "Nice to meet you, {name}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide. Your email is used only for this welcome email. Or press Skip for now: you get them here either way.", {name: v}));
     guideSkip(); return;
   }
   if (guide.awaitEmail) return guideEmail(q);
-  guide.msgs.push({role: "user", content: q}); guide.busy = true;
+  guide.msgs.push({role: "user", content: shown || q}); guide.busy = true;
   const wait = guideAdd("bot", "…");
   try {
     const headers = {"Content-Type": "application/json"}, picked = selectedModel();
     const ak = $("#apikey").value.trim(), ok = $("#openaikey").value.trim();
     if (ak) headers["X-Api-Key"] = ak;
     if (ok) headers["X-OpenAI-Api-Key"] = ok;
-    const out = await api("/api/guide", {method: "POST", headers, body: JSON.stringify({messages: guide.msgs, model: picked.id, provider: picked.provider, name: getName()})});
+    const out = await api("/api/guide", {method: "POST", headers, body: JSON.stringify({messages: guide.msgs, model: picked.id, provider: picked.provider, name: getName(), lang: i18n.lang()})});
     wait.innerHTML = md(out.text); guide.msgs.push({role: "assistant", content: out.text});
   } catch (e) {
     const t = guideFaq(q); wait.innerHTML = md(t); guide.msgs.push({role: "assistant", content: t});
@@ -2190,7 +2203,7 @@ function renderTail(log) {
     const box = document.createElement("div"); box.className = "confirmbox";
     box.innerHTML = `<span>This request needs your OK: <b>${gate.runs} run${gate.runs > 1 ? "s" : ""}</b>, about <b>${dur(gate.estimated_wall_time_s)}</b> of simulation.</span>
       <button class="btn small primary" type="button" data-c="go">Run it</button><button class="btn small" type="button" data-c="no">Not now</button>`;
-    box.querySelector("[data-c=go]").onclick = () => { state.approveNext = true; $("#input").value = "Yes, run it as proposed."; send(); };
+    box.querySelector("[data-c=go]").onclick = () => { state.approveNext = true; $("#input").value = t("Yes, run it as proposed."); send(); };
     box.querySelector("[data-c=no]").onclick = () => { state.confirmDismissed = state.messages.length; render(); };
     log.appendChild(box);
   }
@@ -2233,8 +2246,8 @@ function runSummaryLine(r) {
   if (r.status !== "done") return esc(r.status || "");
   const parts = [`<b>${s.order_initial} → ${s.order_final}</b>`];
   const sw = s.neel_z_switches ?? s.neel_z_sign_changes;
-  if (sw != null) parts.push(`${sw} switch${sw === 1 ? "" : "es"}`);
-  parts.push(s.settle_time_s != null ? `settled ${fmt(s.settle_time_s * 1e12, 1)} ps` : "not settled");
+  if (sw != null) parts.push(`<span>${sw} switch${sw === 1 ? "" : "es"}</span>`);
+  parts.push(`<span>${s.settle_time_s != null ? `settled ${fmt(s.settle_time_s * 1e12, 1)} ps` : "not settled"}</span>`);
   const ch = changedText(r.changed_from_defaults);
   if (ch) parts.push(`<span class="mono">${esc(ch)}</span>`);
   return parts.join(" · ");
@@ -2277,7 +2290,7 @@ function renderRunsPanel() {
   for (const r of rows) {
     const s = r.summary || {}, li = document.createElement("li");
     li.className = "rp-row" + (runsPanel.sel.has(r.id) ? " sel" : ""); li.tabIndex = 0;
-    const when = r.created ? new Date(r.created * 1000).toLocaleString([], {dateStyle: "short", timeStyle: "short"}) : "";
+    const when = r.created ? new Date(r.created * 1000).toLocaleString(i18n.lang(), {dateStyle: "short", timeStyle: "short"}) : "";
     const tags = [];
     if (s.order_final) tags.push(`<span class="tag ord">${s.order_initial} → ${s.order_final}</span>`);
     if (r.status !== "done") tags.push(`<span class="tag st-${r.status}">${esc(r.status)}</span>`);
@@ -2295,7 +2308,7 @@ function renderRunsPanel() {
     li.querySelector("[data-a=star]").onclick = e => { e.stopPropagation(); setStar(r.id, !r.starred); };
     li.querySelector("[data-a=tags]").onclick = async e => {
       e.stopPropagation();
-      const v = prompt(`Tags for ${r.id} (comma separated)`, (r.tags || []).join(", "));
+      const v = prompt(t("Tags for {id} (comma separated)", {id: r.id}), (r.tags || []).join(", "));
       if (v === null) return;
       try { const out = await postJson(`/api/runs/${r.id}/meta`, {tags: v.split(",")}); r.tags = out.tags; renderRunsPanel(); } catch (err) { alert(err.message); }
     };
@@ -2372,7 +2385,7 @@ function trackCompare(ids, quiet) {
   });
   el.querySelector("[data-r=fig]").onclick = () => openFigure({runs: c.cmp.ids, quantities: [c.cmp.q], t0: c.cmp.zoom && c.cmp.zoom[0], t1: c.cmp.zoom && c.cmp.zoom[1]});
   el.querySelector("[data-r=rep]").onclick = () => openReport(c.cmp.ids);
-  el.querySelector("[data-r=ask]").onclick = () => { $("#input").value = `Compare runs ${c.cmp.ids.join(", ")} and explain what differs.`; send(); };
+  el.querySelector("[data-r=ask]").onclick = () => { $("#input").value = t("Compare runs {ids} and explain what differs.", {ids: c.cmp.ids.join(", ")}); send(); };
   loadCompare(c);
   if (!quiet) { foldOthers(id); render(); openRunCard(id); }
 }
@@ -2481,7 +2494,7 @@ $("#repgo").onclick = async () => {
 };
 $("#repask").onclick = () => {
   const ids = reportIds(); if (!ids.length) return;
-  closeReport(); $("#input").value = `Write a report of runs ${ids.join(", ")} with your interpretation.` + ($("#rep-title").value ? ` Title: ${$("#rep-title").value}.` : ""); send();
+  closeReport(); $("#input").value = t("Write a report of runs {ids} with your interpretation.", {ids: ids.join(", ")}) + ($("#rep-title").value ? " " + t("Title: {title}.", {title: $("#rep-title").value}) : ""); send();
 };
 
 // ---------------------------------------------------------------- 3D view of m1 and m2 on the unit sphere
@@ -2617,7 +2630,7 @@ function rpSelectAll() {
 }
 async function rpDelete() {
   const ids = [...runsPanel.sel]; if (!ids.length) return;
-  if (!confirm(`Delete ${ids.length} run${ids.length > 1 ? "s" : ""} (${ids.slice(0, 8).join(", ")}${ids.length > 8 ? "…" : ""})? Their files are removed from the server; this cannot be undone.`)) return;
+  if (!confirm(t("Delete {n} run(s) ({ids})? Their files are removed from the server; this cannot be undone.", {n: ids.length, ids: ids.slice(0, 8).join(", ") + (ids.length > 8 ? "…" : "")}))) return;
   let out;
   try { out = await postJson("/api/runs/delete", {run_ids: ids}); } catch (e) { alert(e.message); return; }
   for (const id of out.deleted) {
@@ -2625,7 +2638,7 @@ async function rpDelete() {
     const c = cardEls.get(id);
     if (c) { c.chart && c.chart.destroy(); c.view && c.view.destroy(); cardEls.delete(id); state.cards = state.cards.filter(x => x !== id); }
   }
-  if (out.refused.length) alert("Not deleted:\n" + out.refused.map(r => `${r.run_id}: ${r.reason}`).join("\n"));
+  if (out.refused.length) alert(t("Not deleted:") + "\n" + out.refused.map(r => `${r.run_id}: ${r.reason}`).join("\n"));
   render(); persist(); await loadRunsPanel(); refreshRuns();
 }
 $("#rpall").onclick = rpSelectAll;
@@ -2707,7 +2720,7 @@ async function micStart() {
     mic.stream = await navigator.mediaDevices.getUserMedia({audio: id ? {deviceId: {exact: id}} : true});
   } catch (e) {
     if (id && e.name === "OverconstrainedError") { micSet("device", ""); return micStart(); }   // that microphone is gone
-    alert(e.name === "NotAllowedError" ? "Microphone access was blocked. Allow it in the browser's site settings." : "Microphone error: " + e.message); return;
+    alert(e.name === "NotAllowedError" ? t("Microphone access was blocked. Allow it in the browser's site settings.") : t("Microphone error:") + " " + e.message); return;
   }
   const type = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
   mic.chunks = []; mic.cancel = false;
@@ -2732,12 +2745,13 @@ async function micSendAudio() {
   micUi("");
 }
 function micBrowser() {
-  if (!SpeechRec) { alert("Voice input needs an OpenAI key (Settings), or a browser with built-in dictation such as Chrome or Edge."); return; }
+  if (!SpeechRec) { alert(t("Voice input needs an OpenAI key (Settings), or a browser with built-in dictation such as Chrome or Edge.")); return; }
   const r = new SpeechRec(); mic.speech = r;
-  r.lang = micGet("lang") === "el" ? "el-GR" : micGet("lang") === "en" ? "en-US" : (navigator.language || "en-US");
+  const ml = micGet("lang") || i18n.lang().slice(0, 2);
+  r.lang = {el: "el-GR", en: i18n.lang() === "en-GB" ? "en-GB" : "en-US", es: "es-ES", de: "de-DE", it: "it-IT"}[ml] || navigator.language || "en-US";
   r.interimResults = false; r.continuous = true;
   r.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) micInsert(e.results[i][0].transcript); };
-  r.onerror = e => { if (e.error !== "aborted" && e.error !== "no-speech") alert("Dictation error: " + e.error); };
+  r.onerror = e => { if (e.error !== "aborted" && e.error !== "no-speech") alert(t("Dictation error:") + " " + e.error); };
   r.onend = () => { mic.speech = null; micUi(""); };
   r.start(); micUi("rec");
 }
