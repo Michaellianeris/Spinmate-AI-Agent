@@ -81,6 +81,24 @@ dist\SpinMate\SpinMate.exe --selftest
 
 ## Using the app
 
+<img src="docs/screenshots/home-tour.png" alt="The SpinMate home page in dark theme with numbered markers: the left bar (1-7), the message box (8-11), Find a skill (12) and Athena (13)" width="900">
+
+| # | Where | What it does |
+|---|---|---|
+| 1 | Left bar | **New conversation.** Starts an empty chat; the previous one stays in the history. |
+| 2 | Left bar | **Conversation history.** Your earlier chats, kept per name. |
+| 3 | Left bar | **Runs panel.** Every run and sweep: search, filter, star, compare, plot or report (see [Run catalog](#run-catalog-postgres)). |
+| 4 | Left bar | **Default parameters.** The values Fast mode starts from, kept per name. |
+| 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. |
+| 6 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
+| 7 | Left bar | **Settings.** Colour theme (Light, Dark, Spin) and the Anthropic and OpenAI API keys. |
+| 8 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). |
+| 9 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
+| 10 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
+| 11 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. |
+| 12 | Start here | **Find a skill.** Ready questions for the common scenarios; click one to ask it. |
+| 13 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
+
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file
 with the paperclip (drag and drop also works). Under the message box you choose the model and the mode:
 
