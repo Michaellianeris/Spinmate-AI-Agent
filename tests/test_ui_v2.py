@@ -14,6 +14,7 @@ def test_validation_status_and_page():
     assert v["available"] and v["passed"] == v["total"] == 9 and v["date"]
     page = http.get("/validation")
     assert page.status_code == 200 and "phase-diagram.png" in page.text and "unchanged" not in page.text
+    assert "/api/logo.png" in page.text and http.get("/api/logo.png").headers["content-type"] == "image/png"
     assert http.get("/api/validation/phase-diagram.png").headers["content-type"] == "image/png"
 
 

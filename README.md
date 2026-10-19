@@ -28,8 +28,10 @@ explains the results from the actual magnetization dynamics, with figures and re
 - [Behind a corporate proxy](#behind-a-corporate-proxy)
 - [How it works](#how-it-works)
 - [Version 2.0 (in development)](#version-20-in-development)
+- [Prompt evaluation](#prompt-evaluation)
 - [Development](#development)
 - [Security](#security)
+- [Contact](#contact)
 - [License](#license)
 
 ## Quick start
@@ -45,8 +47,9 @@ docker compose up --build
 Open http://localhost:8421. The host port can be changed with `HOST_PORT` in `.env`. The app listens only
 on this computer (`BIND_ADDRESS=127.0.0.1`); see [Security](#security) before sharing it.
 
-If you leave `ANTHROPIC_API_KEY` empty you can paste the key in the settings of the page instead. It is
-kept in that browser tab only and sent to your own server with each message.
+If you leave the keys empty you can paste them in the settings of the page instead. They are kept in that
+browser tab only and sent to your own server with each message; under each key the page shows whether it
+works and how many models it can use.
 
 Results are stored in the `sublattice-data` Docker volume. To keep them in a folder on disk, replace the
 volume line in `docker-compose.yml` with `- ./workspace:/data`.
@@ -83,7 +86,7 @@ dist\SpinMate\SpinMate.exe --selftest
 
 ## Using the app
 
-<img src="docs/screenshots/home-tour.png" alt="The SpinMate home page in dark theme with numbered markers: the left bar (1-7), the message box (8-11), Find a skill (12) and Athena (13)" width="900">
+<img src="docs/screenshots/home-tour.png" alt="The SpinMate home page in dark theme with numbered markers: the left bar (1-9), the message box (10-13), Find a skill (14) and Athena (15)" width="900">
 
 | # | Where | What it does |
 |---|---|---|
@@ -91,15 +94,17 @@ dist\SpinMate\SpinMate.exe --selftest
 | 2 | Left bar | **Conversation history.** Your earlier chats, kept per name. |
 | 3 | Left bar | **Runs panel.** Every run and sweep: search, filter, star, compare, plot or report (see [Run catalog](#run-catalog-postgres)). |
 | 4 | Left bar | **Default parameters.** The values Fast mode starts from, kept per name. |
-| 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. |
-| 6 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
-| 7 | Left bar | **Settings.** Language, colour theme (Light, Dark, Spin) and the Anthropic, OpenAI and Gemini API keys. |
-| 8 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). |
-| 9 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
-| 10 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
-| 11 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. |
-| 12 | Start here | **Find a skill.** Ready questions for the common scenarios; click one to ask it. |
-| 13 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
+| 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. When an engine plug-in is installed it also has an **Engine** menu. |
+| 6 | Left bar | **Physics validation.** Green when the solver passes all its analytic checks; click for the report and the phase diagram (see [Physics validation](#physics-validation)). |
+| 7 | Left bar | **Connect to Claude.** The commands that add SpinMate to Claude Code, Claude Desktop or any MCP agent, with copy buttons. |
+| 8 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
+| 9 | Left bar | **Settings.** Language, colour theme (Light, Dark, Spin), the Anthropic, OpenAI and Gemini API keys with a check of each, and the model behind each god. |
+| 10 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). |
+| 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
+| 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
+| 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. |
+| 14 | Start here | **Find a skill.** Ready questions for the common scenarios; click one to ask it. |
+| 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file
 with the paperclip (drag and drop also works). Under the message box you choose the model and the mode:
@@ -130,7 +135,7 @@ model behind it is picked from the Claude, OpenAI and Gemini keys you have.
 <img src="docs/screenshots/personas.png" alt="Athena's welcome on the first visit, and the persona menu with the models each god picks from" width="820">
 
 **How the model is chosen.** On *Auto* (the default), every request is scored over all models of the chosen
-god from both providers: `capability + bonus for the god's strongest model − price weight × cost`, where the
+god from every provider you have a key for (Anthropic, OpenAI, Gemini): `capability + bonus for the god's strongest model − price weight × cost`, where the
 price weight depends on the god (Hermes cares most about price, Zeus least) and shrinks when the request is
 demanding (Deep mode, sweeps, comparisons, reports, long messages). So the strongest model wins unless a
 cheaper one is clearly enough. There is no fixed provider order; if a call fails, the next model by the same
@@ -259,12 +264,13 @@ The assistant knows about these and mentions them when they matter.
   temperature, as in FeRh.
 - `Temp` is both the noise temperature (`flag0`) and the amplitude of the temperature cycle
   (`flagTempVarying`).
-- The thermal field direction comes from `np.random.rand(3)`, so it always lies in the +x+y+z octant and
-  has a non-zero mean.
+- Version 2.0 fixed four issues of the original code: the thermal field is now Gaussian (it was a vector in
+  the +x+y+z octant), the anisotropy is added once, the Ku(t) amplitude has the right units and `RK4` has the
+  right weights. Runs at T = 0 without Ku(t) are unchanged; see [Physics validation](#physics-validation).
 - `H_Amp` is added to the DC field amplitude before the `flag3` branch. Keep `Hex_AC` orthogonal to
   `Hex_DC`.
 - The chirp current is not multiplied by `SHE_angle`, unlike the SOT current.
-- `p`, `T` and `gamma` are parsed but not used. `RK4` exists but the solver uses `Heun`.
+- `p`, `T` and `gamma` are parsed but not used. The solver uses `Heun`; `RK4` is optional.
 - The defaults in `conf.py` (Ms, Ku, damping, SHE angle) are the AFM-PUF values, not FeRh.
 
 ## Configuration
@@ -297,6 +303,9 @@ Set these in `.env`.
 | `CONFIRM_MINUTES` | `10` | runs or sweeps estimated above this wall time wait for the Run it button |
 | `CONFIRM_RUNS` | `40` | sweeps with more runs than this wait for the Run it button |
 | `EUR_PER_USD` | daily ECB rate | fixed exchange rate for the cost estimate; empty = the ECB reference rate, refreshed daily |
+| `APP_URL` | `http://localhost:8421` | address used in emails and in the links that MCP results return |
+| `MAIL_RELAY` | project relay | where the welcome email is sent from; `off` saves it to `workspace/outbox` |
+| `MUMAX3_BIN` | empty | path of the mumax3 binary, only for the optional mumax3 engine |
 | `PRICES_JSON` | built-in table | token prices, `{"model-prefix": [input, output, cache write, cache read]}` in USD per million |
 
 One Heun step takes roughly 0.6 to 1 ms on one core, so the default 10 ns (100 000 steps) takes one to two
@@ -324,20 +333,24 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 
 ## How it works
 
-<img src="docs/architecture.png" alt="SpinMate architecture: browser, FastAPI server, agent loop with the model router, tools, run queue and runner inside Docker; Claude, OpenAI, the Postgres run catalog and the data volume outside" width="900">
+<img src="docs/architecture-v2.png" alt="SpinMate 2.0 architecture: the web app, Claude apps and any agent reach the spinmate-mcp server through a physics subagent; the server sits on spinmate-core with the tools, the run queue, the engine interface (macrospin built in, mumax3 or your own engine as optional plug-ins) and the physics validation; Anthropic, OpenAI, Gemini, the run catalog and the data volume outside" width="900">
 
 ```
-browser (web/index.html)
-   |  conversation kept in the page, sent every turn, answer streamed back as events
+browser (web/index.html)                  Claude Code / Claude Desktop / any MCP agent
+   |  conversation kept in the page          |
+   v                                         |
+FastAPI (app/server.py)                      |
+   agent loop: Claude, OpenAI or Gemini (app/agent.py), model picked per request (app/router.py)
+   |  calls the tools through MCP (app/mcp_client.py)
+   v                                         v
+spinmate-mcp (spinmate_mcp/): tools, resources, prompts, over stdio or HTTP (/mcp)
    v
-FastAPI (app/server.py) --> provider-neutral tool loop (Claude, OpenAI or Gemini; app/agent.py, spinmate_core/tools.py)
-   |                                   model picked per request by capability and price (app/router.py)
-   |                                   |  validate, start, sweep, get_run, cancel
-   v                                   v
-run queue (spinmate_core/simulations.py) --> python -m spinmate_core.runner   (one process per run)
-   |                                   imports macrospin/main.py
+spinmate-core (spinmate_core/): tools, run queue, sweeps, catalog, figures, reports, validation
    v
-run catalog (spinmate_core/catalog.py) --> Postgres: runs and sweeps, read-only SQL for query_runs
+engine interface: macrospin (built in) | mumax3 or another engine (optional plug-ins)
+   |  python -m spinmate_core.runner, one process per run
+   v
+run catalog (Postgres or SQLite): read-only SQL for query_runs
 ```
 
 `spinmate_core/runner.py` wraps the original code without changing its equations. It counts Heun steps for the
@@ -357,11 +370,10 @@ and the web app becomes one client among many.
 | Who can use it | the SpinMate web app | the web app, Claude Desktop and Claude Code, any MCP agent |
 | Interface | FastAPI and one agent loop | MCP server: tools, resources, prompts, over stdio or HTTP |
 | Physics knowledge | in the app's system prompt | a physics subagent (skill and prompts) usable in any harness |
-| Engine | the macrospin code, built in | an engine interface with plug-ins: macrospin, then mumax3 |
-| Validation | tests of the app | a physics validation suite: AFMR and Kittel frequencies, energy at α=0, \|m\|=1, SOT threshold |
+| Models | Claude and OpenAI | Claude, OpenAI and Gemini |
+| Engine | the macrospin code, built in | an engine interface: macrospin built in, mumax3 or any engine as an optional plug-in |
+| Validation | tests of the app | a physics validation suite: AFMR and Kittel frequencies, energy at α=0, \|m\|=1, damping, AFM/FM boundary, thermal field |
 | Package | one app | `spinmate-core` (no LLM), `spinmate-mcp`, the web app |
-
-<img src="docs/architecture-v2.png" alt="SpinMate version 2.0 architecture" width="900">
 
 ### Use SpinMate from Claude and other agents (MCP)
 
@@ -466,7 +478,7 @@ Only the Run button approves a large request; the model never sees the `confirme
 of its system prompt (how to read a run, the scales of the material) comes from `spinmate_mcp/physics.md`, the
 same file as the MCP prompts and the Claude Code subagent.
 
-### mumax3 engine (plug-in)
+### mumax3 engine (optional plug-in)
 
 `plugins/spinmate-mumax3` adds [mumax3](https://mumax.github.io) (GPU micromagnetics) as an optional second engine,
 through the same interface as macrospin. The input is either SpinMate lines, turned into an `.mx3` script,
@@ -499,7 +511,8 @@ to its authors. Details in `plugins/spinmate-mumax3/README.md`.
 
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
-an MCP client and a second engine (mumax3). `main` keeps the stable 1.x release.
+an MCP client, a second engine (mumax3), Gemini as a third model provider and the 2.0 controls of the page
+(engine menu, validation badge, connect dialog, key check). `main` keeps the stable 1.x release.
 
 ## Prompt evaluation
 
@@ -527,12 +540,17 @@ pytest -q
 ```
 
 ```
-app/               server, agent loop, tools, run manager, runner, prompts, guide
+app/               web server, agent loop (Claude, OpenAI, Gemini), model router, MCP client, prompts, guide
+spinmate_core/     the engine without an LLM: tools, run queue, runner, catalog, figures, reports, validation
+spinmate_mcp/      the MCP server and the physics guide (physics.md)
+plugins/           optional engines (spinmate-mumax3)
 macrospin/         the simulation code (four fixes in 2.0, see Physics validation)
 original_scripts/  original batch scripts (prepare, run_sim, avg_neel, neel_vector_generate)
-web/index.html     the whole interface
+web/               the interface (index.html) and its translations (i18n.js)
+docs/              user guide, presentation, architecture diagrams, validation report
 examples/          parameter files
-tests/             smoke tests
+tests/             unit, API, MCP, engine and physics tests
+evals/             prompt evaluation with the real agent
 ```
 
 The server has no login. It is meant for local use; do not expose the port to the internet, since anyone
@@ -544,7 +562,8 @@ SpinMate is meant to run on your own computer.
 
 - **Local only by default.** Docker publishes the app on `127.0.0.1`. There is no password (the name you
   give Athena is not a login), so anyone who can reach the page can run simulations and spend your API
-  key. Set `BIND_ADDRESS=0.0.0.0` only behind a reverse proxy with real authentication.
+  key. Set `BIND_ADDRESS=0.0.0.0` only behind a reverse proxy with real authentication. The MCP endpoint
+  (`/mcp`) is on the same port and follows the same rule.
 - **Limit the cost.** Set `TOKEN_BUDGET` in `.env` and a monthly spend limit in the Anthropic, OpenAI and Google
   consoles. Use a separate API key for SpinMate so you can revoke it on its own.
 - **Change `POSTGRES_PASSWORD`.** The database is not exposed outside Docker, but the default is public.
