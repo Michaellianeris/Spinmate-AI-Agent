@@ -61,7 +61,8 @@ def test_admin_with_token(monkeypatch, tmp_path, tmp_usage):
 
 def test_page_has_usage_templates_and_second_opinion():
     html = (ROOT / "web" / "index.html").read_text()
-    for el in ('id="usagedlg"', 'id="tplbtn"', 'id="tpldlg"', 'id="otherdlg"', "askother", "#FF5A42"):
+    for el in ('id="usagedlg"', 'id="tplbtn"', 'id="tpldlg"', 'id="otherdlg"', "askother", "#FF5A42", "provChip(m.provider)",
+               'aria-keyshortcuts="Control+K"', 'e.code === "KeyK"'):
         assert el in html
     relay = (ROOT / "relay" / "Code.gs").read_text()
     assert "function setupSheet" in relay and "log_(name, email, appUrl, 'sent')" in relay
