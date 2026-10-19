@@ -20,7 +20,8 @@ GATED = ("start_simulation", "start_sweep")
 INSTRUCTIONS = """SpinMate runs the original two-sublattice macrospin solver (antiferromagnets, FeRh, exchange-coupled
 ferromagnets). Usual flow: validate_parameters -> start_simulation (or start_sweep) -> wait_for_run (or wait_for_sweep)
 -> get_run with include_plot=true. Parameters are lines such as --A0=0.248e-12 or --t=2e-9 (SI units); only
-values that differ from the defaults are needed. Read spinmate://parameters for every parameter and its unit, and
+values that differ from the defaults are needed. Read spinmate://physics/guide before designing runs,
+spinmate://parameters for every parameter and its unit, and
 spinmate://physics/scales for the time, field and frequency scales of the default material. Report only numbers
 that come from tool results. Large requests return needs_confirmation: ask the user, then call again with
 confirmed=true."""
@@ -105,6 +106,8 @@ STATIC = {
     "spinmate://parameters": ("Parameter reference", "Every solver parameter, its unit and default.", PARAMETERS),
     "spinmate://physics/scales": ("Physics scales", "Exchange and anisotropy fields, mode frequencies and switching "
                                   "times of the default material, measured with SpinMate.", SCALES),
+    "spinmate://physics/guide": ("Physics guide", "How to design, run and interpret SpinMate simulations: workflows, "
+                                 "how to read the summary, scales of the default material.", None),
 }
 TEMPLATES = [
     ("spinmate://runs/{run_id}", "Run", "Status, summary and changed parameters of a run.", "application/json"),
@@ -114,7 +117,8 @@ TEMPLATES = [
 
 
 def resource_list():
-    res = [types.Resource(uri=u, name=n, description=d, mime_type="text/plain") for u, (n, d, _) in STATIC.items()]
+    res = [types.Resource(uri=u, name=n, description=d, mime_type="text/markdown" if t is None else "text/plain")
+           for u, (n, d, t) in STATIC.items()]
     res.append(types.Resource(uri="spinmate://validation", name="Physics validation",
                               description="Latest physics validation of the engine: cases, results and findings.",
                               mime_type="application/json"))
@@ -128,6 +132,8 @@ def resource_list():
 
 def read(uri):
     """Returns (text, mime type) for a SpinMate resource, or raises ValueError."""
+    if uri == "spinmate://physics/guide":
+        return GUIDE, "text/markdown"
     if uri in STATIC:
         return STATIC[uri][2], "text/plain"
     if uri == "spinmate://validation":
@@ -178,9 +184,58 @@ async def _read_resource(ctx, params):
     return types.ReadResourceResult(contents=[types.TextResourceContents(uri=str(params.uri), mime_type=mime, text=text)])
 
 
+# ---------------------------------------------------------------- prompts: the physics subagent
+GUIDE = (Path(__file__).resolve().parent / "physics.md").read_text()
+PROMPTS = {
+    "design_experiment": (
+        "Design and run the simulations that answer a physics question, then interpret them.",
+        [("goal", "the question, e.g. 'does a 0.3 T field along z switch the Néel vector?'", True)],
+        "Design the simulations that answer this question, run them with the SpinMate tools and interpret the "
+        "result. First say in two lines which runs you will do and why (durations from the scales).\n\n"
+        "Question: {goal}"),
+    "find_threshold": (
+        "Bracket the value of a parameter where the behaviour changes, with coarse and fine sweeps.",
+        [("parameter", "the parameter to sweep, e.g. SOT_DC_Amp or A0", True),
+         ("behaviour", "what changes at the threshold, e.g. 'the Néel vector switches'", True),
+         ("conditions", "other parameter lines, optional", False)],
+        "Find the value of {parameter} at which {behaviour}. Follow the threshold search workflow: coarse sweep, "
+        "then finer sweeps inside the bracket, at most 4 rounds. Conditions: {conditions}"),
+    "interpret_run": (
+        "Explain what happened in a finished run, from its summary and plot.",
+        [("run_id", "the run, e.g. r0001", True)],
+        "Explain run {run_id}: call get_run with include_plot=true, state the outcome, the mechanism and the "
+        "evidence, the caveats and one useful next run."),
+}
+
+
+async def _list_prompts(ctx, params):
+    return types.ListPromptsResult(prompts=[
+        types.Prompt(name=n, description=d, arguments=[types.PromptArgument(name=a, description=ad, required=r)
+                                                        for a, ad, r in args])
+        for n, (d, args, _) in PROMPTS.items()])
+
+
+def prompt_text(name, arguments):
+    if name not in PROMPTS:
+        raise ValueError(f"unknown prompt {name}")
+    desc, args, task = PROMPTS[name]
+    values = {a: (arguments or {}).get(a) or ("none" if not r else "") for a, _, r in args}
+    missing = [a for a, _, r in args if r and not values[a]]
+    if missing:
+        raise ValueError(f"missing argument: {', '.join(missing)}")
+    return desc, GUIDE + "\n\n## Task\n" + task.format(**values)
+
+
+async def _get_prompt(ctx, params):
+    desc, text = prompt_text(params.name, params.arguments)
+    return types.GetPromptResult(description=desc, messages=[
+        types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))])
+
+
 def build():
     return Server("spinmate", version=VERSION, title="SpinMate",
                   description="Two-sublattice macrospin simulations: runs, sweeps, figures and reports.",
                   instructions=INSTRUCTIONS, website_url="https://github.com/Michaellianeris/sublattice-agent",
                   on_list_tools=_list_tools, on_call_tool=_call_tool, on_list_resources=_list_resources,
-                  on_list_resource_templates=_list_templates, on_read_resource=_read_resource)
+                  on_list_resource_templates=_list_templates, on_read_resource=_read_resource,
+                  on_list_prompts=_list_prompts, on_get_prompt=_get_prompt)

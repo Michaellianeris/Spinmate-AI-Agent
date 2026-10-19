@@ -13,7 +13,8 @@ a = Analysis(
     [os.path.join(SPECPATH, "spinmate.py")],
     pathex=[ROOT, os.path.join(ROOT, "macrospin")],
     datas=[(os.path.join(ROOT, "web"), "web"),
-           (os.path.join(ROOT, "examples"), "examples")]
+           (os.path.join(ROOT, "examples"), "examples"),
+           (os.path.join(ROOT, "spinmate_mcp", "physics.md"), "spinmate_mcp")]
           + collect_data_files("scienceplots") + collect_data_files("latex2mathml"),
     hiddenimports=MACROSPIN + collect_submodules("app") + collect_submodules("spinmate_core") + collect_submodules("spinmate_mcp") + collect_submodules("mcp") + collect_submodules("uvicorn")
                   + ["scipy.signal", "matplotlib.backends.backend_agg", "multipart"],
