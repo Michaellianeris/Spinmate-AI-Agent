@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir --no-deps ./plugins/spinmate-mumax3
 COPY macrospin ./macrospin
 COPY web ./web
 COPY examples ./examples
+COPY docs/validation ./docs/validation
 COPY evals ./evals
 
 RUN useradd --create-home --uid 1000 sim \

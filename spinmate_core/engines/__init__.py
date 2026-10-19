@@ -38,4 +38,18 @@ def get(name=None):
     return _cache[name]
 
 
-__all__ = ["Engine", "Validation", "available", "get", "register", "DEFAULT"]
+def describe():
+    """Every engine with its title and whether it can run here; an engine may define ready() -> (bool, note)."""
+    out = []
+    for n in available():
+        try:
+            e = get(n)
+            ok, note = e.ready() if hasattr(e, "ready") else (True, "")
+            out.append({"name": n, "title": e.title, "description": e.description, "ready": bool(ok), "note": note,
+                        "default": n == DEFAULT})
+        except Exception as err:   # a broken plug-in is reported, not fatal
+            out.append({"name": n, "title": n, "description": "", "ready": False, "note": str(err), "default": False})
+    return out
+
+
+__all__ = ["Engine", "Validation", "available", "describe", "get", "register", "DEFAULT"]

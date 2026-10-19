@@ -88,6 +88,9 @@ class Mumax3Engine:
     description = ("Finite-difference micromagnetics on the GPU with mumax3: exchange, anisotropy, demagnetisation, "
                    "Zeeman and thermal fields on a grid of cells. Input: SpinMate lines or an .mx3 script.")
 
+    def ready(self):
+        return (True, "") if binary() else (False, "mumax3 is not installed here: set MUMAX3_BIN (needs an NVIDIA GPU)")
+
     def parameter_schema(self):
         return {k: {"default": v[0], "kind": v[1], "unit": v[2], "description": v[3]} for k, v in PARAMS.items()}
 

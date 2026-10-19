@@ -263,7 +263,7 @@ def report_html(results):
 td,th{{border-bottom:1px solid #D6DCE8;padding:8px;text-align:left;vertical-align:top;font-size:14px}}
 tr.pass .st{{color:#1B7F3B;font-weight:700}}tr.fail .st{{color:#B42318;font-weight:700}}small{{color:#5B6478}}</style></head>
 <body><h1>SpinMate physics validation</h1>
-<p>Engine: macrospin (original code, unchanged) · {time.strftime('%Y-%m-%d %H:%M')} · {n_ok} of {len(results)} cases pass</p>
+<p>Engine: macrospin (validated, fixes F1-F4 applied) · {time.strftime('%Y-%m-%d %H:%M')} · {n_ok} of {len(results)} cases pass</p>
 <table><tr><th>Case</th><th>Measured</th><th>Expected</th><th>Tolerance</th><th>Result</th><th>Runs</th></tr>{rows}</table>
 <h2>Fixed in version 2.0</h2><ul>{finds}</ul></body></html>"""
 

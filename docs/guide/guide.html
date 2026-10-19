@@ -226,7 +226,8 @@ over MCP they return <code>needs_confirmation</code> and run only when called ag
 
 <h2><span class="n">8</span>From Claude and other agents (MCP)</h2>
 <p>SpinMate is also an MCP server (Model Context Protocol), so Claude Code, Claude Desktop or any MCP agent can design, run
-and read simulations with the same tools, runs and queue as the web app.</p>
+and read simulations with the same tools, runs and queue as the web app. The plug icon in the left bar shows these
+commands for your server, with copy buttons.</p>
 <div class="grid2">
 <div><h3>Claude Code</h3>
 <p>With the Docker app running:</p>
@@ -254,7 +255,8 @@ python -m spinmate_mcp --http   # port 8422</pre></div>
 
 <h2><span class="n">9</span>Engines: macrospin and mumax3</h2>
 <p><b>Plug-ins are optional:</b> SpinMate runs fully with the built-in macrospin engine, and mumax3 or any other engine is added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
-in the chat simply ask for mumax3, over MCP pass <code>engine="mumax3"</code>.</p>
+in the chat simply ask for mumax3, over MCP pass <code>engine="mumax3"</code>. When a plug-in is installed, <b>Run setup</b> also
+shows an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 without a GPU) is marked “not installed”.</p>
 <table>
 <tr><th style="width:24mm">Engine</th><th>What it computes</th><th style="width:56mm">Notes</th></tr>
 <tr><td><b>macrospin</b><br>(default)</td><td>Two coupled LLG equations for the sublattices m₁ and m₂: exchange A0, anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise, time-dependent drives.</td><td>Built in; sweeps, continuation and combination of runs.</td></tr>
@@ -276,6 +278,7 @@ publish results obtained with it, cite Vansteenkiste et al., <i>The design and v
 <div>
 <p><code>python -m spinmate_core.validation</code> runs the real solver on cases with an analytic answer and writes a report
 (agents read it as <code>spinmate://validation</code>). It runs on every pull request that changes the solver or the core.
+The shield in the left bar is green when every case passes; click it for the report and the phase diagram.
 Each sublattice carries Ms/2, so μ₀H<sub>E</sub> = 4|A0|/(Ms l²) and μ₀H<sub>K</sub> = 4Ku/Ms.</p>
 <table>
 <tr><th>Case</th><th>Expected</th><th>Measured</th></tr>
@@ -318,6 +321,7 @@ to compare, plot, report or delete. With the catalog the assistant answers quest
 <h2><span class="n">14</span>Settings and conversations</h2>
 <ul>
 <li><b>Language:</b> English (US or UK), Greek, Spanish, German or Italian; the buttons, Athena and the answers follow it. It starts from the browser language.</li>
+<li><b>API keys:</b> under each key a check mark and the number of models it can use, or the provider's error.</li>
 <li><b>Theme:</b> Spin (default), Light or Dark. <b>Default parameters:</b> saved per user and used as the base of every run.</li>
 <li><b>Cost:</b> tokens and the estimated € next to the mode buttons; hover for the exchange rate.</li>
 <li><b>Conversations:</b> the clock icon lists your chats; select one, several or all and delete them (runs are kept).</li>

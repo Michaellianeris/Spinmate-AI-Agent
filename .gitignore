@@ -12,3 +12,4 @@ build/
 dist/
 .venv-build/
 SpinMate-windows.zip
+*.egg-info/
