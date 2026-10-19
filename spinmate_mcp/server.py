@@ -40,7 +40,8 @@ def _section(text, start, end=None):
 
 
 PARAMETERS = _section(prompts.SYSTEM_PROMPT, "Parameter reference")
-SCALES = _section(prompts.SYSTEM_PROMPT, "- Scales of the default material", "Answer format")
+GUIDE = (Path(__file__).resolve().parent / "physics.md").read_text()
+SCALES = _section(GUIDE, "## Scales of the default material", "## Answer")
 
 
 def tool_list():
@@ -185,7 +186,6 @@ async def _read_resource(ctx, params):
 
 
 # ---------------------------------------------------------------- prompts: the physics subagent
-GUIDE = (Path(__file__).resolve().parent / "physics.md").read_text()
 PROMPTS = {
     "design_experiment": (
         "Design and run the simulations that answer a physics question, then interpret them.",

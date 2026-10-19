@@ -143,3 +143,25 @@ def test_claude_code_files_are_up_to_date():
     from spinmate_mcp import agent_files
     for path, text in agent_files.render().items():
         assert (ROOT / path).read_text() == text, f"{path} is stale: run python -m spinmate_mcp.agent_files"
+
+
+def test_web_agent_goes_through_mcp(monkeypatch):
+    from app import mcp_client
+    from spinmate_core import tools
+    defs = {d["name"]: d for d in mcp_client.tool_defs()}
+    assert "start_simulation" in defs and "confirmed" not in defs["start_simulation"]["input_schema"]["properties"]
+    content, event = mcp_client.call("validate_parameters", {"parameters_text": "--t=1e-11\n"})
+    assert json.loads(content)["ok"] and event["tool"] == "validate_parameters"
+    # the model cannot approve a large request itself: only the Run button (approved=True) does
+    monkeypatch.setattr(tools, "CONFIRM_RUNS", 1)
+    args = {"parameters_text": "--t=1e-11\n", "parameter": "A0", "values": [1e-13, 2e-13], "confirmed": True}
+    held, ev = mcp_client.call("start_sweep", args)
+    assert ev["needs_confirmation"] and "Run button" in json.loads(held)["error"]
+    started, ev = mcp_client.call("start_sweep", args, approved=True)
+    assert ev.get("sweep_id")
+
+
+def test_web_prompt_uses_the_physics_guide():
+    from app import prompts
+    assert "{PHYSICS}" not in prompts.SYSTEM_PROMPT
+    assert "AFM <-> FM stability boundary: |Ku| = 2|A0|/l^2" in prompts.SYSTEM_PROMPT

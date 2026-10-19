@@ -8,7 +8,7 @@ import anthropic
 from . import openai_provider
 from . import fx
 from . import pricing
-from . import tools
+from . import mcp_client
 from . import prompts
 
 DEFAULT_MODEL = os.environ.get("CLAUDE_MODEL") or "claude-sonnet-5"
@@ -128,7 +128,7 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
             return
         try:
             resp = client.messages.create(model=model, max_tokens=MAX_TOKENS, system=system,
-                                          tools=tools.TOOLS, messages=_prune_images(messages), timeout=90)
+                                          tools=mcp_client.tool_defs(), messages=_prune_images(messages), timeout=90)
         except anthropic.AuthenticationError:
             yield {"type": "error", "status": 401, "error": "The API key was rejected. Check it in console.anthropic.com."}
             return
@@ -177,7 +177,7 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
                 continue
             yield {"type": "tool_start", "id": block.id, "name": block.name, "input": block.input or {}}
             try:
-                out, event = tools.call(block.name, block.input or {}, approved)
+                out, event = mcp_client.call(block.name, block.input or {}, approved)
                 is_error = '"ok": false' in out if isinstance(out, str) else False
             except Exception as e:  # tool failure goes back to Claude, not to the user
                 out, event, is_error = f"tool failed: {e}", {"tool": block.name, "error": str(e)}, True
@@ -247,7 +247,7 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
                    "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
             return
         try:
-            response = openai_provider.create(model, instructions, input_items, tools.TOOLS,
+            response = openai_provider.create(model, instructions, input_items, mcp_client.tool_defs(),
                                               api_key, MAX_TOKENS, 90)
         except openai_provider.OpenAIError as e:
             yield {"type": "error", "status": e.status, "error": str(e)}
@@ -283,7 +283,7 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
             yield {"type": "tool_start", "id": call["id"], "name": call["name"],
                    "input": call["input"]}
             try:
-                value, event = tools.call(call["name"], call["input"], approved)
+                value, event = mcp_client.call(call["name"], call["input"], approved)
                 is_error = '"ok": false' in value if isinstance(value, str) else False
             except Exception as e:
                 value, event, is_error = f"tool failed: {e}", {"tool": call["name"], "error": str(e)}, True

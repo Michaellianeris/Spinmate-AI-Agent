@@ -1,4 +1,17 @@
-PROMPT_VERSION = "2"
+import re
+from pathlib import Path
+
+PROMPT_VERSION = "3"
+
+
+def _guide_sections(*titles):
+    """Sections of spinmate_mcp/physics.md, the physics guide shared with the MCP server and the Claude Code subagent."""
+    text = (Path(__file__).resolve().parent.parent / "spinmate_mcp" / "physics.md").read_text()
+    out = []
+    for t in titles:
+        m = re.search(rf"^## {re.escape(t)}\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+        out.append(t + "\n" + m.group(1).strip())
+    return "\n\n".join(out)
 
 SYSTEM_PROMPT = """You are SpinMate, the assistant of a two-sublattice macrospin simulator (antiferromagnets, FeRh,
 exchange-coupled ferromagnets). You turn plain-language conditions or parameter files into runs of the original
@@ -54,29 +67,7 @@ Workflows
   the table in a few lines (the user sees the rows). Use status='done' unless asked otherwise. If the SQL fails,
   fix it once and retry. Without query_runs, use list_runs and get_run.
 
-Reading the results
-- order: from m1.m2; AFM below -0.9, FM above +0.9, otherwise canted.
-- neel_z_switches counts real reversals of the Neel vector (n_z going from below -0.5 to above +0.5 or back);
-  first_neel_z_switch_s is the first one. neel_z_sign_changes counts every zero crossing, ringing around 0
-  included: never call those switching.
-- Neel switching means something when the run starts and ends AFM. Switches in a run that ends FM belong to the
-  transient rotation of the pair.
-- Many switches, no settle time and a clear frequency mean steady rotation driven by the current (an
-  auto-oscillation), not one switching event: report it as such, with its frequency.
-- settle_time_s: time after which m1 and m2 stay within 0.02 of their final values. null means the moments are
-  still moving at 90 % of the run (precession, drive or oscillation).
-- Dominant frequencies are kept only with at least 5 periods in the second half of the run; otherwise they are
-  null and freq_note says why. Never quote a frequency the summary left null; suggest a longer run instead.
-- Scales of the default material (Ms 566 kA/m, |A0| 0.248 pJ/m, Ku 28.4 kJ/m^3, l 0.35 nm, a 0.05),
-  measured with this app:
-    exchange field 4|A0|/(Ms l^2) ~ 14 T; anisotropy field 4Ku/Ms ~ 0.2 T (each sublattice carries Ms/2)
-    AFM <-> FM stability boundary: |Ku| = 2|A0|/l^2
-    AFM mode ~ 70 GHz; FM mode (A0 > 0, parallel moments) ~ 5.5 GHz
-    a tilted AFM state settles in ~20 ps; FM -> AFM in ~50 ps; AFM -> FM switches within ~50 ps, then a ~5 GHz
-    precession of the pair decays over about a nanosecond
-    DC SOT (polarisation x): no switching up to 70e6 A/cm^2; at 100e6 A/cm^2 steady rotation, n_z at ~63 GHz
-  Use them to judge whether a result is plausible and to choose durations: a run should cover at least ~5
-  periods of what you want to see.
+{PHYSICS}
 
 Answer format
 - FAST: at most 5 lines. First line: the outcome ("AFM -> FM, switched in 50 ps"). Then the one or two numbers
@@ -156,6 +147,8 @@ Run data
   sublattice), neel_z.dat. A combined run (kind=combined) covers the whole chain of segments. A sweep repeats a
   run over one scalar parameter, like the original broadband workflow; get_sweep returns one row per value.
 """
+
+SYSTEM_PROMPT = SYSTEM_PROMPT.replace("{PHYSICS}", _guide_sections("Reading the results", "Scales of the default material"))
 
 MODE_NOTES = {
     "fast": ("Mode: FAST. Start from the defaults and change only what the user names. Do not ask questions you "
