@@ -121,3 +121,25 @@ def test_http_inside_the_web_app():
 def test_unknown_resource_is_an_error():
     with pytest.raises(ValueError):
         M.read("spinmate://nothing")
+
+
+def test_physics_prompts_and_guide():
+    async def go():
+        async with Client(spinmate_mcp.build()) as c:
+            names = {p.name for p in (await c.list_prompts()).prompts}
+            got = await c.get_prompt("find_threshold", {"parameter": "SOT_DC_Amp", "behaviour": "the Néel vector switches"})
+            guide = (await c.read_resource("spinmate://physics/guide")).contents[0].text
+            return names, got, guide
+    names, got, guide = run(go)
+    assert {"design_experiment", "find_threshold", "interpret_run"} <= names
+    text = got.messages[0].content.text
+    assert "SOT_DC_Amp" in text and "Reading the results" in text and "Conditions: none" in text
+    assert "2 Ku" in guide
+    with pytest.raises(ValueError):
+        M.prompt_text("interpret_run", {})
+
+
+def test_claude_code_files_are_up_to_date():
+    from spinmate_mcp import agent_files
+    for path, text in agent_files.render().items():
+        assert (ROOT / path).read_text() == text, f"{path} is stale: run python -m spinmate_mcp.agent_files"

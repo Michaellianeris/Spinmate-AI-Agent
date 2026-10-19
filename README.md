@@ -438,6 +438,21 @@ of 1/6 (Heun is the default, so runs are not affected), and the thermal field di
 `np.random.rand(3)`, which has only positive components (it matters only with `Temp_Ampl > 0`). SpinMate does
 not change the original code; these are reported for its author to decide.
 
+### Physics subagent
+
+The physics knowledge of SpinMate (workflows, how to read a run summary, the scales of the default material)
+lives in one file, `spinmate_mcp/physics.md`, and reaches every agent in three forms:
+
+- **MCP prompts** of the server: `design_experiment` (goal), `find_threshold` (parameter, behaviour,
+  conditions) and `interpret_run` (run id), plus the resource `spinmate://physics/guide`. In Claude Desktop
+  they appear under the + button of the message box.
+- **A Claude Code subagent**, `.claude/agents/spinmate-physicist.md`, and **an Agent Skill**,
+  `.claude/skills/spinmate-physics/SKILL.md`. Claude Code finds them when it runs in this repository; copy them
+  to `~/.claude/agents/` and `~/.claude/skills/` to use them in other projects.
+
+After editing `physics.md`, run `python -m spinmate_mcp.agent_files` to regenerate the two files (a test fails
+while they are out of date).
+
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
 an MCP client and a second engine (mumax3). `main` keeps the stable 1.x release.
