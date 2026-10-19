@@ -197,8 +197,12 @@ def _needs_confirmation(name, args, approved):
     if wall <= CONFIRM_MINUTES * 60 and runs <= CONFIRM_RUNS:
         return None
     return {"ok": False, "needs_confirmation": True, "runs": runs, "estimated_wall_time_s": round(wall, 1),
-            "error": f"needs the user's confirmation: {runs} run(s), about {wall / 60:.1f} min. The page shows a Run "
-                     "button; tell the user the estimate in one line and stop. Do not retry in this turn."}
+            "error": confirmation_message(runs, wall)}
+
+
+def confirmation_message(runs, wall):
+    return (f"needs the user's confirmation: {runs} run(s), about {wall / 60:.1f} min. The page shows a Run "
+            "button; tell the user the estimate in one line and stop. Do not retry in this turn.")
 
 
 QUERY_TOOL = {
@@ -294,10 +298,19 @@ def call(name, args, approved=False):
     else:
         out = {"error": f"unknown tool {name}"}
 
+    return json.dumps(out, default=str), event_for(name, out)
+
+
+def event_for(name, out):
+    """The part of a tool result the web page needs for its chips and cards."""
     event = {"tool": name}
+    if not isinstance(out, dict):
+        return event
+    if out.get("needs_confirmation"):
+        return {"tool": name, **{k: out.get(k) for k in ("needs_confirmation", "runs", "estimated_wall_time_s", "error")}}
     for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error", "run_ids", "report", "html_url", "zip_url", "figure", "png_url"):
-        if isinstance(out, dict) and key in out:
+        if key in out:
             event[key] = out[key]
-    if name in ("get_run", "wait_for_run") and isinstance(out, dict) and "id" in out:
+    if name in ("get_run", "wait_for_run") and "id" in out:
         event["run_id"] = out["id"]
-    return json.dumps(out, default=str), event
+    return event

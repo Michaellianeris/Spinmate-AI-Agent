@@ -434,7 +434,7 @@ Each sublattice carries Ms/2, so the fields are μ0H_E = 4|A0|/(Ms l²) and μ0H
 | AFM/FM boundary \|Ku\| = 2\|A0\|/l² | stable above, unstable below | as expected at ±10 % | pass |
 | Thermal field | isotropic, σ = Temp_Ampl | mean < 0.03 σ, σ within 3 % | pass |
 
-<img src="docs/validation/phase-diagram.png" alt="AFM/FM phase diagram: the boundary found with SpinMate 2.0 for A0 from -6 to 6 pJ/m lies on the analytical lines |Ku| = 2|A0|/l^2" width="420">
+<img src="docs/validation/phase-diagram.png" alt="AFM/FM phase diagram: the boundary found with SpinMate 2.0 for A0 from -6 to 6 pJ/m lies on the analytical lines |Ku| = 2|A0|/l^2" width="460">
 
 The boundary measured by bisection with the solver (12 points, `docs/validation/phase-boundary.json`) lies
 on |Ku| = 2|A0|/l² within 2-6 %; the small offsets come from the finite run time and the finite starting angle.
@@ -451,6 +451,14 @@ boundary is unchanged.
   default integrator, so earlier runs were not affected).
 - **F3.** The thermal field was Temp_Ampl times a unit vector with only positive components; it is now Gaussian
   with standard deviation Temp_Ampl per component, as `run.py` defines it. Runs with temperature change.
+
+### The web app as an MCP client
+
+The chat agent of the web app (`app/agent.py`) no longer imports the tools: it lists and calls them through
+the MCP server, in the same process (`app/mcp_client.py`), exactly as Claude Desktop or any other agent does.
+Only the Run button approves a large request; the model never sees the `confirmed` argument. The physics part
+of its system prompt (how to read a run, the scales of the material) comes from `spinmate_mcp/physics.md`, the
+same file as the MCP prompts and the Claude Code subagent.
 
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
