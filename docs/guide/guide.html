@@ -253,12 +253,12 @@ python -m spinmate_mcp --http   # port 8422</pre></div>
 <div class="ask">Use spinmate to find the smallest DC SOT current that makes the Néel vector rotate.</div>
 
 <h2><span class="n">9</span>Engines: macrospin and mumax3</h2>
-<p>Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
+<p><b>Plug-ins are optional:</b> SpinMate runs fully with the built-in macrospin engine, and mumax3 or any other engine is added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
 in the chat simply ask for mumax3, over MCP pass <code>engine="mumax3"</code>.</p>
 <table>
 <tr><th style="width:24mm">Engine</th><th>What it computes</th><th style="width:56mm">Notes</th></tr>
 <tr><td><b>macrospin</b><br>(default)</td><td>Two coupled LLG equations for the sublattices m₁ and m₂: exchange A0, anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise, time-dependent drives.</td><td>Built in; sweeps, continuation and combination of runs.</td></tr>
-<tr><td><b>mumax3</b><br>(plug-in)</td><td>Finite-difference micromagnetics of one ferromagnet on a grid, on the GPU. Input as SpinMate lines (turned into an <code>.mx3</code> script) or a complete <code>.mx3</code> script; the card shows ⟨m⟩(t).</td><td>Needs an NVIDIA GPU and the mumax3 binary in <code>MUMAX3_BIN</code>; without it validation warns. Single runs only.</td></tr>
+<tr><td><b>mumax3</b><br>(optional plug-in)</td><td>Finite-difference micromagnetics of one ferromagnet on a grid, on the GPU. Input as SpinMate lines (turned into an <code>.mx3</code> script) or a complete <code>.mx3</code> script; the card shows ⟨m⟩(t).</td><td>Needs an NVIDIA GPU and the mumax3 binary in <code>MUMAX3_BIN</code>; without it validation warns. Single runs only.</td></tr>
 </table>
 <pre>--Nx=128
 --Ny=128
