@@ -88,6 +88,7 @@ class GuideIn(BaseModel):
 class ParamsIn(BaseModel):
     parameters_text: str
     label: str = ""
+    engine: str | None = None    # None = macrospin
 
 
 class ContinueIn(BaseModel):
@@ -352,16 +353,69 @@ def examples():
 
 @app.post("/api/validate")
 def validate(body: ParamsIn):
-    out = P.validate(body.parameters_text, S.sec_per_step())
+    if body.engine and body.engine != "macrospin":
+        out = S._check(body.parameters_text, body.engine)
+    else:
+        out = P.validate(body.parameters_text, S.sec_per_step())
     out.pop("cleaned_text", None)
     return out
+
+
+@app.get("/api/engines")
+def engines_list():
+    from spinmate_core import engines
+    return {"engines": engines.describe()}
+
+
+# ---- physics validation: the latest report of this server, else the one in the repository
+DOCS_VALIDATION = Path(__file__).resolve().parent.parent / "docs" / "validation"
+
+
+def _validation_report():
+    for folder, source in ((S.WORKSPACE / "validation", "this server"), (DOCS_VALIDATION, "repository")):
+        if (folder / "report.html").exists():
+            return folder, source
+    return None, None
+
+
+@app.get("/api/validation")
+def validation_status():
+    folder, source = _validation_report()
+    if not folder:
+        return {"available": False}
+    html_text = (folder / "report.html").read_text()
+    m = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}) · (\d+) of (\d+) cases pass", html_text)
+    return {"available": True, "source": source, "date": m.group(1) if m else None,
+            "passed": int(m.group(2)) if m else None, "total": int(m.group(3)) if m else None}
+
+
+@app.get("/validation")
+def validation_page():
+    folder, _ = _validation_report()
+    if not folder:
+        raise HTTPException(404, "no validation report: run python -m spinmate_core.validation")
+    html_text = (folder / "report.html").read_text()
+    if (DOCS_VALIDATION / "phase-diagram.png").exists():
+        html_text = html_text.replace("<h2>Fixed in version 2.0</h2>",
+                                      '<h2>AFM/FM phase boundary</h2><p><img src="/api/validation/phase-diagram.png" '
+                                      'alt="AFM/FM phase diagram: measured boundary on |Ku| = 2|A0|/l²" width="560"></p>'
+                                      "<h2>Fixed in version 2.0</h2>")
+    return Response(html_text, media_type="text/html")
+
+
+@app.get("/api/validation/phase-diagram.png")
+def validation_phase_diagram():
+    path = DOCS_VALIDATION / "phase-diagram.png"
+    if not path.exists():
+        raise HTTPException(404, "no phase diagram")
+    return FileResponse(path)
 
 
 # ---- runs and sweeps
 
 @app.post("/api/runs")
 def start(body: ParamsIn):
-    out = S.start_run(body.parameters_text, body.label)
+    out = S.start_run(body.parameters_text, body.label, engine=body.engine)
     if not out["ok"]:
         raise HTTPException(400, out["error"])
     return out

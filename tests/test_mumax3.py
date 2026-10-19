@@ -59,3 +59,18 @@ def test_run_through_the_tools(mumax):
 def test_unknown_engine_is_an_error():
     out = S.start_run("--t=1e-11\n", engine="no-such-engine")
     assert not out["ok"] and "no engine" in out["error"]
+
+
+def test_engines_endpoint_and_readiness(mumax, monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.server import app
+    http = TestClient(app)
+    eng = {e["name"]: e for e in http.get("/api/engines").json()["engines"]}
+    assert eng["macrospin"]["ready"] and eng["macrospin"]["default"] and eng["mumax3"]["ready"]
+    monkeypatch.delenv("MUMAX3_BIN")
+    monkeypatch.setattr(M.shutil, "which", lambda name: None)
+    eng = {e["name"]: e for e in http.get("/api/engines").json()["engines"]}
+    assert not eng["mumax3"]["ready"] and "MUMAX3_BIN" in eng["mumax3"]["note"]
+    # the page validates and starts runs on the engine it chose
+    r = http.post("/api/validate", json={"parameters_text": "--Nx=16\n--t=1e-10\n", "engine": "mumax3"}).json()
+    assert r["ok"] and r["steps"] == 100 and any("MUMAX3_BIN" in w for w in r["warnings"])

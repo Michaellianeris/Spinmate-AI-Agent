@@ -264,7 +264,9 @@ def call(name, args, approved=False):
                 out["engines"].append({"name": n, "error": str(err)})
                 continue
             schema = e.parameter_schema()
-            out["engines"].append({"name": n, "title": e.title, "description": e.description,
+            ready, note = e.ready() if hasattr(e, "ready") else (True, "")
+            out["engines"].append({"name": n, "title": e.title, "description": e.description, "ready": ready,
+                                   **({"note": note} if note else {}),
                                    "parameters": schema if n != "macrospin" else "see spinmate://parameters"})
     elif name == "start_simulation":
         out = S.start_run(args["parameters_text"], args.get("label", ""), engine=args.get("engine"))

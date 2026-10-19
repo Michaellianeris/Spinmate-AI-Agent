@@ -368,6 +368,14 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .history-foot .grow{flex:1}
 .history-foot .danger{color:#C0262D;border-color:#E9B8BB}.history-foot .danger:disabled{opacity:.45;cursor:default}
 .modal-back{position:fixed;inset:0;z-index:24;background:rgba(15,20,30,.5)}
+.valbtn{position:relative}.valbtn .vdot{position:absolute;right:7px;top:7px;width:8px;height:8px;border-radius:50%;background:#22A35A;box-shadow:0 0 0 2px var(--panel)}
+.valbtn .vdot.warn{background:#E0A100}
+.enginerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 2px;font-size:.9rem}
+.enginerow select{min-width:220px}.enginerow small{color:var(--muted);flex-basis:100%}
+.keystat{display:block;font-size:.76rem;margin-top:3px;min-height:1em}.keystat.ok{color:var(--ok)}.keystat.bad{color:var(--err)}
+.connectdlg{width:min(640px,calc(100vw - 32px))}.connectdlg h4{margin:14px 0 4px}
+.cmdbox{display:flex;gap:8px;align-items:flex-start}.cmdbox pre{flex:1;margin:4px 0;white-space:pre-wrap;word-break:break-all}
+.engchip{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--soft);border:1px solid var(--line);font-size:.75rem;color:var(--muted)}
 .defdlg{position:fixed;z-index:25;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px 20px}
 .defdlg h3{margin:0 0 4px}
 .defdlg p{margin:0 0 10px;color:var(--muted);font-size:.85rem}
@@ -540,6 +548,8 @@ main{grid-template-columns:minmax(0,1fr)}
   <button class="rail-btn" id="runsbtn" type="button" title="All runs: search, compare, figures, reports" aria-label="All runs" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5.5l1 1 1.8-2M4 11.5l1 1 1.8-2"/><circle cx="5" cy="18" r="1.2"/></svg></button>
   <button class="rail-btn" id="defaultsbtn" type="button" title="Default parameters" aria-label="Default parameters"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>
   <button class="rail-btn" id="setupbtn" type="button" title="Run setup (no assistant)" aria-label="Run setup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></button>
+  <button class="rail-btn valbtn" id="validbtn" type="button" title="Physics validation" aria-label="Physics validation" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><i class="vdot"></i></button>
+  <button class="rail-btn" id="connectbtn" type="button" title="Use SpinMate from Claude and other agents" aria-label="Connect to Claude"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7V3M15 7V3"/><path d="M7 7h10v4a5 5 0 01-10 0z"/><path d="M12 16v5"/></svg></button>
   <div class="rail-sp"></div>
   <button class="pill" id="keypill" type="button" title="API key status"><i></i><span id="keytext"></span></button>
   <div class="settings" id="accountwrap">
@@ -564,9 +574,9 @@ main{grid-template-columns:minmax(0,1fr)}
         <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
         <button type="button" data-theme="spin" aria-pressed="true"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
-      <label>Anthropic API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"></label>
-      <label>OpenAI API key <input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"></label>
-      <label>Gemini API key <input id="geminikey" type="password" placeholder="AIza…" autocomplete="off"></label>
+      <label>Anthropic API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"><small class="keystat" id="ks-anthropic"></small></label>
+      <label>OpenAI API key <input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"><small class="keystat" id="ks-openai"></small></label>
+      <label>Gemini API key <input id="geminikey" type="password" placeholder="AIza…" autocomplete="off"><small class="keystat" id="ks-gemini"></small></label>
       <p>The keys stay in this browser tab and are sent only to your own server.</p>
       <details class="prefs"><summary>Model behind each god</summary>
         <div id="prefs"></div>
@@ -643,6 +653,8 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><h4>Default parameters</h4><p>Edit the values Fast mode starts from: duration, Ms, exchange A0, anisotropy Ku, damping, temperature, SOT current, the initial state and one or two extra flags. They are saved in this browser and also sent to the assistant as the base of its runs. &ldquo;Reset to built-in&rdquo; brings back the originals.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></span><div><h4>Run setup</h4><p>Starts a simulation yourself, without the assistant, so it uses no tokens. <b>Fast</b> has presets (AFM&rarr;FM, AFM&rarr;AFM, FM&rarr;AFM, FM&rarr;FM, FeRh heating), sliders, Check and Run. <b>Deep</b> is a text editor for the full parameter file with an examples menu, Check, Run and Save as file. The result appears in the chat.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9"/><path d="M3 20h18"/></svg></span><div><h4>Model gods</h4><p>Opens a comparison of the four model levels (Hermes, Dionysus, Zeus, Apollo): what each one is good for, how fast and how deep it is, and which model it will use and what it falls back to. Each card has a button to choose it.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><div><h4>Physics validation</h4><p>Shows that the solver passes its analytic checks (resonance frequencies, energy, damping, the AFM/FM boundary). Green when all cases pass; click for the full report and the phase diagram.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7V3M15 7V3"/><path d="M7 7h10v4a5 5 0 01-10 0z"/><path d="M12 16v5"/></svg></span><div><h4>Connect to Claude</h4><p>The commands that add SpinMate to Claude Code, Claude Desktop or any MCP agent, with copy buttons.</p></div></div>
 <div class="tool"><span class="ti"><span class="dotstatus"></span></span><div><h4>API key status</h4><p>Green when a key is available (on the server or in this tab), amber when it is missing. Click it to open the settings.</p></div></div>
 <div class="tool"><span class="ti"><span class="avatar"><span>M</span></span></span><div><h4>Account</h4><p>Shows who is signed in. Log out, then type another name in Athena&rsquo;s window to log in. Each name keeps its own history and default parameters. There is no password.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><div><h4>Settings</h4><p>Language (English US or UK, Greek, Spanish, German, Italian), colour theme (Light, Dark, Spin), your Anthropic, OpenAI and Gemini API keys, and the model each god uses (Auto by default). The keys stay in this browser tab and are only sent to your own server.</p></div></div>
@@ -662,11 +674,27 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><img class="owl" src="/athena.png" alt="" onerror="this.remove()"></span><div><h4>Athena</h4><p>The owl in the bottom right corner explains how to use the app. She only answers questions about SpinMate itself; for simulations, ask in the chat.</p></div></div>
   </div>
 </section>
+<div class="modal-back" id="connectback" hidden></div>
+<section class="defdlg connectdlg" id="connectdlg" hidden role="dialog" aria-label="Use SpinMate from other agents">
+  <div class="dlg-head"><h3>Use SpinMate from Claude and other agents</h3>
+    <button class="rail-btn" id="connectclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p>SpinMate is also an MCP server: Claude Code, Claude Desktop or any MCP agent can run and read simulations with the same tools, runs and queue as this page.</p>
+  <h4>Claude Code</h4>
+  <div class="cmdbox"><pre class="ftext" id="cmd-code" data-noi18n></pre><button class="btn small" type="button" data-copy="cmd-code">Copy</button></div>
+  <p>Opening Claude Code in the repository also loads the physics subagent and skill.</p>
+  <h4>Claude Desktop</h4>
+  <p>Settings &gt; Developer &gt; Edit config (claude_desktop_config.json); change the path to your copy of the repository.</p>
+  <div class="cmdbox"><pre class="ftext" id="cmd-desktop" data-noi18n></pre><button class="btn small" type="button" data-copy="cmd-desktop">Copy</button></div>
+  <h4>Any MCP agent</h4>
+  <div class="cmdbox"><pre class="ftext" id="cmd-url" data-noi18n></pre><button class="btn small" type="button" data-copy="cmd-url">Copy</button></div>
+  <p>Streamable HTTP. Large requests return needs_confirmation, so the agent asks you before it runs them.</p>
+</section>
 <div class="modal-back" id="setupback" hidden></div>
 <section class="defdlg setupdlg" id="setupdlg" hidden role="dialog" aria-label="Run setup">
   <div class="dlg-head"><h3>Run setup</h3>
     <button class="rail-btn" id="setupclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <p>Start a run yourself, without the assistant (no tokens). The result appears in the chat.</p>
+      <div class="enginerow" id="enginerow" hidden><label for="engine">Engine</label><select id="engine"></select><small id="enginenote"></small></div>
       <div class="modes" role="group" aria-label="Setup mode">
         <button type="button" id="mode-fast" aria-pressed="true">Fast</button>
         <button type="button" id="mode-deep" aria-pressed="false">Deep (txt)</button>
@@ -1436,16 +1464,17 @@ function showCheck(r, el = $("#checkout")) {
   if (!r.ok) { el.className = "check bad"; el.textContent = r.error; return; }
   el.className = "check ok";
   const changed = Object.entries(r.changed_from_defaults || {}).map(([k, v]) => `${k}=${Array.isArray(v) ? v.join(",") : v}`).join("  ");
-  el.innerHTML = `Valid. ${r.steps.toLocaleString()} steps, about ${dur(r.estimated_runtime_s)}.` +
+  el.innerHTML = `Valid. ${r.steps.toLocaleString()} steps${r.estimated_runtime_s ? `, about ${dur(r.estimated_runtime_s)}` : ""}.` +
     (changed ? `<div class="mono" style="color:var(--muted);margin-top:4px">${esc(changed)}</div>` : "") +
     (r.warnings || []).map(w => `<p class="warn">${esc(w)}</p>`).join("");
 }
-$("#check").onclick = async () => { try { showCheck(await postJson("/api/validate", {parameters_text: $("#params").value})); } catch (e) { showCheck({ok: false, error: e.message}); } };
+$("#check").onclick = async () => { try { showCheck(await postJson("/api/validate", {parameters_text: $("#params").value, engine: currentEngine()})); } catch (e) { showCheck({ok: false, error: e.message}); } };
 async function runText(text, label, show) {
   try {
-    const chk = await postJson("/api/validate", {parameters_text: text}); show(chk);
+    const engine = currentEngine();
+    const chk = await postJson("/api/validate", {parameters_text: text, engine}); show(chk);
     if (!chk.ok) return;
-    const out = await postJson("/api/runs", {parameters_text: text, label});
+    const out = await postJson("/api/runs", {parameters_text: text, label, engine});
     trackRun(out.run_id, label); closeSetup(); await refreshRuns();
   } catch (e) { show({ok: false, error: e.message}); }
 }
@@ -1563,6 +1592,7 @@ async function paintCard(id, c, r) {
   el.querySelector("[data-r=star]").setAttribute("aria-pressed", String(!!r.starred));
   el.querySelector("[data-r=sum]").innerHTML = runSummaryLine(r);
   const lab = el.querySelector(".rc-label"); if (!lab.textContent && r.label) lab.textContent = r.label;
+  if (r.engine && r.engine !== "macrospin" && !el.querySelector(".engchip")) lab.insertAdjacentHTML("afterend", `<span class="engchip" title="Engine">${esc(r.engine)}</span>`);
   bar.style.width = (r.status === "done" ? 100 : r.progress * 100).toFixed(1) + "%";
   if (r.status === "queued") setStep(el, "sim", "active", `Queued, estimated ${dur(r.estimated_runtime_s)}`);
   else if (r.status === "running") setStep(el, "sim", "active", `Simulating, ${(r.progress * 100).toFixed(0)}%${r.eta_s ? ", about " + dur(r.eta_s) + " left" : ""}`);
@@ -1663,6 +1693,67 @@ function setMode(m) {
   for (const p of ["", "c"]) { $(`#${p}mode-fast`).setAttribute("aria-pressed", String(m === "fast")); $(`#${p}mode-deep`).setAttribute("aria-pressed", String(m === "deep")); }
   try { localStorage.setItem("sublattice.mode", m); } catch {}
 }
+// ---------------------------------------------------------------- engines: the selector appears only when a plug-in is installed
+state.engines = [];
+const currentEngine = () => ($("#engine") && $("#engine").value) || "macrospin";
+async function loadEngines() {
+  try { state.engines = (await api("/api/engines")).engines || []; } catch { state.engines = []; }
+  const sel = $("#engine"); sel.innerHTML = "";
+  for (const e of state.engines) {
+    const o = document.createElement("option"); o.value = e.name;
+    o.textContent = e.title + (e.ready ? "" : " · " + t("not installed")); sel.appendChild(o);
+  }
+  sel.value = "macrospin"; $("#enginerow").hidden = state.engines.length < 2; engineChanged();
+}
+function engineChanged() {
+  const e = state.engines.find(x => x.name === currentEngine()), other = currentEngine() !== "macrospin";
+  $("#enginenote").textContent = !e || !other ? "" : e.ready ? e.description : e.note;
+  // the Fast form, presets and examples are for the macrospin solver
+  $("#mode-fast").hidden = other; $("#examples").hidden = other;
+  if (other) { $("#fast").hidden = true; $("#deep").hidden = false; $("#mode-deep").setAttribute("aria-pressed", "true"); $("#mode-fast").setAttribute("aria-pressed", "false"); }
+  else setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
+  $("#params").placeholder = other ? "--t=2e-9" : "--t=5e-9\n--SOT_DC_Amp=30e6";
+  showCheck(null);
+}
+$("#engine").onchange = engineChanged;
+
+// ---------------------------------------------------------------- physics validation badge
+async function loadValidation() {
+  try {
+    const v = await api("/api/validation"); if (!v.available) return;
+    const all = v.passed != null && v.passed === v.total, b = $("#validbtn");
+    b.querySelector(".vdot").classList.toggle("warn", !all);
+    b.title = v.passed != null ? `Physics validation: ${v.passed}/${v.total} analytic cases pass${v.date ? " · " + v.date : ""}` : "Physics validation";
+    b.hidden = false;
+  } catch {}
+}
+$("#validbtn").onclick = () => window.open("/validation", "_blank", "noopener");
+
+// ---------------------------------------------------------------- connect Claude and other agents (MCP)
+function openConnect() {
+  const url = location.origin + "/mcp";
+  $("#cmd-code").textContent = `claude mcp add --transport http spinmate ${url}`;
+  $("#cmd-desktop").textContent = `{
+  "mcpServers": {
+    "spinmate": {
+      "command": "docker",
+      "args": ["compose", "-f", "/path/to/Spinmate-AI-Agent/docker-compose.yml",
+               "exec", "-T", "sublattice-agent", "python", "-m", "spinmate_mcp"]
+    }
+  }
+}`;
+  $("#cmd-url").textContent = url;
+  $("#connectdlg").hidden = false; $("#connectback").hidden = false;
+}
+function closeConnect() { $("#connectdlg").hidden = true; $("#connectback").hidden = true; }
+$("#connectbtn").onclick = openConnect;
+$("#connectclose").onclick = closeConnect;
+$("#connectback").onclick = closeConnect;
+document.querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => {
+  try { await navigator.clipboard.writeText($("#" + b.dataset.copy).textContent); const old = b.textContent; b.textContent = t("Copied"); setTimeout(() => b.textContent = old, 1200); } catch {}
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeConnect(); });
+
 $("#mode-fast").onclick = () => setMode("fast");
 $("#mode-deep").onclick = () => setMode("deep");
 $("#cmode-fast").onclick = () => setMode("fast");
@@ -2172,8 +2263,19 @@ async function loadModels() {
     const sel = $("#model"); sel.innerHTML = "";
     for (const m of out.models) addModelOption(m.provider || "anthropic", m.id, m.name);
     sel.title = `${out.models.length} models from Anthropic, OpenAI and Gemini`;
+    keyStatus(out);
     refreshGods();
   } catch {}
+}
+// a check mark and the number of models per key, or the provider's error, under each key field
+function keyStatus(out) {
+  for (const p of PROVIDERS) {
+    const el = $("#ks-" + p); if (!el) continue;
+    const n = (out.models || []).filter(m => (m.provider || "anthropic") === p).length, err = (out.errors || {})[p];
+    if (!keyOk(p)) { el.textContent = ""; el.className = "keystat"; }
+    else if ((out.sources || {})[p] === "api") { el.textContent = "✓ " + t("Key works") + ` · ${n} ` + t("models"); el.className = "keystat ok"; }
+    else { el.textContent = "✗ " + String(err || t("Key not checked")).slice(0, 140); el.className = "keystat bad"; }
+  }
 }
 let modelTimer;
 for (const id of ["#apikey", "#openaikey", "#geminikey"]) $(id).addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
@@ -2667,7 +2769,7 @@ async function init() {
   $("#apikey").value = sessionStorage.getItem("sublattice.key") || "";
   $("#openaikey").value = sessionStorage.getItem("sublattice.openai.key") || "";
   $("#geminikey").value = sessionStorage.getItem("sublattice.gemini.key") || "";
-  keyState(); loadModels();
+  keyState(); loadModels(); loadEngines(); loadValidation();
   if ($("#keypill").classList.contains("need") && getName()) toggleSettings(true);
   state.examples = (await api("/api/examples")).examples;
   for (const ex of state.examples) { const o = document.createElement("option"); o.value = o.textContent = ex.name; $("#examples").appendChild(o); }

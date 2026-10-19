@@ -391,6 +391,8 @@ app running:
 }
 ```
 
+The plug icon in the left bar of the app shows these commands for your server, with copy buttons.
+
 This starts the server over stdio inside the container, on the same `/data`. Without Docker, run
 `python -m spinmate_mcp` from the repository (stdio), or `python -m spinmate_mcp --http` for
 `http://127.0.0.1:8422/mcp`. Links in the results (figures, reports) point to `APP_URL`, by default
