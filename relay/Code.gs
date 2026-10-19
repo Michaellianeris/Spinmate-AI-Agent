@@ -5,7 +5,7 @@
  * The app sends only {name, email, app_url}. The email text, the logo and the PDFs are read from the public
  * repository, so they always match the latest version on main. Setup: relay/README.md.
  */
-const RAW = 'https://raw.githubusercontent.com/Michaellianeris/sublattice-agent/main/web/';
+const RAW = 'https://raw.githubusercontent.com/Michaellianeris/Spinmate-AI-Agent/main/web/';
 const DAILY_LIMIT = 80;            // consumer Gmail sends to about 100 recipients a day
 const EMAIL_RE = /^[^@\s<>"']{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
 const ATTACHED = 'The user guide and the SpinMate presentation are attached as PDFs';

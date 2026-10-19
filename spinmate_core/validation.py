@@ -30,8 +30,9 @@ class Result:
 def _const():
     d = defaults()
     Ms, A0, Ku, l, g0 = d["Ms"], d["A0"], d["Ku"], d["l"], d["g0"]
-    return {"Ms": Ms, "g0": g0, "K": 2 * Ku / (MU0 * Ms ** 2), "J": 4 * abs(A0) / (MU0 * Ms ** 2 * l ** 2),
-            "F0": g0 * Ms / (2 * np.pi)}   # frequency unit: fields in the solver are in units of Ms
+    # each sublattice carries Ms/2: H_K = 4 Ku / (mu0 Ms), H_E = 4 |A0| / (mu0 Ms l^2), here in units of Ms
+    return {"Ms": Ms, "g0": g0, "K": 4 * Ku / (MU0 * Ms ** 2), "J": 4 * abs(A0) / (MU0 * Ms ** 2 * l ** 2),
+            "F0": g0 * Ms / (2 * np.pi)}   # frequency unit
 
 
 def _run(text, label):
@@ -90,8 +91,8 @@ def energy():
     m1, m2 = _tilted(10, afm=True)
     rid, d = _run(f"--a=0\n--t=5e-10\n--m1={_vec(m1)}\n--m2={_vec(m2)}\n", "validation: energy")
     a, b = d[:, 1:4], d[:, 4:7]
-    # energy density / (mu0 Ms^2) for the field the solver uses (anisotropy as measured below: 2 Ku)
-    E = c["J"] * np.sum(a * b, 1) - c["K"] * (a[:, 2] ** 2 + b[:, 2] ** 2)
+    # energy whose gradient is the solver's field: exchange J m1.m2 (AFM) and anisotropy K/2 mz^2 per sublattice
+    E = c["J"] * np.sum(a * b, 1) - c["K"] / 2 * (a[:, 2] ** 2 + b[:, 2] ** 2)
     drift = float((E.max() - E.min()) / abs(E[0]))
     return Result("energy", "Energy conservation without damping (α = 0)", "pass" if drift < 1e-3 else "fail",
                   {"relative drift": drift}, {"relative drift": 0.0}, "< 1e-3 over 0.5 ns",
@@ -113,10 +114,7 @@ def kittel():
     f0_exp = c["F0"] * c["K"]
     ok_slope = _rel(slope, slope_exp) < 0.01
     ok_f0 = _rel(f[0.0], f0_exp) < 0.01
-    note = ""
-    if not ok_f0 and _rel(f[0.0], 2 * f0_exp) < 0.01:
-        note = ("The field slope is right, but f(H = 0) is twice the anisotropy frequency: the solver acts with "
-                "2 Ku. See finding F1.")
+    note = "f = (γ/2π) μ0 (H_K + H), μ0 H_K = 4 Ku / Ms."
     return Result("kittel", "Ferromagnetic resonance (Kittel), A0 > 0, easy axis z",
                   "pass" if ok_slope and ok_f0 else "fail",
                   {"f(H=0) GHz": f[0.0] / 1e9, "f(H=0.1 T) GHz": f[0.1] / 1e9, "slope GHz/T": slope / 1e9},
@@ -129,12 +127,9 @@ def afmr(h=2e-14):
     m1, m2 = _tilted(2, afm=True)
     rid, d = _run(f"--a=0\n--h={h}\n--t=3e-10\n--m1={_vec(m1)}\n--m2={_vec(m2)}\n", f"validation: AFMR h={h:g}")
     f = _freq(d[:, 0], (d[:, 1] - d[:, 4]) / 2)
-    exp1 = c["F0"] * np.sqrt(c["K"] * (2 * c["J"] + c["K"]))
-    exp2 = c["F0"] * np.sqrt(2 * c["K"] * (2 * c["J"] + 2 * c["K"]))
-    ok = _rel(f, exp1) < 0.01
-    note = "" if ok else (f"Matches 2 Ku within {100 * _rel(f, exp2):.1f} %. See finding F1." if _rel(f, exp2) < 0.01 else "")
-    return Result("afmr", "Antiferromagnetic resonance, A0 < 0, H = 0", "pass" if ok else "fail",
-                  {"f GHz": f / 1e9}, {"f GHz": exp1 / 1e9, "f GHz with 2 Ku": exp2 / 1e9}, "1 %", note, [rid])
+    exp = c["F0"] * np.sqrt(c["K"] * (2 * c["J"] + c["K"]))
+    return Result("afmr", "Antiferromagnetic resonance, A0 < 0, H = 0", "pass" if _rel(f, exp) < 0.01 else "fail",
+                  {"f GHz": f / 1e9}, {"f GHz": exp / 1e9}, "1 %", "f = (γ/2π) μ0 √(H_K (2 H_E + H_K))", [rid])
 
 
 def convergence():
@@ -165,24 +160,75 @@ def damping():
     return Result("damping", "Gilbert damping: decay rate α·ω of the ferromagnetic mode",
                   "pass" if _rel(rate, exp) < 0.02 else "fail",
                   {"decay rate 1/ns": rate / 1e9}, {"decay rate 1/ns": exp / 1e9}, "2 %",
-                  note="ω is the measured precession frequency, so this case does not depend on F1.", runs=[rid])
+                  note="ω is the measured precession frequency.", runs=[rid])
+
+
+def phase_boundary():
+    """AFM <-> FM stability boundary |Ku| = 2 |A0| / l^2: below it the order follows the sign of A0, above it the
+    starting order survives. Checked at 0.9 and 1.1 times the boundary, from both sides (l = 3.5 nm)."""
+    l, a0 = 3.5e-9, 3e-12
+    kc = 2 * a0 / l ** 2
+    fm = "--m1=0.25,0,0.968\n--m2=0.35,0,0.937\n"
+    # below the boundary the starting order is unstable and leaves (near it slowly, so through canted states)
+    cases = [("AFM start, A0 > 0", "AFM", f"--A0={a0}", "", 0.9, "leaves AFM"),
+             ("AFM start, A0 > 0", "AFM", f"--A0={a0}", "", 1.1, "stays AFM"),
+             ("FM start, A0 < 0", "FM", f"--A0={-a0}", fm, 0.9, "leaves FM"),
+             ("FM start, A0 < 0", "FM", f"--A0={-a0}", fm, 1.1, "stays FM")]
+    measured, expected, runs, ok = {}, {}, [], True
+    for name, start_order, a0_line, start, f, want in cases:
+        rid = S.start_run(f"{a0_line}\n--l={l}\n--Ku={f * kc:.6g}\n--t=1e-9\n{start}", label=f"validation: phase {name} {f}")["run_id"]
+        end = (S.wait_for_run(rid, 900).get("summary") or {}).get("order_final")
+        got = f"{'stays' if end == start_order else 'leaves'} {start_order} (ends {end})"
+        key = f"{name}, Ku = {f} x boundary"
+        measured[key], expected[key] = got, want
+        ok &= got.startswith(want)
+        runs.append(rid)
+    return Result("phase", "AFM/FM stability boundary |Ku| = 2|A0|/l²", "pass" if ok else "fail", measured, expected,
+                  "final order", note=f"A0 = ±3 pJ/m, l = 3.5 nm, boundary {kc / 1e6:.3f} MJ/m³", runs=runs)
+
+
+def thermal():
+    """The thermal field is isotropic and Gaussian: per-component mean 0, standard deviation Temp_Ampl."""
+    import sys
+    from .params import CODE_DIR
+    if str(CODE_DIR) not in sys.path:
+        sys.path.insert(0, str(CODE_DIR))
+    from conf import conFile
+    from solver import solver as Solver
+    p = conFile()
+    p.Temp_Ampl, p.flag5, p.Ku, p.A0, p.a = 1.0, False, 0.0, 0.0, 0.0
+    sv = Solver(p)
+    np.random.seed(1)
+    m = np.array([0.0, 0.0, 1.0])
+    # with no other field, mxx = -(g0 Ms) m x h_T, so the x and y components of h_T are recovered from it
+    pref = p.g0 * p.Ms
+    samples = np.array([sv.mxx(m, m, 0.0) for _ in range(20000)]) / -pref
+    hx, hy = -samples[:, 1], samples[:, 0]
+    mean, std = float(max(abs(hx.mean()), abs(hy.mean()))), float((hx.std() + hy.std()) / 2)
+    ok = mean < 0.03 and abs(std - 1) < 0.03
+    return Result("thermal", "Thermal field: isotropic, Gaussian, σ = Temp_Ampl", "pass" if ok else "fail",
+                  {"|mean| (units of σ)": mean, "std (units of σ)": std}, {"|mean| (units of σ)": 0.0, "std (units of σ)": 1.0},
+                  "3 % (20 000 samples)")
 
 
 CASES = {"norm": norm, "determinism": determinism, "energy": energy, "kittel": kittel, "afmr": afmr,
-         "convergence": convergence, "damping": damping}
-FAST = ("norm", "determinism", "energy")
+         "convergence": convergence, "damping": damping, "phase": phase_boundary, "thermal": thermal}
+FAST = ("norm", "determinism", "energy", "thermal")
 
+# issues the first validation found in macrospin/, fixed in version 2.0; deterministic runs are unchanged bit for bit
 FINDINGS = [
-    ("F1", "Static anisotropy counted twice",
-     "In macrospin/current.py, ku() returns the static K when flag2 (Ku(t)) is off, and solver.py adds it again "
-     "through the AC anisotropy term along u_ani_AC, which defaults to the easy axis. The dynamics therefore "
-     "use 2 Ku: the AFMR and Kittel frequencies match 2 Ku, not Ku. Either return 0 from ku() when flag2 is "
-     "off, or document that the effective anisotropy is 2 Ku. The original code is not changed by SpinMate."),
-    ("F2", "RK4 weight 0.166 instead of 1/6",
-     "solver.py RK4() uses 0.166 * h; 1/6 = 0.1667. The default integrator is Heun, so runs are not affected."),
+    ("F1", "Static anisotropy added through the AC term",
+     "ku() in current.py returned the static K when flag2 was off, and solver.py added it again along u_ani_AC. "
+     "The total, 4 Ku/(mu0 Ms) per sublattice, is right for sublattices of Ms/2 and gives the AFM/FM boundary "
+     "|Ku| = 2|A0|/l^2, but it broke when u_ani_AC differs from u_ani or Ku(t) is on. Fixed: K = 4 Ku/(mu0 Ms^2) "
+     "in one term, ku() returns only the AC part."),
+    ("F4", "Ku(t) amplitude normalised with g0",
+     "ku() divided Ku_Amp by g0 Ms^2 instead of mu0 Ms^2, so Ku(t) was 1.76e11 times too weak. Fixed."),
+    ("F2", "RK4 weights and stages",
+     "RK4() used 0.166 instead of 1/6 and fed the m1 slopes into the m2 stages. Fixed; Heun stays the default."),
     ("F3", "Thermal field direction",
-     "solver.py draws the thermal field direction from np.random.rand(3), which only has positive components; "
-     "an isotropic field needs a normal distribution. It only matters with Temp_Ampl > 0."),
+     "The thermal field was Temp_Ampl times a unit vector from np.random.rand(3), with only positive components. "
+     "Fixed: a Gaussian field with standard deviation Temp_Ampl per component, as run.py defines it."),
 ]
 
 
@@ -219,7 +265,7 @@ tr.pass .st{{color:#1B7F3B;font-weight:700}}tr.fail .st{{color:#B42318;font-weig
 <body><h1>SpinMate physics validation</h1>
 <p>Engine: macrospin (original code, unchanged) · {time.strftime('%Y-%m-%d %H:%M')} · {n_ok} of {len(results)} cases pass</p>
 <table><tr><th>Case</th><th>Measured</th><th>Expected</th><th>Tolerance</th><th>Result</th><th>Runs</th></tr>{rows}</table>
-<h2>Findings in the original code</h2><ul>{finds}</ul></body></html>"""
+<h2>Fixed in version 2.0</h2><ul>{finds}</ul></body></html>"""
 
 
 def main(argv=None):

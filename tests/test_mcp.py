@@ -134,7 +134,7 @@ def test_physics_prompts_and_guide():
     assert {"design_experiment", "find_threshold", "interpret_run"} <= names
     text = got.messages[0].content.text
     assert "SOT_DC_Amp" in text and "Reading the results" in text and "Conditions: none" in text
-    assert "2 Ku" in guide
+    assert "4Ku/Ms" in guide
     with pytest.raises(ValueError):
         M.prompt_text("interpret_run", {})
 

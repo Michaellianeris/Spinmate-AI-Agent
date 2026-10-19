@@ -1,4 +1,4 @@
-"""The original two-sublattice macrospin solver (macrospin/, unchanged), behind the Engine interface."""
+"""The two-sublattice macrospin solver (macrospin/, checked by spinmate_core.validation), behind the Engine interface."""
 from .. import params as P
 from .. import simulations as S
 from .base import Validation
@@ -8,7 +8,7 @@ class MacrospinEngine:
     name = "macrospin"
     title = "Two-sublattice macrospin"
     description = ("Coupled LLG equations of two sublattices with exchange, anisotropy, Zeeman, SOT, thermal "
-                   "noise and time-dependent drives; Heun integration (the original code, unchanged).")
+                   "noise and time-dependent drives; Heun integration.")
 
     def parameter_schema(self):
         out = {}

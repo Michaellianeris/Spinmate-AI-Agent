@@ -43,10 +43,12 @@ time-dependent drives, integrated with Heun steps.
 
 ## Scales of the default material
 Ms 566 kA/m, |A0| 0.248 pJ/m, Ku 28.4 kJ/m^3, lattice constant l 0.35 nm, damping α 0.05.
-- Exchange field 4|A0|/(Ms l^2) ≈ 14 T; anisotropy field 2Ku/Ms ≈ 0.1 T.
-- The solver applies the anisotropy twice (validation finding F1, `spinmate://validation`): the dynamics act
-  with 2 Ku. Analytic estimates must use 2 Ku to agree with the runs.
-- AFM resonance ≈ 67 GHz; FM mode (A0 > 0, parallel moments) ≈ 5.6 GHz at H = 0, +28 GHz per tesla.
+- Each sublattice carries Ms/2: exchange field μ0H_E = 4|A0|/(Ms l^2) ≈ 14 T, anisotropy field
+  μ0H_K = 4Ku/Ms ≈ 0.2 T.
+- AFM <-> FM stability boundary: |Ku| = 2|A0|/l^2. Below it only the order set by the sign of A0 is stable;
+  above it both AFM and FM are (meta)stable.
+- AFM resonance f = (γ/2π) μ0 √(H_K (2H_E + H_K)) ≈ 67 GHz; FM mode (A0 > 0) f = (γ/2π) μ0 (H_K + H) ≈ 5.6 GHz
+  at H = 0, +28 GHz per tesla. These formulas are checked by `spinmate://validation`.
 - A tilted AFM state settles in ≈ 20 ps; FM -> AFM in ≈ 50 ps; AFM -> FM switches within ≈ 50 ps, then a
   ≈ 5 GHz precession of the pair decays over about a nanosecond.
 - DC SOT with polarisation x: no switching up to 70e6 A/cm^2; at 100e6 A/cm^2 steady rotation, n_z at ≈ 63 GHz.

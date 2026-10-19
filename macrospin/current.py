@@ -23,13 +23,14 @@ class Current:
 		k = np.float64(k)
 		t0 = np.float64(t0)
 
+		# Only the AC part of Ku(t): the static part is already in K (before, K was returned here and added twice).
 		if not self.param.flag2:
-			return k
+			return np.float64(0.0)
 		else:
-			# TT = np.float64(self.param.T * (self.param.g0 * self.param.Ms))
 			omega = np.float64(2 * np.pi *self.param.Ku_Fr)
-			kamp = np.float64((2 * self.param.Ku_Amp) / (self.param.g0 * self.param.Ms**2))
-			kk = np.float64(k + kamp * np.sin(omega * t0 + self.param.Ku_phase*np.pi/180.0))
+			# same normalisation as the static K in solver.py (before: g0 instead of mu0, 1.76e11 times too small)
+			kamp = np.float64((4 * self.param.Ku_Amp) / (self.param.mu0 * self.param.Ms**2))
+			kk = np.float64(kamp * np.sin(omega * t0 + self.param.Ku_phase*np.pi/180.0))
 			return kk
 
 	def H(self, H, t0):

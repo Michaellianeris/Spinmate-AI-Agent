@@ -15,8 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      # kittel and afmr fail until finding F1 (anisotropy counted twice) is decided
-      - run: python -m spinmate_core.validation --allow kittel --allow afmr
+      - run: python -m spinmate_core.validation
         env:
           WORKSPACE: ${{ runner.temp }}/spinmate
           MPLBACKEND: Agg
