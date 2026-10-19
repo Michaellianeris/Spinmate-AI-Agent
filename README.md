@@ -161,7 +161,8 @@ god shows a coloured badge with its initial.
 The app works without the assistant: Run setup runs a simulation directly and only the chat needs the API.
 
 **Athena.** The owl in the bottom right corner (named after the Greek goddess of wisdom) only explains how
-to use the app. The first time it asks for your name and, optionally, your email to create an account: you
+to use the app. Ask her for the user guide or the presentation (in any of the six languages) and she gives you both PDFs
+to open or download. The first time it asks for your name and, optionally, your email to create an account: you
 then receive a welcome email with the logo, a greeting with your name and the PDF user guide
 ([`web/spinmate-guide.pdf`](web/spinmate-guide.pdf), source in `docs/guide/`). Set `SMTP_*` in `.env` to send it;
 without a mail server it is saved to `workspace/outbox`. If the provider cannot be reached Athena answers from a

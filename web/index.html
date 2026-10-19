@@ -412,6 +412,10 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .tplout{margin-top:10px}
 .provchip{display:inline-block;padding:0 7px;margin:0 4px 0 2px;border-radius:999px;color:#fff;font:600 .7rem/1.6 Inter,system-ui,sans-serif;vertical-align:1px}
 .kbd{font:600 .72rem var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--soft)}
+.gdocs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.gdoc{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--panel);font-size:.86rem}
+.gdoc::before{content:"PDF";font:700 .65rem/1 var(--mono);color:#fff;background:#FF5A42;border-radius:4px;padding:4px 5px}
+.gdoc b{flex:1;font-size:.84rem}.gdoc span{white-space:nowrap}
 .engchip{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--soft);border:1px solid var(--line);font-size:.75rem;color:var(--muted)}
 .defdlg{position:fixed;z-index:25;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px 20px}
 .defdlg h3{margin:0 0 4px}
@@ -2391,7 +2395,18 @@ const ATHENA_INTRO = "In Greek mythology, Athena was the goddess of wisdom, stra
 // links to the user guide and, when it was added, the presentation
 const docLinks = () => `[${t("user guide (PDF)")}](/api/guide.pdf)` + (state.config && state.config.presentation ? ` ${t("and the")} [${t("presentation (PDF)")}](/api/presentation.pdf)` : "");
 const guide = {open: false, msgs: [], started: false, awaitName: false, awaitEmail: false, busy: false};
-const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?"];
+const GUIDE_CHIPS = ["Who are you?", "How do I run a simulation?", "What is Fast vs Deep?", "Where are my results?", "How do I change the theme?", "Give me the user guide and the presentation"];
+// a request for the documents is answered here, with the files, whatever the model would say
+const DOCS_RE = /guide|manual|handbook|documentation|\bdocs?\b|\bpdf\b|present|slides?|\bdeck\b|\bppt|οδηγ|εγχειρ|παρουσ|guía|presentaci|diapositiv|handbuch|anleitung|präsentation|folien|guida|presentazione/i;
+function guideDocs() {
+  const pres = state.config && state.config.presentation;
+  const d = guideAdd("bot", t(pres ? "Here are the SpinMate user guide and the presentation. Open them in a new tab or download them:" : "Here is the SpinMate user guide. Open it in a new tab or download it:"));
+  const box = document.createElement("div"); box.className = "gdocs";
+  const item = (href, name, label) => `<div class="gdoc"><b>${t(label)}</b><span><a href="${href}" target="_blank" rel="noopener">${t("Open")}</a> · <a href="${href}" download="${name}">${t("Download")}</a></span></div>`;
+  box.innerHTML = item("/api/guide.pdf", "SpinMate-User-Guide.pdf", "User guide (PDF)") + (pres ? item("/api/presentation.pdf", "SpinMate-Presentation.pdf", "Presentation (PDF)") : "");
+  d.appendChild(box); $("#guidelog").scrollTop = $("#guidelog").scrollHeight;
+  return pres ? "[the user guide and the presentation, with links]" : "[the user guide, with a link]";
+}
 
 function guideAdd(role, text) {
   const d = document.createElement("div"); d.className = "gmsg " + role;
@@ -2459,6 +2474,9 @@ async function guideAsk(q, shown) {
     guideSkip(); return;
   }
   if (guide.awaitEmail) return guideEmail(q);
+  if (DOCS_RE.test(q)) {
+    guide.msgs.push({role: "user", content: shown || q}, {role: "assistant", content: guideDocs()}); return;
+  }
   guide.msgs.push({role: "user", content: shown || q}); guide.busy = true;
   const wait = guideAdd("bot", "…");
   try {
