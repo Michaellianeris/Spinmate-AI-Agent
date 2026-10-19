@@ -33,6 +33,9 @@ services:
       - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN:-}
       - MAIL_RELAY=${MAIL_RELAY:-}
       - APP_URL=${APP_URL:-}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+      - ADMIN_SHEET_URL=${ADMIN_SHEET_URL:-}
+      - MUMAX3_BIN=${MUMAX3_BIN:-}
       - PRICES_JSON=${PRICES_JSON:-}
     volumes:
       - sublattice-data:/data

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>SpinMate admin</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#F7F5FB;--panel:#fff;--ink:#1A1530;--muted:#6B5A86;--line:#E6DFF0;--soft:#F8F4FB;--ok:#1B7F3B;--err:#B42318;--accent:#8A3FB5}
+@media (prefers-color-scheme:dark){:root{--bg:#120D26;--panel:#1E1638;--ink:#F4EEFF;--muted:#BDB2DA;--line:#3A2E5C;--soft:#251C44;--ok:#5BD08A;--err:#FF8A80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,"Segoe UI",system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:28px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+header h1{font-size:1.5rem;margin:0}header img{height:38px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.panel h2{font-size:1.05rem;margin:0 0 8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card b{display:block;font-size:1.35rem}.card small{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;white-space:nowrap}
+.ok{color:var(--ok)}.bad{color:var(--err)}.muted{color:var(--muted)}
+button,input{font:inherit}
+input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--ink);min-width:260px}
+button{padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.del{padding:3px 10px;font-size:.8rem}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#login{max-width:520px}
+.wrap{overflow-x:auto}
+</style></head>
+<body><main>
+<header><h1>SpinMate admin</h1><img src="/api/logo.png" alt="SpinMate"></header>
+
+<section class="panel" id="login">
+  <h2>Admin token</h2>
+  <p class="muted">The value of <code>ADMIN_TOKEN</code> in the <code>.env</code> of this server. It is kept in this browser tab only.</p>
+  <form class="row" id="loginform"><input id="token" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN" required>
+    <button class="primary" type="submit">Open</button></form>
+  <p class="bad" id="loginerr"></p>
+</section>
+
+<div id="app" hidden>
+  <div class="cards" id="cards"></div>
+  <section class="panel"><h2>Accounts on this server</h2>
+    <p class="muted" id="mailnote"></p>
+    <div class="wrap"><table id="accounts"></table></div></section>
+  <section class="panel"><h2>Assistant cost, last 30 days</h2><div class="wrap"><table id="usage"></table></div></section>
+  <section class="panel"><h2>Outbox (emails saved instead of sent)</h2><div class="wrap"><table id="outbox"></table></div></section>
+  <p class="muted">This page shows only this server. Sign-ups from every SpinMate install are in the <b>SpinMate users</b>
+    Google Sheet of the account that runs the mail relay. <button type="button" id="logout">Lock</button></p>
+</div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
+const when = ts => ts ? new Date(ts * 1000).toLocaleString() : "";
+const PN = {anthropic: "Claude", openai: "OpenAI", gemini: "Gemini"};
+let token = "";
+try { token = sessionStorage.getItem("spinmate.admin") || ""; } catch {}
+
+async function call(path, opts = {}) {
+  const res = await fetch(path, {...opts, headers: {...(opts.headers || {}), "X-Admin-Token": token}});
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail || res.statusText);
+  return body;
+}
+
+function render(d) {
+  const eur = usd => "€" + (usd * d.usage.eur_per_usd).toFixed(2);
+  const sent = d.accounts.filter(a => a.welcome_sent).length;
+  const cost = Object.values(d.usage.totals).reduce((a, x) => a + x.cost_usd, 0);
+  $("#cards").innerHTML = [["Accounts", d.accounts.length], ["Welcome emails sent", sent], ["In the outbox", d.outbox.length],
+    ["Runs", d.runs], ["Cost, 30 days", eur(cost)]].map(([k, v]) => `<div class="card"><small>${k}</small><b>${v}</b></div>`).join("");
+  $("#mailnote").innerHTML = `Welcome emails go out through <b>${esc(d.mail_mode)}</b>` +
+    (d.sheet_url ? ` · <a href="${esc(d.sheet_url)}" target="_blank" rel="noopener">SpinMate users Sheet</a>` : "") + ".";
+  $("#accounts").innerHTML = `<tr><th>Name</th><th>Email</th><th>Created</th><th>Welcome email</th><th></th></tr>` +
+    (d.accounts.map(a => `<tr><td>${esc(a.name)}</td><td>${esc(a.email)}</td><td>${when(a.created)}</td>
+      <td class="${a.welcome_sent ? "ok" : "muted"}">${a.welcome_sent ? "sent " + when(a.welcome_sent) : "not sent"}</td>
+      <td><button class="del" data-email="${esc(a.email)}">Delete</button></td></tr>`).join("") || `<tr><td colspan="5" class="muted">No accounts yet.</td></tr>`);
+  $("#usage").innerHTML = `<tr><th>Day</th>${Object.values(PN).map(n => `<th class="num">${n}</th>`).join("")}<th class="num">Total</th><th class="num">Tokens</th></tr>` +
+    (d.usage.days.map(x => `<tr><td>${x.day}</td>${Object.keys(PN).map(p => `<td class="num">${x.providers[p].answers ? eur(x.providers[p].cost_usd) : "–"}</td>`).join("")}<td class="num"><b>${eur(x.cost_usd)}</b></td><td class="num">${x.tokens.toLocaleString()}</td></tr>`).join("")
+     || `<tr><td colspan="6" class="muted">No answers from the assistant yet.</td></tr>`);
+  $("#outbox").innerHTML = `<tr><th>File</th><th>Saved</th><th class="num">Size</th></tr>` +
+    (d.outbox.map(f => `<tr><td>${esc(f.name)}</td><td>${when(f.time)}</td><td class="num">${(f.bytes / 1024).toFixed(0)} kB</td></tr>`).join("")
+     || `<tr><td colspan="3" class="muted">Empty.</td></tr>`);
+  document.querySelectorAll("button.del").forEach(b => b.onclick = async () => {
+    if (!confirm(`Delete the account ${b.dataset.email} from this server? Remove the row from the Sheet as well.`)) return;
+    await call("/api/admin/accounts/delete", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({email: b.dataset.email})});
+    load();
+  });
+}
+
+async function load() {
+  try {
+    render(await call("/api/admin/summary"));
+    $("#login").hidden = true; $("#app").hidden = false; $("#loginerr").textContent = "";
+  } catch (e) {
+    $("#login").hidden = false; $("#app").hidden = true;
+    if (token) $("#loginerr").textContent = e.message;
+  }
+}
+$("#loginform").onsubmit = e => {
+  e.preventDefault(); token = $("#token").value.trim();
+  try { sessionStorage.setItem("spinmate.admin", token); } catch {}
+  load();
+};
+$("#logout").onclick = () => { token = ""; try { sessionStorage.removeItem("spinmate.admin"); } catch {} $("#token").value = ""; load(); };
+if (token) load();
+</script>
+</body></html>

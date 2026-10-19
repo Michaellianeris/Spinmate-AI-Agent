@@ -302,6 +302,7 @@ Gaussian (F3). Runs at T = 0 without Ku(t) give bit-identical trajectories to ve
 <h2><span class="n">11</span>Sweeps, threshold searches and continuing runs</h2>
 <ul>
 <li><b>Sweep:</b> “Sweep A0 from −0.25e-12 to +0.25e-12 in 11 steps, 0.5 ns each.” Runs go in parallel; the card shows a table and an overlay.</li>
+<li><b>Form:</b> the chart icon next to the paperclip opens a sweep or threshold search form: parameter in convenient units, range, steps or what to look for, and duration. It writes the request with SI values and warns about unusual numbers.</li>
 <li><b>Threshold search:</b> “Find the smallest SOT current between 50e6 and 150e6 A/cm² that makes the Néel vector rotate.” A few rounds of bracketing sweeps narrow the interval.</li>
 <li><b>Continue:</b> “Continue r0003 for another 0.5 ns.” Time does not restart; <i>combine</i> joins the segments into one curve.</li>
 </ul>
@@ -323,7 +324,8 @@ to compare, plot, report or delete. With the catalog the assistant answers quest
 <li><b>Language:</b> English (US or UK), Greek, Spanish, German or Italian; the buttons, Athena and the answers follow it. It starts from the browser language.</li>
 <li><b>API keys:</b> under each key a check mark and the number of models it can use, or the provider's error.</li>
 <li><b>Theme:</b> Spin (default), Light or Dark. <b>Default parameters:</b> saved per user and used as the base of every run.</li>
-<li><b>Cost:</b> tokens and the estimated € next to the mode buttons; hover for the exchange rate.</li>
+<li><b>Cost:</b> tokens and the estimated € next to the mode buttons; click it for <b>usage and cost</b> per day and per provider (Claude, OpenAI, Gemini).</li>
+<li><b>Ask another god:</b> under an answer, sends the same question to another model level and shows both answers side by side.</li>
 <li><b>Conversations:</b> the clock icon lists your chats; select one, several or all and delete them (runs are kept).</li>
 <li><b>Voice:</b> the microphone records a request; the arrow next to it chooses the microphone and language.</li>
 </ul>
@@ -347,6 +349,7 @@ to compare, plot, report or delete. With the catalog the assistant answers quest
 <tr><td><code>DATABASE_URL</code>, <code>POSTGRES_PASSWORD</code></td><td>Run catalog; empty URL switches it off</td></tr>
 <tr><td><code>EUR_PER_USD</code>, <code>PRICES_JSON</code></td><td>Fixed exchange rate (default: daily ECB) and price overrides</td></tr>
 <tr><td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code>, <code>SMTP_FROM</code></td><td>Mail server for the optional welcome email (Gmail: smtp.gmail.com, 587, App Password)</td></tr>
+<tr><td><code>ADMIN_TOKEN</code>, <code>ADMIN_SHEET_URL</code></td><td>Turns on <code>/admin</code> (accounts, welcome emails, outbox, cost of this server) and links the SpinMate users Sheet</td></tr>
 <tr><td><code>APP_URL</code></td><td>Base of the links in MCP results (default <code>http://localhost:8421</code>)</td></tr>
 <tr><td><code>MUMAX3_BIN</code></td><td>Path of the mumax3 binary, for the mumax3 engine</td></tr>
 <tr><td><code>SSL_CERT_FILE</code></td><td>Company CA bundle behind a corporate proxy</td></tr>

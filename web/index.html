@@ -373,8 +373,40 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .enginerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 2px;font-size:.9rem}
 .enginerow select{min-width:220px}.enginerow small{color:var(--muted);flex-basis:100%}
 .keystat{display:block;font-size:.76rem;margin-top:3px;min-height:1em}.keystat.ok{color:var(--ok)}.keystat.bad{color:var(--err)}
-.connectdlg{width:min(640px,calc(100vw - 32px))}.connectdlg h4{margin:14px 0 4px}
+.defdlg.connectdlg{width:min(640px,calc(100vw - 32px))}.connectdlg h4{margin:14px 0 4px}
 .cmdbox{display:flex;gap:8px;align-items:flex-start}.cmdbox pre{flex:1;margin:4px 0;white-space:pre-wrap;word-break:break-all}
+.tokpill{cursor:pointer}.tokpill:hover{border-color:var(--accent,#8A3FB5)}
+.defdlg.usagedlg{width:min(760px,calc(100vw - 32px))}
+.ucards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.ucard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft)}
+.ucard b{display:block;font-size:1.15rem}.ucard small{color:var(--muted);display:block}
+.ucard i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.utable{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:6px}
+.utable th,.utable td{padding:6px 8px;border-bottom:1px solid var(--grid);text-align:right;white-space:nowrap}
+.utable th:first-child,.utable td:first-child{text-align:left}
+.ubar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--grid);min-width:80px}
+.uempty{color:var(--muted);padding:16px 0}
+.othercol .muted{color:var(--muted)}.othercol .bad{color:var(--err)}
+.askother{margin-left:10px;padding:1px 9px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--ink);font:inherit;font-size:.74rem;cursor:pointer}
+.askother:hover{border-color:var(--accent,#8A3FB5)}
+.defdlg.otherdlg{width:min(1100px,calc(100vw - 32px));max-height:calc(100vh - 32px)}
+.othergods{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.othergods button{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer;font:inherit}
+.othergods button[aria-pressed=true]{border-color:var(--accent,#8A3FB5);box-shadow:0 0 0 1px var(--accent,#8A3FB5)}
+.othergods button:disabled{opacity:.45;cursor:default}
+.othergods .godlogo{width:22px;height:22px}
+.othercols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.othercols{grid-template-columns:1fr}}
+.othercol{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--soft);min-height:120px;overflow:auto;max-height:60vh}
+.othercol h4{margin:0 0 6px;font-size:.9rem}.othercol .who{color:var(--muted);font-size:.78rem;margin-bottom:8px}
+.othercol .steps{font-size:.8rem;color:var(--muted);margin:6px 0}
+.defdlg.tpldlg{width:min(620px,calc(100vw - 32px))}
+.tplgrid{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;align-items:center;margin-top:12px;font-size:.9rem}
+.tplgrid input,.tplgrid select{width:100%}
+.tplgrid .pair{display:flex;gap:8px;align-items:center}.tplgrid .pair input{flex:1}
+.tplunit{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.tplwarn{color:#B7791F;font-size:.82rem;min-height:1em;margin-top:8px}
+.tplout{margin-top:10px}
 .engchip{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--soft);border:1px solid var(--line);font-size:.75rem;color:var(--muted)}
 .defdlg{position:fixed;z-index:25;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px 20px}
 .defdlg h3{margin:0 0 4px}
@@ -598,6 +630,9 @@ main{grid-template-columns:minmax(0,1fr)}
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
           </button>
           <input type="file" id="fileinput" accept=".txt,text/plain" hidden>
+          <button class="icon" id="tplbtn" type="button" title="Sweep or threshold search form" aria-label="Sweep or threshold search form">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          </button>
           <div class="micpick" id="micpick">
             <button class="icon" id="mic" type="button" title="Voice input: click to talk, click again to stop" aria-label="Voice input" aria-pressed="false">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3"/></svg>
@@ -619,7 +654,7 @@ main{grid-template-columns:minmax(0,1fr)}
             <button type="button" id="cmode-fast" aria-pressed="true" title="Fast: default parameters, short answers">Fast</button>
             <button type="button" id="cmode-deep" aria-pressed="false" title="Deep: full parameters or txt, thorough analysis">Deep</button>
           </div>
-          <span class="tokpill" id="tokpill" title="Tokens used in this chat">0 tokens</span>
+          <span class="tokpill" id="tokpill" role="button" tabindex="0" title="Tokens used in this chat">0 tokens</span>
           <span class="hint">Enter to send</span>
           <button class="send" id="send" type="button" title="Send" aria-label="Send">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
@@ -661,6 +696,9 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="toolsec">Under the message box</div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-9 9a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></span><div><h4>Attach</h4><p>Adds a parameter .txt file to your message. Dragging a file onto the chat works too.</p></div></div>
 <div class="tool"><span class="ti"><span class="godstack"><img src="/gods/hermes.png" alt="" onerror="this.remove()"><img src="/gods/dionysus.png" alt="" onerror="this.remove()"><img src="/gods/zeus.png" alt="" onerror="this.remove()"><img src="/gods/apollo.png" alt="" onerror="this.remove()"></span></span><div><h4>Model picker</h4><p>Choose a god: <b>Hermes</b> (quick), <b>Dionysus</b> (balanced), <b>Zeus</b> (most capable) or <b>Apollo</b> (specialised). The exact Claude, OpenAI or Gemini model behind it is chosen automatically, and each god shows which one it will use. To fix a specific model, use Settings &gt; Model behind each god.</p></div></div>
+<div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><div><h4>Sweep or threshold form</h4><p>Pick a parameter in convenient units, the range and the steps (or what to look for), and the duration. It writes a clear request with SI values and warns about unusual numbers.</p></div></div>
+<div class="tool"><span class="ti"><b>tok</b></span><div><h4>Usage and cost</h4><p>Click the token counter for the tokens and the cost per day and per provider (Claude, OpenAI, Gemini) of every answer on this server.</p></div></div>
+<div class="tool"><span class="ti"><b>2nd</b></span><div><h4>Ask another god</h4><p>Under an answer: sends the same question to another model level and shows both answers side by side.</p></div></div>
 <div class="tool"><span class="ti"><b>F/D</b></span><div><h4>Fast and Deep</h4><p><b>Fast</b> uses the default parameters and answers briefly. <b>Deep</b> works from the full parameters or your file, mentions the caveats that apply and analyses the dynamics in detail.</p></div></div>
 <div class="tool"><span class="ti"><b>tok</b></span><div><h4>Token counter</h4><p>Tokens used in the current chat. Each answer also shows its own input and output tokens. Runs started from Run setup use none.</p></div></div>
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span><div><h4>Send</h4><p>Sends the message. Enter does the same.</p></div></div>
@@ -673,6 +711,48 @@ main{grid-template-columns:minmax(0,1fr)}
 <div class="tool"><span class="ti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg></span><div><h4>Export</h4><p><b>Export CSV</b> saves the whole trajectory (time, m1, m2, N&eacute;el vector). <b>Export all data</b> saves a zip with every output file of the run. Sweeps give a chart of mean |nz| against the swept parameter; click a point to open that run.</p></div></div>
 <div class="tool"><span class="ti"><img class="owl" src="/athena.png" alt="" onerror="this.remove()"></span><div><h4>Athena</h4><p>The owl in the bottom right corner explains how to use the app. She only answers questions about SpinMate itself; for simulations, ask in the chat.</p></div></div>
   </div>
+</section>
+<div class="modal-back" id="tplback" hidden></div>
+<section class="defdlg tpldlg" id="tpldlg" hidden role="dialog" aria-label="Sweep or threshold search">
+  <div class="dlg-head"><h3>Sweep or threshold search</h3>
+    <button class="rail-btn" id="tplclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="modes" role="group" aria-label="Kind">
+    <button type="button" id="tpl-sweep" aria-pressed="true">Sweep</button>
+    <button type="button" id="tpl-thr" aria-pressed="false">Threshold search</button>
+  </div>
+  <div class="tplgrid">
+    <label for="tpl-param">Parameter</label><select id="tpl-param"></select>
+    <label for="tpl-from">From – to</label><div class="pair"><input id="tpl-from" inputmode="decimal"><span>–</span><input id="tpl-to" inputmode="decimal"><span class="tplunit" id="tpl-unit"></span></div>
+    <label for="tpl-steps" id="tpl-steps-l">Steps</label><input id="tpl-steps" type="number" min="2" max="400" value="11">
+    <label for="tpl-beh" id="tpl-beh-l" hidden>Look for</label><select id="tpl-beh" hidden>
+      <option value="the Néel vector switches">the Néel vector switches</option>
+      <option value="the final order changes from AFM to FM">the order changes from AFM to FM</option>
+      <option value="steady rotation of the Néel vector (auto-oscillation) starts">steady rotation starts (auto-oscillation)</option>
+      <option value="">something else (write it below)</option>
+    </select>
+    <label for="tpl-t">Duration of each run</label><div class="pair"><input id="tpl-t" inputmode="decimal" value="2"><span class="tplunit">ns</span></div>
+    <label for="tpl-extra">Other conditions</label><input id="tpl-extra" placeholder="e.g. A0 = 0.248e-12, field 0.1 T along z, T = 0" spellcheck="false">
+  </div>
+  <div class="tplwarn" id="tplwarn"></div>
+  <pre class="ftext tplout" id="tplout" data-noi18n></pre>
+  <div class="row"><button class="btn" id="tplput" type="button">Put in the message box</button><button class="btn primary" id="tplsend" type="button">Send</button></div>
+</section>
+<div class="modal-back" id="otherback" hidden></div>
+<section class="defdlg otherdlg" id="otherdlg" hidden role="dialog" aria-label="Ask another god">
+  <div class="dlg-head"><h3>Ask another god</h3>
+    <button class="rail-btn" id="otherclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p>The same question goes to another model level; both answers stay side by side. Runs it starts appear in the Runs panel.</p>
+  <div class="othergods" id="othergods"></div>
+  <div class="othercols"><div class="othercol" id="othera"></div><div class="othercol" id="otherb"></div></div>
+</section>
+<div class="modal-back" id="usageback" hidden></div>
+<section class="defdlg usagedlg" id="usagedlg" hidden role="dialog" aria-label="Usage and cost">
+  <div class="dlg-head"><h3>Usage and cost</h3>
+    <button class="rail-btn" id="usageclose" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="row"><label>Period <select id="usagedays"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select></label></div>
+  <div class="ucards" id="ucards"></div>
+  <div id="utable"></div>
+  <p class="note" id="unote"></p>
 </section>
 <div class="modal-back" id="connectback" hidden></div>
 <section class="defdlg connectdlg" id="connectdlg" hidden role="dialog" aria-label="Use SpinMate from other agents">
@@ -994,7 +1074,10 @@ function render() {
         else if (place(b.name, res)) chips = null;
       }
     }
-    if (state.usages[mi]) add("usage mono", fmtUsage(state.usages[mi]));
+    if (state.usages[mi]) {
+      const u = add("usage mono", fmtUsage(state.usages[mi]));
+      if (!state.busy) { const b = document.createElement("button"); b.type = "button"; b.className = "askother"; b.textContent = t("Ask another god"); b.onclick = () => openOther(mi); u.appendChild(b); }
+    }
   }
   let chips = null;
   for (const it of state.live) {
@@ -1717,6 +1800,160 @@ function engineChanged() {
 }
 $("#engine").onchange = engineChanged;
 
+// ---------------------------------------------------------------- question templates: sweeps and threshold searches
+// shown in convenient units, written in SI (currents in A/cm²) so the request has no unit slips
+const TPL = [
+  {k: "SOT_DC_Amp", label: "SOT current", unit: "10⁶ A/cm²", scale: 1e6, si: "A/cm²", lo: 0.1, hi: 1000, from: 50, to: 150},
+  {k: "A0", label: "Exchange A0", unit: "pJ/m", scale: 1e-12, si: "J/m", lo: 0.001, hi: 20, from: -0.25, to: 0.25},
+  {k: "Ku", label: "Anisotropy Ku", unit: "kJ/m³", scale: 1e3, si: "J/m³", lo: 0.1, hi: 5000, from: 10, to: 100},
+  {k: "H", label: "DC field H (along Hex_DC)", unit: "T", scale: 1, si: "T", lo: 1e-4, hi: 30, from: 0, to: 1},
+  {k: "Temp", label: "Temperature", unit: "K", scale: 1, si: "K", lo: 0, hi: 1500, from: 0, to: 300},
+  {k: "a", label: "Damping α", unit: "", scale: 1, si: "", lo: 1e-4, hi: 1, from: 0.01, to: 0.1},
+  {k: "Ms", label: "Saturation Ms", unit: "kA/m", scale: 1e3, si: "A/m", lo: 10, hi: 3000, from: 300, to: 800},
+  {k: "Fr", label: "Drive frequency Fr", unit: "GHz", scale: 1e9, si: "Hz", lo: 0.001, hi: 1000, from: 10, to: 100},
+  {k: "H_Amp", label: "AC field amplitude", unit: "T", scale: 1, si: "T", lo: 1e-5, hi: 10, from: 0.01, to: 0.1},
+];
+let tplKind = "sweep";
+const sci = v => { if (v === 0) return "0"; const a = Math.abs(v); return a >= 1e-3 && a < 1e4 ? String(+v.toPrecision(6)) : v.toExponential(4).replace(/\.?0+e/, "e").replace("e+", "e"); };
+const num = v => parseFloat(String(v).replace(",", "."));
+function tplParam() { return TPL.find(x => x.k === $("#tpl-param").value) || TPL[0]; }
+function tplText() {
+  const p = tplParam(), a = num($("#tpl-from").value), b = num($("#tpl-to").value), n = parseInt($("#tpl-steps").value, 10), tn = num($("#tpl-t").value);
+  const extra = $("#tpl-extra").value.trim(), warn = [];
+  if (!isFinite(a) || !isFinite(b)) return {text: "", warn: t("Give both ends of the range.")};
+  if (a >= b) warn.push(t("The range should go from the smaller to the larger value."));
+  for (const v of [a, b]) if (v !== 0 && (Math.abs(v) < p.lo || Math.abs(v) > p.hi)) { warn.push(t("{v} {u} is unusual for {p}: check the unit.", {v, u: p.unit, p: t(p.label)})); break; }
+  if (!isFinite(tn) || tn <= 0) warn.push(t("Give the duration in ns."));
+  else if (tn > 50) warn.push(t("Runs longer than 50 ns take minutes each."));
+  const range = `${p.k} from ${sci(a * p.scale)} to ${sci(b * p.scale)}${p.si ? " " + p.si : ""}`, dur = `${sci(tn)} ns`;
+  let text;
+  if (tplKind === "sweep") {
+    if (!(n >= 2)) warn.push(t("Use at least 2 steps."));
+    const max = (state.config && state.config.max_sweep_runs) || 400, conf = state.config && state.config.confirm && state.config.confirm.runs;
+    if (n > max) warn.push(t("At most {n} runs per sweep on this server.", {n: max}));
+    else if (conf && n > conf) warn.push(t("More than {n} runs: you will be asked before they start.", {n: conf}));
+    text = `Sweep ${range} in ${n} steps, ${dur} each.` + (extra ? ` Other conditions: ${extra}.` : "") +
+      " Show the overlay and tell me where the behaviour changes.";
+  } else {
+    const beh = $("#tpl-beh").value || extra || "the behaviour changes";
+    text = `Find the value of ${p.k} between ${sci(a * p.scale)} and ${sci(b * p.scale)}${p.si ? " " + p.si : ""} at which ${beh}. ` +
+      `Runs of ${dur}.` + (extra && $("#tpl-beh").value ? ` Other conditions: ${extra}.` : "") +
+      " Bracket it with a coarse sweep and then finer ones, and report the bracket and the values tried.";
+  }
+  return {text, warn: warn.join(" ")};
+}
+function tplUpdate() { const {text, warn} = tplText(); $("#tplout").textContent = text; $("#tplwarn").textContent = warn; $("#tplput").disabled = $("#tplsend").disabled = !text; }
+function tplSetKind(k) {
+  tplKind = k; $("#tpl-sweep").setAttribute("aria-pressed", String(k === "sweep")); $("#tpl-thr").setAttribute("aria-pressed", String(k !== "sweep"));
+  for (const id of ["#tpl-steps", "#tpl-steps-l"]) $(id).hidden = k !== "sweep";
+  for (const id of ["#tpl-beh", "#tpl-beh-l"]) $(id).hidden = k === "sweep";
+  tplUpdate();
+}
+function tplParamChanged() { const p = tplParam(); $("#tpl-unit").textContent = p.unit; $("#tpl-from").value = p.from; $("#tpl-to").value = p.to; tplUpdate(); }
+function openTpl() {
+  if (!$("#tpl-param").options.length) for (const p of TPL) { const o = document.createElement("option"); o.value = p.k; o.textContent = t(p.label) + (p.unit ? ` (${p.unit})` : ""); o.dataset.noi18n = ""; $("#tpl-param").appendChild(o); }
+  tplParamChanged(); tplSetKind(tplKind);
+  $("#tpldlg").hidden = false; $("#tplback").hidden = false;
+}
+function closeTpl() { $("#tpldlg").hidden = true; $("#tplback").hidden = true; }
+$("#tplbtn").onclick = openTpl; $("#tplclose").onclick = closeTpl; $("#tplback").onclick = closeTpl;
+$("#tpl-sweep").onclick = () => tplSetKind("sweep"); $("#tpl-thr").onclick = () => tplSetKind("thr");
+$("#tpl-param").onchange = tplParamChanged;
+for (const id of ["#tpl-from", "#tpl-to", "#tpl-steps", "#tpl-t", "#tpl-extra", "#tpl-beh"]) $(id).addEventListener("input", tplUpdate);
+$("#tpl-beh").addEventListener("change", tplUpdate);
+$("#tplput").onclick = () => { $("#input").value = tplText().text; closeTpl(); autosize(); $("#input").focus(); };
+$("#tplsend").onclick = () => { $("#input").value = tplText().text; closeTpl(); send(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeTpl(); });
+
+// ---------------------------------------------------------------- ask another god: the same question, side by side
+const other = {mi: -1, busy: false, god: null};
+function turnOf(mi) {
+  // the user message that started the turn ending at mi, and the answer text of that turn
+  let q = mi; while (q >= 0 && !(state.messages[q].role === "user" && (typeof state.messages[q].content === "string" || state.messages[q].content.some(b => b.type === "text")))) q--;
+  const answer = state.messages.slice(q + 1, mi + 1).filter(m => m.role === "assistant").flatMap(m => Array.isArray(m.content) ? m.content : [{type: "text", text: m.content}])
+    .filter(b => b.type === "text").map(b => splitNext(b.text).body).filter(Boolean).join("\n\n");
+  return {q, answer};
+}
+function openOther(mi) {
+  other.mi = mi; const used = (state.usages[mi] || {}).used || {}, {answer} = turnOf(mi); other.god = used.god;
+  const g = GODS.find(x => x.id === used.god);
+  $("#othera").innerHTML = `<h4>${g ? g.name : t("This answer")}</h4><div class="who">${esc(used.model || "")}</div>${md(answer || "")}`;
+  $("#otherb").innerHTML = `<p class="muted">${t("Choose a god above.")}</p>`;
+  const box = $("#othergods"); box.innerHTML = "";
+  for (const x of GODS) {
+    const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `${godLogo(x)}<span>${x.name}</span>`; b.disabled = x.id === used.god || !candidates(x.id).length || other.busy;
+    b.onclick = () => askOther(x.id, b); box.appendChild(b);
+  }
+  $("#otherdlg").hidden = false; $("#otherback").hidden = false;
+}
+function closeOther() { $("#otherdlg").hidden = true; $("#otherback").hidden = true; }
+$("#otherclose").onclick = closeOther; $("#otherback").onclick = closeOther;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeOther(); });
+async function askOther(godId, btn) {
+  if (other.busy) return; other.busy = true;
+  document.querySelectorAll("#othergods button").forEach(b => { b.setAttribute("aria-pressed", String(b === btn)); b.disabled = true; });
+  const g = GODS.find(x => x.id === godId), list = candidates(godId), c = list[0], {q} = turnOf(other.mi);
+  const pool = autoPool(godId).map(o => ({provider: o.dataset.provider, model: o.dataset.model}));
+  const pinned = godOptions(godId).some(o => o.value === godPref(godId) && keyOk(o.dataset.provider));
+  const col = $("#otherb"); let text = "", steps = [], who = "", used = null;
+  const draw = () => { col.innerHTML = `<h4>${g.name}</h4><div class="who">${esc(who)}</div>${steps.length ? `<div class="steps">${steps.map(esc).join(" · ")}</div>` : ""}${text ? md(splitNext(text).body) : `<p class="muted"><span class="spin"></span>${t("Working…")}</p>`}${used ? `<div class="usage mono">${fmtUsage(used)}</div>` : ""}`; };
+  draw();
+  try {
+    const headers = keyHeaders({"Content-Type": "application/json"});
+    const res = await fetch("/api/chat", {method: "POST", headers, body: JSON.stringify({messages: stripImages(state.messages.slice(0, q + 1)),
+      model: c.dataset.model, provider: c.dataset.provider, auto: !pinned && pool.length > 0, god: godId, candidates: pinned ? [] : pool, fallbacks: [],
+      mode: localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast", name: getName(), defaults: udText(), lang: i18n.lang()})});
+    if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || b.detail || res.statusText); }
+    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = "", model = null;
+    for (;;) {
+      const {value, done} = await reader.read(); if (done) break;
+      buf += dec.decode(value, {stream: true}); let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1); if (!line) continue;
+        const ev = JSON.parse(line);
+        if (ev.type === "model") { model = ev; who = ev.model + (ev.reason ? " (" + ev.reason + ")" : ""); }
+        else if (ev.type === "text") text += (text ? "\n\n" : "") + ev.text;
+        else if (ev.type === "tool_done") { const e = ev.event || {}; steps.push((e.tool || "tool") + (e.run_id || e.sweep_id ? " " + (e.run_id || e.sweep_id) : "")); if (e.run_id || e.sweep_id) refreshRuns(); }
+        else if (ev.type === "usage") { used = Object.assign({}, ev, {used: model}); state.usage.input += ev.input; state.usage.output += ev.output; state.usage.cost = (state.usage.cost || 0) + (ev.cost_usd || 0); updateTok(); }
+        else if (ev.type === "error") throw new Error(ev.error);
+        draw();
+      }
+    }
+  } catch (e) { col.innerHTML = `<h4>${g.name}</h4><p class="bad">${esc(e.message)}</p>`; }
+  other.busy = false;
+  document.querySelectorAll("#othergods button").forEach((b, i) => b.disabled = b.getAttribute("aria-pressed") === "true" || GODS[i].id === other.god || !candidates(GODS[i].id).length);
+}
+
+// ---------------------------------------------------------------- usage and cost per day and provider (server-wide)
+const PCOL = {anthropic: "#FF5A42", openai: "#B24BD0", gemini: "#5A73FF"};   // the colours of the SpinMate logo
+const PNAME = {anthropic: "Claude", openai: "OpenAI", gemini: "Gemini"};
+const shortTok = n => n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e4 ? (n / 1e3).toFixed(1) + "k" : fmtN(n);
+async function openUsage() {
+  $("#usagedlg").hidden = false; $("#usageback").hidden = false;
+  let u; try { u = await api("/api/usage?days=" + $("#usagedays").value); } catch (e) { $("#utable").textContent = e.message; return; }
+  const eur = usd => "€" + (usd * u.eur_per_usd).toFixed(usd * u.eur_per_usd < 1 ? 3 : 2);
+  const total = Object.values(u.totals).reduce((a, x) => a + x.cost_usd, 0);
+  const tok = Object.values(u.totals).reduce((a, x) => a + x.input + x.output, 0);
+  $("#ucards").innerHTML = `<div class="ucard"><small>${t("Total")}</small><b>${eur(total)}</b><small>${shortTok(tok)} ${t("tokens")}</small></div>` +
+    Object.entries(u.totals).map(([p, x]) => `<div class="ucard"><small><i style="background:${PCOL[p]}"></i>${PNAME[p]}</small><b>${eur(x.cost_usd)}</b><small>${shortTok(x.input + x.output)} ${t("tokens")} · ${x.answers} ${t("answers")}</small></div>`).join("");
+  if (!u.days.length) { $("#utable").innerHTML = `<p class="uempty">${t("No answers from the assistant in this period yet.")}</p>`; $("#unote").textContent = ""; return; }
+  const rows = u.days.map(d => {
+    const bar = Object.entries(d.providers).filter(([, x]) => x.cost_usd > 0).map(([p, x]) => `<span style="width:${(100 * x.cost_usd / (d.cost_usd || 1)).toFixed(1)}%;background:${PCOL[p]}"></span>`).join("");
+    return `<tr><td>${d.day}</td>${Object.keys(PNAME).map(p => `<td>${d.providers[p].answers ? eur(d.providers[p].cost_usd) : "–"}</td>`).join("")}<td><b>${eur(d.cost_usd)}</b></td><td>${shortTok(d.tokens)}</td><td><div class="ubar">${bar}</div></td></tr>`;
+  }).join("");
+  const models = u.models.slice(0, 8).map(m => `<tr><td>${esc(m.model)}</td><td>${PNAME[m.provider] || ""}</td><td>${m.answers}</td><td>${shortTok(m.input + m.output)}</td><td>${eur(m.cost_usd)}</td></tr>`).join("");
+  $("#utable").innerHTML = `<table class="utable"><tr><th>${t("Day")}</th>${Object.values(PNAME).map(n => `<th>${n}</th>`).join("")}<th>${t("Total")}</th><th>${t("Tokens")}</th><th></th></tr>${rows}</table>
+    <h4 style="margin:16px 0 4px">${t("Models")}</h4><table class="utable"><tr><th>${t("Model")}</th><th>${t("Provider")}</th><th>${t("Answers")}</th><th>${t("Tokens")}</th><th>${t("Cost")}</th></tr>${models}</table>`;
+  $("#unote").textContent = t("Estimates from list prices, for every answer on this server.") + ` 1 $ = ${u.eur_per_usd.toFixed(4)} €.` + (u.unpriced_answers ? " " + t("Some models have no known price and count as 0.") : "");
+}
+function closeUsage() { $("#usagedlg").hidden = true; $("#usageback").hidden = true; }
+$("#tokpill").onclick = openUsage;
+$("#tokpill").onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openUsage(); } };
+$("#usageclose").onclick = closeUsage; $("#usageback").onclick = closeUsage;
+$("#usagedays").onchange = openUsage;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeUsage(); });
+
 // ---------------------------------------------------------------- physics validation badge
 async function loadValidation() {
   try {
@@ -2206,8 +2443,8 @@ async function guideAsk(q, shown) {
     try { localStorage.setItem("sublattice.name", v); } catch {}
     guide.awaitName = false; guide.awaitEmail = true; onLogin();
     $("#guideinput").placeholder = "you@example.com";
-    guideAdd("bot", t(state.config && state.config.presentation ? "Nice to meet you, {name}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide and the presentation. Your email is used only for this welcome email. Or press Skip for now: you get them here either way."
-      : "Nice to meet you, {name}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide. Your email is used only for this welcome email. Or press Skip for now: you get them here either way.", {name: v}));
+    guideAdd("bot", t(state.config && state.config.presentation ? "Nice to meet you, {name}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide and the presentation. Your email is used for this welcome email and kept by the SpinMate author, only to contact you about SpinMate; write to spinmate.ai.agent@gmail.com to have it deleted. Or press Skip for now: you get them here either way."
+      : "Nice to meet you, {name}! Want an account? Type your email and I'll send you a welcome email with the SpinMate user guide. Your email is used for this welcome email and kept by the SpinMate author, only to contact you about SpinMate; write to spinmate.ai.agent@gmail.com to have it deleted. Or press Skip for now: you get them here either way.", {name: v}));
     guideSkip(); return;
   }
   if (guide.awaitEmail) return guideEmail(q);
