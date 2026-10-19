@@ -400,7 +400,15 @@ def validation_page():
                                       '<h2>AFM/FM phase boundary</h2><p><img src="/api/validation/phase-diagram.png" '
                                       'alt="AFM/FM phase diagram: measured boundary on |Ku| = 2|A0|/l²" width="560"></p>'
                                       "<h2>Fixed in version 2.0</h2>")
+    # the SpinMate logo in the top right corner
+    html_text = html_text.replace("<body>", '<body><img src="/api/logo.png" alt="SpinMate" '
+                                  'style="position:absolute;top:28px;right:32px;height:44px">', 1)
     return Response(html_text, media_type="text/html")
+
+
+@app.get("/api/logo.png")
+def logo_png():
+    return FileResponse(WEB / "spinmate-lockup.png")
 
 
 @app.get("/api/validation/phase-diagram.png")
