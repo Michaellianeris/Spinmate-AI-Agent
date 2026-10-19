@@ -91,9 +91,9 @@ dist\SpinMate\SpinMate.exe --selftest
 
 | # | Where | What it does |
 |---|---|---|
-| 1 | Left bar | **New conversation.** Starts an empty chat; the previous one stays in the history. |
+| 1 | Left bar | **New conversation** (Ctrl+K). Starts an empty chat; the previous one stays in the history. |
 | 2 | Left bar | **Conversation history.** Your earlier chats, kept per name. |
-| 3 | Left bar | **Runs panel.** Every run and sweep: search, filter, star, compare, plot or report (see [Run catalog](#run-catalog-postgres)). |
+| 3 | Left bar | **Runs panel** (Ctrl+/). Every run and sweep: search, filter, star, compare, plot or report (see [Run catalog](#run-catalog-postgres)). |
 | 4 | Left bar | **Default parameters.** The values Fast mode starts from, kept per name. |
 | 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. When an engine plug-in is installed it also has an **Engine** menu. |
 | 6 | Left bar | **Physics validation.** Green when the solver passes all its analytic checks; click for the report and the phase diagram (see [Physics validation](#physics-validation)). |
@@ -143,6 +143,12 @@ cheaper one is clearly enough. There is no fixed provider order; if a call fails
 score is used. Pro models are used only when you pin them. Each answer shows the model, the reason and the
 cost in €. To always use one model for a god, open Settings and pick it under *Model behind each god*.
 The logic is in `app/router.py`, the prices in `app/pricing.py`.
+
+Every answer ends with a line with its tokens, its cost and the model, marked **Claude**, **OpenAI** or
+**Gemini** in the colours of the SpinMate logo.
+
+**Keyboard shortcuts.** Ctrl+K new conversation, Ctrl+/ the Runs panel, Enter send, Shift+Enter new line, Esc
+closes a window (Cmd instead of Ctrl on a Mac).
 
 **Ask another god.** Under every answer, *Ask another god* sends the same question to another model level and
 shows both answers side by side, for example Dionysus next to Zeus, or Claude next to Gemini.

@@ -112,6 +112,10 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "New conversation ({k})": "Νέα συζήτηση ({k})",
+  "All runs: search, compare, figures, reports ({k})": "Όλες οι εκτελέσεις: αναζήτηση, σύγκριση, γραφήματα, αναφορές ({k})",
+  "Keyboard shortcuts": "Συντομεύσεις πληκτρολογίου",
+  "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> new conversation, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> the Runs panel, <span class=\"kbd\">Enter</span> send, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> new line, <span class=\"kbd\">Esc</span> close a window. On a Mac use Cmd.": "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> νέα συζήτηση, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> το πάνελ Runs, <span class=\"kbd\">Enter</span> αποστολή, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> νέα γραμμή, <span class=\"kbd\">Esc</span> κλείσιμο παραθύρου. Σε Mac χρησιμοποιήστε Cmd.",
   "Usage and cost": "Χρήση και κόστος",
   "Period": "Περίοδος",
   "Last 7 days": "Τελευταίες 7 ημέρες",
@@ -695,6 +699,10 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "New conversation ({k})": "Nueva conversación ({k})",
+  "All runs: search, compare, figures, reports ({k})": "Todas las ejecuciones: buscar, comparar, figuras, informes ({k})",
+  "Keyboard shortcuts": "Atajos de teclado",
+  "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> new conversation, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> the Runs panel, <span class=\"kbd\">Enter</span> send, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> new line, <span class=\"kbd\">Esc</span> close a window. On a Mac use Cmd.": "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> nueva conversación, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> el panel de ejecuciones, <span class=\"kbd\">Enter</span> enviar, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> nueva línea, <span class=\"kbd\">Esc</span> cerrar una ventana. En Mac usa Cmd.",
   "Usage and cost": "Uso y coste",
   "Period": "Periodo",
   "Last 7 days": "Últimos 7 días",
@@ -1278,6 +1286,10 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "New conversation ({k})": "Neues Gespräch ({k})",
+  "All runs: search, compare, figures, reports ({k})": "Alle Läufe: suchen, vergleichen, Abbildungen, Berichte ({k})",
+  "Keyboard shortcuts": "Tastenkürzel",
+  "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> new conversation, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> the Runs panel, <span class=\"kbd\">Enter</span> send, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> new line, <span class=\"kbd\">Esc</span> close a window. On a Mac use Cmd.": "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> neues Gespräch, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> der Läufe-Bereich, <span class=\"kbd\">Enter</span> senden, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> neue Zeile, <span class=\"kbd\">Esc</span> Fenster schließen. Auf dem Mac Cmd.",
   "Usage and cost": "Nutzung und Kosten",
   "Period": "Zeitraum",
   "Last 7 days": "Letzte 7 Tage",
@@ -1861,6 +1873,10 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "New conversation ({k})": "Nuova conversazione ({k})",
+  "All runs: search, compare, figures, reports ({k})": "Tutte le esecuzioni: cerca, confronta, figure, report ({k})",
+  "Keyboard shortcuts": "Scorciatoie da tastiera",
+  "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> new conversation, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> the Runs panel, <span class=\"kbd\">Enter</span> send, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> new line, <span class=\"kbd\">Esc</span> close a window. On a Mac use Cmd.": "<span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">K</span> nuova conversazione, <span class=\"kbd\">Ctrl</span>+<span class=\"kbd\">/</span> il pannello dei run, <span class=\"kbd\">Enter</span> invia, <span class=\"kbd\">Shift</span>+<span class=\"kbd\">Enter</span> nuova riga, <span class=\"kbd\">Esc</span> chiudi una finestra. Su Mac usa Cmd.",
   "Usage and cost": "Uso e costi",
   "Period": "Periodo",
   "Last 7 days": "Ultimi 7 giorni",
