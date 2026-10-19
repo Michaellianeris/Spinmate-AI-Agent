@@ -372,6 +372,9 @@ a.btn{text-decoration:none;color:var(--ink);display:inline-block}
 .valbtn .vdot.warn{background:#E0A100}
 .enginerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 2px;font-size:.9rem}
 .enginerow select{min-width:220px}.enginerow small{color:var(--muted);flex-basis:100%}
+.keybox{position:relative;display:block}.keybox input{padding-right:30px}
+.keyclear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:22px;height:22px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:18px;line-height:20px;cursor:pointer}
+.keyclear:hover{background:var(--soft);color:var(--err)}
 .keystat{display:block;font-size:.76rem;margin-top:3px;min-height:1em}.keystat.ok{color:var(--ok)}.keystat.bad{color:var(--err)}
 .defdlg.connectdlg{width:min(640px,calc(100vw - 32px))}.connectdlg h4{margin:14px 0 4px}
 .cmdbox{display:flex;gap:8px;align-items:flex-start}.cmdbox pre{flex:1;margin:4px 0;white-space:pre-wrap;word-break:break-all}
@@ -608,9 +611,9 @@ main{grid-template-columns:minmax(0,1fr)}
         <button type="button" data-theme="dark" aria-pressed="false"><i style="background:#171C25"></i>Dark</button>
         <button type="button" data-theme="spin" aria-pressed="true"><i style="background:linear-gradient(135deg,#E5341B,#8A3FB5 55%,#1D1DD8)"></i>Spin</button>
       </div>
-      <label>Anthropic API key <input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"><small class="keystat" id="ks-anthropic"></small></label>
-      <label>OpenAI API key <input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"><small class="keystat" id="ks-openai"></small></label>
-      <label>Gemini API key <input id="geminikey" type="password" placeholder="AIza…" autocomplete="off"><small class="keystat" id="ks-gemini"></small></label>
+      <label>Anthropic API key <span class="keybox"><input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"><button type="button" class="keyclear" data-key="apikey" title="Delete this key" aria-label="Delete the Anthropic key" hidden>×</button></span><small class="keystat" id="ks-anthropic"></small></label>
+      <label>OpenAI API key <span class="keybox"><input id="openaikey" type="password" placeholder="sk-…" autocomplete="off"><button type="button" class="keyclear" data-key="openaikey" title="Delete this key" aria-label="Delete the OpenAI key" hidden>×</button></span><small class="keystat" id="ks-openai"></small></label>
+      <label>Gemini API key <span class="keybox"><input id="geminikey" type="password" placeholder="AIza…" autocomplete="off"><button type="button" class="keyclear" data-key="geminikey" title="Delete this key" aria-label="Delete the Gemini key" hidden>×</button></span><small class="keystat" id="ks-gemini"></small></label>
       <p>The keys stay in this browser tab and are sent only to your own server.</p>
       <details class="prefs"><summary>Model behind each god</summary>
         <div id="prefs"></div>
@@ -2212,7 +2215,9 @@ function addModelOption(provider, id, name) {
   if (!o) { o = document.createElement("option"); o.value = key; sel.appendChild(o); }
   o.dataset.provider = provider; o.dataset.model = id; o.textContent = name || id; return o;
 }
-const keyOk = provider => { const [field, , flag] = KEY_FIELDS[provider] || KEY_FIELDS.anthropic; return !!($(field).value.trim() || state.config[flag]); };
+const hasKey = provider => { const [field, , flag] = KEY_FIELDS[provider] || KEY_FIELDS.anthropic; return !!($(field).value.trim() || state.config[flag]); };
+// a provider is used only when it has a key and the key did not fail its check
+const keyOk = provider => hasKey(provider) && (state.keyCheck || {})[provider] !== "bad";
 function modelFamily(provider, id) {
   const l = String(id).toLowerCase();
   if (provider === "anthropic") {
@@ -2481,7 +2486,7 @@ function keyState() {
 function toggleSettings(open) {
   const panel = $("#settingspanel"), want = open === undefined ? panel.hidden : open;
   panel.hidden = !want; $("#settingsbtn").setAttribute("aria-expanded", String(want));
-  if (want) $("#apikey").focus();
+  if (want) { $("#apikey").focus(); loadModels(); }
 }
 $("#settingsbtn").onclick = () => toggleSettings();
 $("#keypill").onclick = () => toggleSettings(true);
@@ -2490,6 +2495,13 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") toggleSettin
 $("#apikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.key", $("#apikey").value.trim()); keyState(); });
 $("#openaikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.openai.key", $("#openaikey").value.trim()); keyState(); });
 $("#geminikey").addEventListener("input", () => { sessionStorage.setItem("sublattice.gemini.key", $("#geminikey").value.trim()); keyState(); });
+const KEY_STORE = {apikey: "sublattice.key", openaikey: "sublattice.openai.key", geminikey: "sublattice.gemini.key"};
+for (const f of Object.keys(KEY_STORE)) $("#" + f).addEventListener("input", () => { $("#" + f).parentElement.querySelector(".keyclear").hidden = !$("#" + f).value.trim(); });
+document.querySelectorAll(".keyclear").forEach(b => b.onclick = e => {
+  e.preventDefault(); e.stopPropagation();
+  const f = b.dataset.key; $("#" + f).value = ""; try { sessionStorage.removeItem(KEY_STORE[f]); } catch {}
+  b.hidden = true; keyState(); clearTimeout(modelTimer); loadModels();
+});
 
 function setTheme(t) {
   if (!["light", "dark", "spin"].includes(t)) t = "spin";
@@ -2510,15 +2522,29 @@ async function loadModels() {
     refreshGods();
   } catch {}
 }
+// the provider's error in a few words; the full text is in the tooltip
+function keyError(err) {
+  const e = String(err || "");
+  if (/401|403 forbidden(?!.*tunnel)|invalid.*key|api key not valid|authentication|permission/i.test(e) && !/tunnel|proxy/i.test(e)) return t("The key was rejected.");
+  if (/tunnel|proxy|could not reach|web page instead|timed out|connection|ssl|certificate/i.test(e)) return t("This server cannot reach the provider (network or proxy).");
+  if (/429|quota|rate/i.test(e)) return t("The key has no credit or hit a rate limit.");
+  return e ? e.slice(0, 120) : t("Key not checked");
+}
 // a check mark and the number of models per key, or the provider's error, under each key field
 function keyStatus(out) {
+  state.keyCheck = {};
   for (const p of PROVIDERS) {
     const el = $("#ks-" + p); if (!el) continue;
     const n = (out.models || []).filter(m => (m.provider || "anthropic") === p).length, err = (out.errors || {})[p];
-    if (!keyOk(p)) { el.textContent = ""; el.className = "keystat"; }
-    else if ((out.sources || {})[p] === "api") { el.textContent = "✓ " + t("Key works") + ` · ${n} ` + t("models"); el.className = "keystat ok"; }
-    else { el.textContent = "✗ " + String(err || t("Key not checked")).slice(0, 140); el.className = "keystat bad"; }
+    if (!hasKey(p)) { el.textContent = ""; el.className = "keystat"; }
+    else if ((out.sources || {})[p] === "api") { state.keyCheck[p] = "ok"; el.textContent = "✓ " + t("Key works") + ` · ${n} ` + t("models"); el.className = "keystat ok"; }
+    else { state.keyCheck[p] = "bad"; el.textContent = "✗ " + keyError(err) + " " + t("Not used until it works."); el.title = String(err || ""); el.className = "keystat bad"; }
+    // a key typed in this tab can be deleted; a key from the server's .env cannot
+    const [field, , flag] = KEY_FIELDS[p], typed = !!$(field).value.trim();
+    $(field).parentElement.querySelector(".keyclear").hidden = !typed;
+    if (!typed && state.config[flag] && el.textContent) el.textContent = t("Key from the server's .env:") + " " + el.textContent;
   }
+  keyState();
 }
 let modelTimer;
 for (const id of ["#apikey", "#openaikey", "#geminikey"]) $(id).addEventListener("input", () => { clearTimeout(modelTimer); modelTimer = setTimeout(loadModels, 600); });
