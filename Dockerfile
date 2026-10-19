@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY spinmate_core ./spinmate_core
 COPY spinmate_mcp ./spinmate_mcp
+# engine plug-ins (mumax3 also needs its binary and an NVIDIA GPU, see README)
+COPY plugins ./plugins
+RUN pip install --no-cache-dir --no-deps ./plugins/spinmate-mumax3
 COPY macrospin ./macrospin
 COPY web ./web
 COPY examples ./examples

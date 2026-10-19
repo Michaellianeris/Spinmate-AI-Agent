@@ -102,7 +102,7 @@ def upgrade_summaries():
     from . import runner
     for d in sorted(RUNS.iterdir()):
         s = _read(d / "summary.json")
-        if not s or "neel_z_switches" in s or not (d / "output1.dat").exists():
+        if not s or "neel_z_switches" in s or s.get("engine") or not (d / "output1.dat").exists():
             continue
         keep = {k: s[k] for k in ("t_offset_s", "chain", "segment_starts_ns") if k in s}
         try:
@@ -119,7 +119,8 @@ def _execute(run_id):
         return
     from . import engines   # here, not at the top: the macrospin engine imports this module
     cmd = engines.get((_meta(run_id) or {}).get("engine")).run_command()
-    env = dict(os.environ, PYTHONPATH=str(REPO), MPLBACKEND="Agg")
+    path = os.pathsep.join(x for x in (str(REPO), os.environ.get("PYTHONPATH", "")) if x)   # plug-ins outside site-packages
+    env = dict(os.environ, PYTHONPATH=path, MPLBACKEND="Agg")
     _update(run_id, status="running", started=time.time())
     with open(run_dir / "stdout.log", "w") as out, open(run_dir / "stderr.log", "w") as err:
         proc = subprocess.Popen(cmd, cwd=run_dir, stdout=out, stderr=err, env=env,
@@ -133,8 +134,24 @@ def _execute(run_id):
     _update(run_id, status="done" if ok else "failed", finished=time.time(), returncode=code)
 
 
-def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent_run=None, t_offset=None):
-    check = P.validate(parameters_text, sec_per_step())
+def _check(parameters_text, engine):
+    """Validation result as a dict; the macrospin path is the original one."""
+    if not engine or engine == "macrospin":
+        return P.validate(parameters_text, sec_per_step())
+    from dataclasses import asdict
+    from . import engines
+    try:
+        v = asdict(engines.get(engine).validate(parameters_text))
+    except KeyError as e:
+        return {"ok": False, "error": str(e.args[0])}
+    extra = v.pop("extra") or {}
+    v["cleaned_text"] = extra.get("cleaned_text", parameters_text)
+    return v
+
+
+def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent_run=None, t_offset=None,
+              engine=None):
+    check = _check(parameters_text, engine)
     if not check["ok"]:
         return {"ok": False, "error": check["error"]}
     run_id = _next_id(RUNS, "r")
@@ -147,7 +164,7 @@ def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent
         "steps": check["steps"], "estimated_runtime_s": check["estimated_runtime_s"],
         "changed_from_defaults": check["changed_from_defaults"], "warnings": check["warnings"],
         "sweep_id": sweep_id, "sweep_value": sweep_value,
-        "parent_run": parent_run, "t_offset_s": t_offset, "engine": "macrospin",
+        "parent_run": parent_run, "t_offset_s": t_offset, "engine": engine or "macrospin",
     })
     catalog.sync_run(run_dir)
     _pool.submit(_execute, run_id)
@@ -242,6 +259,8 @@ def continue_run(run_id, extra_t=None, extra_parameters="", label=""):
         return {"ok": False, "error": f"no run {run_id}"}
     if m["status"] != "done":
         return {"ok": False, "error": f"{run_id} is {m['status']}, it must be done to continue from it"}
+    if m.get("engine", "macrospin") != "macrospin":
+        return {"ok": False, "error": f"continue_run works with the macrospin engine; {run_id} ran on {m['engine']}"}
     text = (RUNS / run_id / "parameters.txt").read_text()
     args, _ = P._parse(text)
     m1, m2 = _last_state(run_id)

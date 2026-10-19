@@ -33,15 +33,24 @@ TOOLS = [
         "name": "validate_parameters",
         "description": "Parse parameter text with the simulator's own parser. Returns errors, the values "
                        "that differ from the defaults, step count, estimated runtime and warnings.",
-        "input_schema": {"type": "object", "properties": {"parameters_text": TEXT},
+        "input_schema": {"type": "object", "properties": {"parameters_text": TEXT,
+                                                          "engine": {"type": "string", "description": "default macrospin"}},
                          "required": ["parameters_text"]},
     },
     {
+        "name": "list_engines",
+        "description": "The simulation engines installed here (macrospin is built in; mumax3 and others are "
+                         "plug-ins), with what they model and their parameters.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "start_simulation",
-        "description": "Start one simulation in the background. Returns a run id immediately.",
+        "description": "Start one simulation in the background. Returns a run id immediately. engine defaults to "
+                       "macrospin; list_engines shows the others and their parameters.",
         "input_schema": {"type": "object",
                          "properties": {"parameters_text": TEXT,
-                                        "label": {"type": "string", "description": "short description"}},
+                                        "label": {"type": "string", "description": "short description"},
+                                        "engine": {"type": "string", "description": "simulation engine, default macrospin"}},
                          "required": ["parameters_text"]},
     },
     {
@@ -243,10 +252,22 @@ def call(name, args, approved=False):
     elif name == "save_input_file":
         out = {"saved": S.save_input(args["name"], args["parameters_text"])}
     elif name == "validate_parameters":
-        out = P.validate(args["parameters_text"], S.sec_per_step())
+        out = S._check(args["parameters_text"], args.get("engine"))
         out.pop("cleaned_text", None)
+    elif name == "list_engines":
+        from . import engines
+        out = {"engines": []}
+        for n in engines.available():
+            try:
+                e = engines.get(n)
+            except Exception as err:   # a broken plug-in is reported, not fatal
+                out["engines"].append({"name": n, "error": str(err)})
+                continue
+            schema = e.parameter_schema()
+            out["engines"].append({"name": n, "title": e.title, "description": e.description,
+                                   "parameters": schema if n != "macrospin" else "see spinmate://parameters"})
     elif name == "start_simulation":
-        out = S.start_run(args["parameters_text"], args.get("label", ""))
+        out = S.start_run(args["parameters_text"], args.get("label", ""), engine=args.get("engine"))
     elif name == "start_sweep":
         out = S.start_sweep(args["parameters_text"], args["parameter"], args["values"], args.get("label", ""))
     elif name == "wait_for_run":

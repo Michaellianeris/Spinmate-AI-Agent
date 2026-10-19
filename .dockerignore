@@ -7,3 +7,4 @@ tests
 original_scripts
 *.md
 !macrospin/README.md
+!spinmate_mcp/physics.md
