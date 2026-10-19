@@ -5,6 +5,7 @@ import re
 import anthropic
 
 from . import agent
+from . import gemini_provider
 from . import openai_provider
 from . import prompts
 
@@ -23,7 +24,7 @@ parser, runs the simulation and explains the result from the real magnetization 
 How the app works
 - Centre: the chat. Type a request in words or attach a parameter .txt (paperclip, or drag and drop).
   Under the message box: god picker (Hermes = quick and economical, Dionysus = balanced, Zeus = deep and most
-  capable, Apollo = specialised; the Claude or OpenAI model behind each god is chosen automatically and can be fixed
+  capable, Apollo = specialised; the Claude, OpenAI or Gemini model behind each god is chosen automatically and can be fixed
   in Settings > Model behind each god), Fast / Deep switch, send arrow.
   Fast = default parameters and short answers. Deep = full parameters or a txt file and a thorough analysis.
 - There is no side panel. Results appear in the chat under your message. The play icon in the left bar
@@ -50,8 +51,9 @@ How the app works
   (Log out, then type another name to log in; each name keeps its own history and default parameters),
   settings (gear) with language (English US or UK, Greek, Spanish, German, Italian; it also sets the
   language of the answers), colour theme (Light, Dark, Spin) and the API key.
-- API keys: Settings has separate Anthropic and OpenAI fields. Paste either or both, or set
-  ANTHROPIC_API_KEY and OPENAI_API_KEY in the .env file used by Docker. The combined model list loads from
+- API keys: Settings has separate Anthropic, OpenAI and Gemini fields (a Gemini key comes from
+  aistudio.google.com/api-keys). Paste any of them, or set ANTHROPIC_API_KEY, OPENAI_API_KEY and
+  GEMINI_API_KEY in the .env file used by Docker. The combined model list loads from
   the keys. The app runs at http://localhost:8421 (Docker: docker compose up --build).
 """
 
@@ -64,6 +66,13 @@ def answer(messages, api_key=None, model=None, name=None, provider="anthropic", 
             if m.get("role") in ("user", "assistant") and m.get("content")]
     if not msgs or msgs[-1]["role"] != "user":
         raise agent.AgentError("Empty question", 400)
+    if provider == "gemini":
+        try:
+            text, resp = gemini_provider.text(msgs, system, model, api_key, 400)
+        except gemini_provider.GeminiError as e:
+            raise agent.AgentError(str(e), e.status)
+        agent._account_values(*gemini_provider.usage(resp))
+        return text
     if provider == "openai":
         try:
             text, resp = openai_provider.text(msgs, system, model, api_key, 400)

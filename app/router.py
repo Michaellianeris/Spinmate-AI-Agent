@@ -1,6 +1,6 @@
 """Automatic model choice for a persona (god) when the user has not pinned a model.
 
-Every candidate the page sends (the persona's models from both providers whose key is present) gets
+Every candidate the page sends (the persona's models from every provider whose key is present) gets
 
     U = capability + top bonus - lambda * cost - shortfall penalty
 
@@ -37,6 +37,21 @@ def capability(provider, model):
     """Rough 0..1 capability from the name only, good enough to rank models of one persona."""
     l = (model or "").lower()
     v = _version(l)
+    if provider == "gemini":
+        m = re.search(r"gemini-(\d+)(?:\.(\d))?", l)
+        gv = int(m.group(1)) + (int(m.group(2)) / 10 if m and m.group(2) else 0) if m else 2.5
+        if "flash-lite" in l:
+            base = 0.40
+        elif "flash" in l:
+            base = 0.58
+        elif "pro" in l:
+            base = 0.80
+        else:
+            base = 0.84                 # new flagship lines (e.g. Argon) go to Apollo
+        cap = base + (gv - 3) * 0.08    # Gemini 3.x is about the generation of Claude 5 and GPT-5
+        if "preview" in l or "exp" in l:
+            cap -= 0.001                 # prefer the stable id of the same model
+        return max(0.05, min(1.0, cap))
     if provider == "anthropic":
         if "fable" in l or "mythos" in l:
             base = 0.88
@@ -107,7 +122,8 @@ def rank(candidates, god, messages, mode=None):
         if k not in seen:
             seen.add(k)
             uniq.append({"provider": c["provider"], "model": c["model"]})
-    auto = [c for c in uniq if not re.search(r"-pro\b", c["model"].lower())]
+    # OpenAI pro models (very slow, ~10x the price) only when pinned; Gemini Pro is the normal top line
+    auto = [c for c in uniq if c["provider"] == "gemini" or not re.search(r"-pro\b", c["model"].lower())]
     uniq = auto or uniq
     if not uniq:
         return [], ""

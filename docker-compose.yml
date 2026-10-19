@@ -8,10 +8,13 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-5}
       - CLAUDE_MODELS=${CLAUDE_MODELS:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1}
       - OPENAI_MODELS=${OPENAI_MODELS:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - GEMINI_MODELS=${GEMINI_MODELS:-}
       - SSL_CERT_FILE=${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
       - MAX_PARALLEL=${MAX_PARALLEL:-}
       - MAX_SWEEP_RUNS=${MAX_SWEEP_RUNS:-400}

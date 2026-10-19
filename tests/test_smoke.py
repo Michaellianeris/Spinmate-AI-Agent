@@ -126,17 +126,18 @@ def test_openai_agent_loop_translates_tools_and_usage(client):
 
 
 def test_models_endpoint_combines_providers(client):
-    from app import agent, openai_provider
+    from app import agent, gemini_provider, openai_provider
 
-    real_agent, real_openai = agent.list_models, openai_provider.list_models
+    real = agent.list_models, openai_provider.list_models, gemini_provider.list_models
     agent.list_models = lambda key=None: ([{"id": "claude-x", "name": "Claude X", "provider": "anthropic"}], "api", None)
     openai_provider.list_models = lambda key=None: ([{"id": "gpt-x", "name": "gpt-x", "provider": "openai"}], "api", None)
+    gemini_provider.list_models = lambda key=None: ([{"id": "gemini-x", "name": "Gemini X", "provider": "gemini"}], "api", None)
     try:
         data = client.get("/api/models").json()
     finally:
-        agent.list_models, openai_provider.list_models = real_agent, real_openai
-    assert {m["provider"] for m in data["models"]} == {"anthropic", "openai"}
-    assert data["sources"] == {"anthropic": "api", "openai": "api"}
+        agent.list_models, openai_provider.list_models, gemini_provider.list_models = real
+    assert {m["provider"] for m in data["models"]} == {"anthropic", "openai", "gemini"}
+    assert data["sources"] == {"anthropic": "api", "openai": "api", "gemini": "api"}
 
 
 def test_series_endpoint_downsamples_and_zooms(client):

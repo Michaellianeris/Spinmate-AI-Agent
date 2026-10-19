@@ -19,6 +19,7 @@ from . import reports
 from . import tools
 from . import catalog
 from . import guide
+from . import gemini_provider
 from . import openai_provider
 from . import router
 from . import params as P
@@ -163,6 +164,7 @@ def config():
     return {"model": agent.DEFAULT_MODEL, "models": agent.MODELS,
             "has_server_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
+            "has_gemini_key": bool(gemini_provider.env_key()),
             "defaults": P.app_defaults(), "token_budget": agent.TOKEN_BUDGET,
             "tokens_used": agent.tokens_used(), "max_parallel": S.MAX_PARALLEL, "max_sweep_runs": S.MAX_SWEEP_RUNS,
             "catalog": catalog.status(), **fx.info(), "email": mailer.mail_enabled(),
@@ -172,10 +174,11 @@ def config():
 
 @app.post("/api/guide")
 def guide_answer(body: GuideIn, x_api_key: str | None = Header(default=None),
-                 x_openai_api_key: str | None = Header(default=None)):
+                 x_openai_api_key: str | None = Header(default=None),
+                 x_gemini_api_key: str | None = Header(default=None)):
     try:
         name = re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip()
-        key = x_openai_api_key if body.provider == "openai" else x_api_key
+        key = {"openai": x_openai_api_key, "gemini": x_gemini_api_key}.get(body.provider, x_api_key)
         return {"text": guide.answer(body.messages, key, body.model, name, body.provider, body.lang)}
     except agent.AgentError as e:
         return JSONResponse({"error": str(e)}, status_code=e.status)
@@ -183,26 +186,31 @@ def guide_answer(body: GuideIn, x_api_key: str | None = Header(default=None),
 
 @app.get("/api/models")
 def models(x_api_key: str | None = Header(default=None),
-           x_openai_api_key: str | None = Header(default=None)):
+           x_openai_api_key: str | None = Header(default=None),
+           x_gemini_api_key: str | None = Header(default=None)):
     claude, c_source, c_error = agent.list_models(x_api_key)
     openai, o_source, o_error = openai_provider.list_models(x_openai_api_key)
-    return {"models": claude + openai,
-            "sources": {"anthropic": c_source, "openai": o_source},
-            "errors": {"anthropic": c_error, "openai": o_error},
-            "defaults": {"anthropic": agent.DEFAULT_MODEL, "openai": openai_provider.DEFAULT_MODEL}}
+    gemini, g_source, g_error = gemini_provider.list_models(x_gemini_api_key)
+    return {"models": claude + openai + gemini,
+            "sources": {"anthropic": c_source, "openai": o_source, "gemini": g_source},
+            "errors": {"anthropic": c_error, "openai": o_error, "gemini": g_error},
+            "defaults": {"anthropic": agent.DEFAULT_MODEL, "openai": openai_provider.DEFAULT_MODEL,
+                         "gemini": gemini_provider.DEFAULT_MODEL}}
 
 
 @app.post("/api/chat")
 def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
-         x_openai_api_key: str | None = Header(default=None)):
+         x_openai_api_key: str | None = Header(default=None),
+         x_gemini_api_key: str | None = Header(default=None)):
     """Streams provider-neutral agent events as newline-delimited JSON."""
-    if body.provider not in ("anthropic", "openai"):
+    if body.provider not in ("anthropic", "openai", "gemini"):
         raise HTTPException(400, f"unknown provider {body.provider}")
     if body.model and not re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", body.model):
         raise HTTPException(400, f"invalid model name {body.model}")
     keys = {"anthropic": x_api_key or os.environ.get("ANTHROPIC_API_KEY"),
-            "openai": x_openai_api_key or os.environ.get("OPENAI_API_KEY")}
-    given = {"anthropic": x_api_key, "openai": x_openai_api_key}
+            "openai": x_openai_api_key or os.environ.get("OPENAI_API_KEY"),
+            "gemini": x_gemini_api_key or gemini_provider.env_key()}
+    given = {"anthropic": x_api_key, "openai": x_openai_api_key, "gemini": x_gemini_api_key}
     def ok(c):
         return (isinstance(c, dict) and c.get("provider") in keys and keys[c["provider"]]
                 and isinstance(c.get("model"), str) and re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", c["model"]))
@@ -217,7 +225,7 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
         tries = [{"provider": t["provider"], "model": t["model"]} for t in tries if keys.get(t["provider"])]
         reason = "pinned" if body.model and not body.auto else ""
     if not tries:
-        env_name = "OPENAI_API_KEY" if body.provider == "openai" else "ANTHROPIC_API_KEY"
+        env_name = {"openai": "OPENAI_API_KEY", "gemini": "GEMINI_API_KEY"}.get(body.provider, "ANTHROPIC_API_KEY")
         return JSONResponse({"error": f"No {body.provider} API key. Add one in Settings or set {env_name}."},
                             status_code=401)
     retry = {400, 401, 402, 403, 404, 429, 502}

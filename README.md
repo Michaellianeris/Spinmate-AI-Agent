@@ -34,10 +34,11 @@ explains the results from the actual magnetization dynamics, with figures and re
 
 ## Quick start
 
-You need Docker and at least one API key: Anthropic (console.anthropic.com) or OpenAI (platform.openai.com).
+You need Docker and at least one API key: Anthropic (console.anthropic.com), OpenAI (platform.openai.com) or
+Gemini ([aistudio.google.com/api-keys](https://aistudio.google.com/api-keys)).
 
 ```bash
-cp .env.example .env          # put a key in ANTHROPIC_API_KEY and/or OPENAI_API_KEY
+cp .env.example .env          # put a key in ANTHROPIC_API_KEY, OPENAI_API_KEY and/or GEMINI_API_KEY
 docker compose up --build
 ```
 
@@ -92,7 +93,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 4 | Left bar | **Default parameters.** The values Fast mode starts from, kept per name. |
 | 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. |
 | 6 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
-| 7 | Left bar | **Settings.** Language, colour theme (Light, Dark, Spin) and the Anthropic and OpenAI API keys. |
+| 7 | Left bar | **Settings.** Language, colour theme (Light, Dark, Spin) and the Anthropic, OpenAI and Gemini API keys. |
 | 8 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). |
 | 9 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 10 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
@@ -110,18 +111,18 @@ with the paperclip (drag and drop also works). Under the message box you choose 
 ### Models and the guide
 
 Under the message box you choose one of four gods. Each is a level of model, not a fixed model: the
-model behind it is picked from the Claude and OpenAI keys you have.
+model behind it is picked from the Claude, OpenAI and Gemini keys you have.
 
 <table>
 <tr><th></th><th>Persona</th><th>Best for</th><th>Typical models</th></tr>
 <tr><td><img src="web/gods/hermes.png" width="56" alt="Hermes"></td><td><b>Hermes</b><br>quick and economical</td>
-<td>Single runs, the presets, short answers in Fast mode</td><td>Claude Haiku, GPT nano / mini</td></tr>
+<td>Single runs, the presets, short answers in Fast mode</td><td>Claude Haiku, GPT nano / mini, Gemini Flash-Lite</td></tr>
 <tr><td><img src="web/gods/dionysus.png" width="56" alt="Dionysus"></td><td><b>Dionysus</b><br>balanced (default)</td>
-<td>Everyday runs with a clear explanation, sweeps and comparisons</td><td>Claude Sonnet, GPT-5.x</td></tr>
+<td>Everyday runs with a clear explanation, sweeps and comparisons</td><td>Claude Sonnet, GPT-5.x, Gemini Flash</td></tr>
 <tr><td><img src="web/gods/zeus.png" width="56" alt="Zeus"></td><td><b>Zeus</b><br>deep and most capable</td>
-<td>Deep mode, goal searches over several sweeps, careful reading of curves, reports</td><td>Claude Opus, OpenAI o-series</td></tr>
+<td>Deep mode, goal searches over several sweeps, careful reading of curves, reports</td><td>Claude Opus, OpenAI o-series, Gemini Pro</td></tr>
 <tr><td><img src="web/gods/apollo.png" width="56" alt="Apollo"></td><td><b>Apollo</b><br>specialised and new</td>
-<td>Trying new or special models as they appear</td><td>Claude Fable / Mythos and other new models</td></tr>
+<td>Trying new or special models as they appear</td><td>Claude Fable / Mythos, other Gemini lines and new models</td></tr>
 <tr><td><img src="web/athena.png" width="56" alt="Athena"></td><td><b>Athena</b><br>the guide</td>
 <td>How to use the app: where results are, what Fast and Deep do, what a tool does</td><td>The selected provider, with built-in answers offline</td></tr>
 </table>
@@ -154,7 +155,7 @@ built-in list.
 with your initial in the left bar shows who is signed in and lets you log out. Every name keeps its own
 chat history and default parameters in the browser.
 
-**Settings** (gear in the left bar): language, colour theme (Light, Dark, Spin), Anthropic API key and OpenAI API key.
+**Settings** (gear in the left bar): language, colour theme (Light, Dark, Spin), Anthropic, OpenAI and Gemini API keys.
 
 **Language.** English (US or UK), Greek, Spanish, German or Italian. It changes the buttons, menus and
 Athena, and the assistant answers in that language. Chosen once per browser; the first time it follows the
@@ -274,10 +275,13 @@ Set these in `.env`.
 |---|---|---|
 | `ANTHROPIC_API_KEY` | empty | server-side Anthropic key; otherwise paste it in Settings |
 | `OPENAI_API_KEY` | empty | server-side OpenAI key; otherwise paste it in Settings |
+| `GEMINI_API_KEY` | empty | server-side Gemini key (Google AI Studio); otherwise paste it in Settings |
 | `CLAUDE_MODEL` | `claude-sonnet-5` | default Claude model |
 | `CLAUDE_MODELS` | built-in list | fallback Claude model list |
 | `OPENAI_MODEL` | `gpt-4.1` | default OpenAI model |
 | `OPENAI_MODELS` | built-in list | fallback OpenAI model list |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | default Gemini model |
+| `GEMINI_MODELS` | built-in list | fallback Gemini model list |
 | `HOST_PORT` | `8421` | port on your machine |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | empty | mail server for the optional welcome email; empty = saved to `workspace/outbox` |
 | `BIND_ADDRESS` | `127.0.0.1` | who can open the app; `0.0.0.0` = your whole network |
@@ -314,7 +318,7 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 
   The `certs/` folder is mounted read-only and ignored by git.
 
-- "The network returned a web page instead of the Claude/OpenAI API": a gateway or acceptable-use page is
+- "The network returned a web page instead of the Claude/OpenAI/Gemini API": a gateway or acceptable-use page is
   answering in place of the API. Open the address in a browser or ask your network team to allow it.
   The simulator itself and Run setup keep working in the meantime.
 
@@ -326,7 +330,7 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 browser (web/index.html)
    |  conversation kept in the page, sent every turn, answer streamed back as events
    v
-FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/agent.py, spinmate_core/tools.py)
+FastAPI (app/server.py) --> provider-neutral tool loop (Claude, OpenAI or Gemini; app/agent.py, spinmate_core/tools.py)
    |                                   model picked per request by capability and price (app/router.py)
    |                                   |  validate, start, sweep, get_run, cancel
    v                                   v
@@ -539,7 +543,7 @@ SpinMate is meant to run on your own computer.
 - **Local only by default.** Docker publishes the app on `127.0.0.1`. There is no password (the name you
   give Athena is not a login), so anyone who can reach the page can run simulations and spend your API
   key. Set `BIND_ADDRESS=0.0.0.0` only behind a reverse proxy with real authentication.
-- **Limit the cost.** Set `TOKEN_BUDGET` in `.env` and a monthly spend limit in the Anthropic and OpenAI
+- **Limit the cost.** Set `TOKEN_BUDGET` in `.env` and a monthly spend limit in the Anthropic, OpenAI and Google
   consoles. Use a separate API key for SpinMate so you can revoke it on its own.
 - **Change `POSTGRES_PASSWORD`.** The database is not exposed outside Docker, but the default is public.
 - **Keys** stay in `.env` (ignored by git) or in the browser tab where you paste them.
@@ -557,4 +561,4 @@ SpinMate is free and open source under the [MIT License](LICENSE): anyone may us
 share it, for research, teaching or commercial work, as long as the copyright notice is kept. It comes
 without warranty. If you use it in published work, a mention of SpinMate is appreciated.
 
-The API keys you add are yours; calls to Anthropic or OpenAI are billed to your own account.
+The API keys you add are yours; calls to Anthropic, OpenAI or Google are billed to your own account.
