@@ -116,7 +116,7 @@ def selftest():
 def main():
     arg = sys.argv[1] if len(sys.argv) > 1 else ""
     if arg == "--runner":
-        from app import runner
+        from spinmate_core import runner
         runner.main()
     elif arg == "--selftest":
         selftest()
