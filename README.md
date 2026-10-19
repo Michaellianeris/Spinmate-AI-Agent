@@ -414,6 +414,30 @@ point group `spinmate.engines`:
 mumax3 = "spinmate_mumax3:Mumax3Engine"
 ```
 
+### Physics validation
+
+`python -m spinmate_core.validation` runs the real solver on cases with an analytic answer and writes a
+report to `WORKSPACE/validation/report.html` (agents read it as `spinmate://validation`). It runs on every
+pull request that changes `macrospin/` or `spinmate_core/`.
+
+| Case | Expected | Measured | Result |
+|---|---|---|---|
+| \|m1\| = \|m2\| = 1 | 0 | 2e-16 | pass |
+| Same input, same trajectory | 0 | 0 | pass |
+| Energy with α = 0, 0.5 ns | conserved | drift 1.6e-6 | pass |
+| Time-step convergence (AFMR) | h = 1e-13 s ≈ 2e-14 s | 0.03 % apart | pass |
+| Gilbert damping, decay rate α·ω | 0.3525 /ns | 0.3524 /ns | pass |
+| Kittel, field slope | 27.99 GHz/T | 28.03 GHz/T | pass |
+| Kittel, f(H = 0) = γ μ0 H_K / 2π | 2.81 GHz | 5.61 GHz | **fail (F1)** |
+| AFMR, f = γ μ0 √(H_K (2H_E + H_K)) / 2π | 47.5 GHz | 67.3 GHz | **fail (F1)** |
+
+**F1.** The dynamics use twice the anisotropy: `ku()` in `macrospin/current.py` returns the static K when
+`flag2` is off, and `solver.py` adds it again through the AC term along `u_ani_AC`, which defaults to the easy
+axis. With 2 Ku both frequencies match within 0.1 %. Two smaller notes: `RK4()` uses the weight 0.166 instead
+of 1/6 (Heun is the default, so runs are not affected), and the thermal field direction comes from
+`np.random.rand(3)`, which has only positive components (it matters only with `Temp_Ampl > 0`). SpinMate does
+not change the original code; these are reported for its author to decide.
+
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
 an MCP client and a second engine (mumax3). `main` keeps the stable 1.x release.
