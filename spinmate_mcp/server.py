@@ -115,6 +115,9 @@ TEMPLATES = [
 
 def resource_list():
     res = [types.Resource(uri=u, name=n, description=d, mime_type="text/plain") for u, (n, d, _) in STATIC.items()]
+    res.append(types.Resource(uri="spinmate://validation", name="Physics validation",
+                              description="Latest physics validation of the engine: cases, results and findings.",
+                              mime_type="application/json"))
     res.append(types.Resource(uri="spinmate://runs", name="Runs", description="The most recent runs and their status.",
                               mime_type="application/json"))
     for p in sorted(EXAMPLES.glob("*.txt")):
@@ -127,6 +130,11 @@ def read(uri):
     """Returns (text, mime type) for a SpinMate resource, or raises ValueError."""
     if uri in STATIC:
         return STATIC[uri][2], "text/plain"
+    if uri == "spinmate://validation":
+        f = S.WORKSPACE / "validation" / "report.json"
+        if not f.exists():
+            raise ValueError("no validation report yet: run python -m spinmate_core.validation")
+        return f.read_text(), "application/json"
     if uri == "spinmate://runs":
         rows = [{k: r.get(k) for k in ("id", "label", "status", "kind", "sweep_id", "parent_run")}
                 for r in S.list_runs(100)]
