@@ -18,8 +18,8 @@ REPORTS.mkdir(parents=True, exist_ok=True)
 METHOD = (r"Two-sublattice macrospin model of the original SpinMate code: the coupled Landau-Lifshitz-Gilbert "
           r"equations of $\mathbf{m}_1$ and $\mathbf{m}_2$ are integrated with Heun's method. Each sublattice feels "
           r"the inter-sublattice exchange field $4A_0/(\mu_0 M_\mathrm{s}^2 l^2)$ along the other sublattice and the "
-          r"uniaxial anisotropy field $2K_\mathrm{u}/(\mu_0 M_\mathrm{s}^2)$ along $\mathbf{u}_\mathrm{ani}$ (both in "
-          r"units of $M_\mathrm{s}$), and the applied fields, spin-orbit torques and thermal field set in its parameter "
+          r"uniaxial anisotropy field $4K_\mathrm{u}/(\mu_0 M_\mathrm{s}^2)$ along $\mathbf{u}_\mathrm{ani}$ (both in "
+          r"units of $M_\mathrm{s}$; each sublattice carries $M_\mathrm{s}/2$), and the applied fields, spin-orbit torques and thermal field set in its parameter "
           r"file. Order is read from $\mathbf{m}_1\cdot\mathbf{m}_2$ (AFM below $-0.9$, FM above $+0.9$); a switch is "
           r"a reversal of the Néel vector $\mathbf{n} = (\mathbf{m}_1 - \mathbf{m}_2)/2$ with $n_z$ crossing from "
           r"below $-0.5$ to above $+0.5$ or back.")

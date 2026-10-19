@@ -69,7 +69,8 @@ Reading the results
   null and freq_note says why. Never quote a frequency the summary left null; suggest a longer run instead.
 - Scales of the default material (Ms 566 kA/m, |A0| 0.248 pJ/m, Ku 28.4 kJ/m^3, l 0.35 nm, a 0.05),
   measured with this app:
-    exchange field 4|A0|/(Ms l^2) ~ 14 T; anisotropy field 2Ku/Ms ~ 0.1 T
+    exchange field 4|A0|/(Ms l^2) ~ 14 T; anisotropy field 4Ku/Ms ~ 0.2 T (each sublattice carries Ms/2)
+    AFM <-> FM stability boundary: |Ku| = 2|A0|/l^2
     AFM mode ~ 70 GHz; FM mode (A0 > 0, parallel moments) ~ 5.5 GHz
     a tilted AFM state settles in ~20 ps; FM -> AFM in ~50 ps; AFM -> FM switches within ~50 ps, then a ~5 GHz
     precession of the pair decays over about a nanosecond

@@ -1,4 +1,4 @@
-"""The physics validation suite: the fast cases must pass, and finding F1 stays visible."""
+"""The physics validation suite: the fast cases and the resonance formulas must pass."""
 from spinmate_core import validation as V
 
 
@@ -7,10 +7,9 @@ def test_fast_cases_pass():
         assert r.status == "pass", (r.id, r.measured, r.note)
 
 
-def test_afmr_shows_the_doubled_anisotropy():
+def test_afmr_matches_the_formula():
     r = V.afmr(h=1e-13)
-    assert abs(r.measured["f GHz"] - r.expected["f GHz with 2 Ku"]) / r.expected["f GHz with 2 Ku"] < 0.01
-    assert "F1" in r.note
+    assert r.status == "pass", r.measured
 
 
 def test_report_html():

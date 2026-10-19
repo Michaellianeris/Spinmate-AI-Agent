@@ -235,7 +235,7 @@ async def _get_prompt(ctx, params):
 def build():
     return Server("spinmate", version=VERSION, title="SpinMate",
                   description="Two-sublattice macrospin simulations: runs, sweeps, figures and reports.",
-                  instructions=INSTRUCTIONS, website_url="https://github.com/Michaellianeris/sublattice-agent",
+                  instructions=INSTRUCTIONS, website_url="https://github.com/Michaellianeris/Spinmate-AI-Agent",
                   on_list_tools=_list_tools, on_call_tool=_call_tool, on_list_resources=_list_resources,
                   on_list_resource_templates=_list_templates, on_read_resource=_read_resource,
                   on_list_prompts=_list_prompts, on_get_prompt=_get_prompt)

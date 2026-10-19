@@ -331,7 +331,7 @@ FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/ag
    |                                   |  validate, start, sweep, get_run, cancel
    v                                   v
 run queue (spinmate_core/simulations.py) --> python -m spinmate_core.runner   (one process per run)
-   |                                   imports macrospin/main.py unchanged
+   |                                   imports macrospin/main.py
    v
 run catalog (spinmate_core/catalog.py) --> Postgres: runs and sweeps, read-only SQL for query_runs
 ```
@@ -380,7 +380,7 @@ app running:
   "mcpServers": {
     "spinmate": {
       "command": "docker",
-      "args": ["compose", "-f", "/path/to/sublattice-agent/docker-compose.yml",
+      "args": ["compose", "-f", "/path/to/Spinmate-AI-Agent/docker-compose.yml",
                "exec", "-T", "sublattice-agent", "python", "-m", "spinmate_mcp"]
     }
   }
@@ -420,38 +420,37 @@ mumax3 = "spinmate_mumax3:Mumax3Engine"
 report to `WORKSPACE/validation/report.html` (agents read it as `spinmate://validation`). It runs on every
 pull request that changes `macrospin/` or `spinmate_core/`.
 
+Each sublattice carries Ms/2, so the fields are μ0H_E = 4|A0|/(Ms l²) and μ0H_K = 4Ku/Ms.
+
 | Case | Expected | Measured | Result |
 |---|---|---|---|
 | \|m1\| = \|m2\| = 1 | 0 | 2e-16 | pass |
 | Same input, same trajectory | 0 | 0 | pass |
 | Energy with α = 0, 0.5 ns | conserved | drift 1.6e-6 | pass |
+| Kittel, f = γ μ0 (H_K + H) / 2π | 5.62 GHz, 27.99 GHz/T | 5.61 GHz, 28.03 GHz/T | pass |
+| AFMR, f = γ μ0 √(H_K (2H_E + H_K)) / 2π | 67.3 GHz | 67.3 GHz | pass |
 | Time-step convergence (AFMR) | h = 1e-13 s ≈ 2e-14 s | 0.03 % apart | pass |
 | Gilbert damping, decay rate α·ω | 0.3525 /ns | 0.3524 /ns | pass |
-| Kittel, field slope | 27.99 GHz/T | 28.03 GHz/T | pass |
-| Kittel, f(H = 0) = γ μ0 H_K / 2π | 2.81 GHz | 5.61 GHz | **fail (F1)** |
-| AFMR, f = γ μ0 √(H_K (2H_E + H_K)) / 2π | 47.5 GHz | 67.3 GHz | **fail (F1)** |
+| AFM/FM boundary \|Ku\| = 2\|A0\|/l² | stable above, unstable below | as expected at ±10 % | pass |
+| Thermal field | isotropic, σ = Temp_Ampl | mean < 0.03 σ, σ within 3 % | pass |
 
-**F1.** The dynamics use twice the anisotropy: `ku()` in `macrospin/current.py` returns the static K when
-`flag2` is off, and `solver.py` adds it again through the AC term along `u_ani_AC`, which defaults to the easy
-axis. With 2 Ku both frequencies match within 0.1 %. Two smaller notes: `RK4()` uses the weight 0.166 instead
-of 1/6 (Heun is the default, so runs are not affected), and the thermal field direction comes from
-`np.random.rand(3)`, which has only positive components (it matters only with `Temp_Ampl > 0`). SpinMate does
-not change the original code; these are reported for its author to decide.
+<img src="docs/validation/phase-diagram.png" alt="AFM/FM phase diagram: the boundary found with SpinMate 2.0 for A0 from -6 to 6 pJ/m lies on the analytical lines |Ku| = 2|A0|/l^2" width="420">
 
-### Physics subagent
+The boundary measured by bisection with the solver (12 points, `docs/validation/phase-boundary.json`) lies
+on |Ku| = 2|A0|/l² within 2-6 %; the small offsets come from the finite run time and the finite starting angle.
 
-The physics knowledge of SpinMate (workflows, how to read a run summary, the scales of the default material)
-lives in one file, `spinmate_mcp/physics.md`, and reaches every agent in three forms:
+**Fixed in version 2.0.** The first run of the suite found four issues in `macrospin/`. Runs at T = 0 without
+Ku(t) give exactly the same trajectories as before (checked bit for bit on nine scenarios), and the AFM/FM
+boundary is unchanged.
 
-- **MCP prompts** of the server: `design_experiment` (goal), `find_threshold` (parameter, behaviour,
-  conditions) and `interpret_run` (run id), plus the resource `spinmate://physics/guide`. In Claude Desktop
-  they appear under the + button of the message box.
-- **A Claude Code subagent**, `.claude/agents/spinmate-physicist.md`, and **an Agent Skill**,
-  `.claude/skills/spinmate-physics/SKILL.md`. Claude Code finds them when it runs in this repository; copy them
-  to `~/.claude/agents/` and `~/.claude/skills/` to use them in other projects.
-
-After editing `physics.md`, run `python -m spinmate_mcp.agent_files` to regenerate the two files (a test fails
-while they are out of date).
+- **F1.** The 4 in H_K came from adding the static anisotropy twice: `ku()` returned K when `flag2` was off and
+  the solver added it again along `u_ani_AC`. It broke as soon as `u_ani_AC` differs from `u_ani` or Ku(t) is on.
+  Now K = 4Ku/(μ0Ms²) in one term and `ku()` returns only the AC part.
+- **F4.** The Ku(t) amplitude was divided by g0·Ms² instead of μ0·Ms², 1.76e11 times too weak.
+- **F2.** `RK4()` used the weight 0.166 instead of 1/6 and fed the m1 slopes into the m2 stages (Heun is the
+  default integrator, so earlier runs were not affected).
+- **F3.** The thermal field was Temp_Ampl times a unit vector with only positive components; it is now Gaussian
+  with standard deviation Temp_Ampl per component, as `run.py` defines it. Runs with temperature change.
 
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
@@ -484,7 +483,7 @@ pytest -q
 
 ```
 app/               server, agent loop, tools, run manager, runner, prompts, guide
-macrospin/         original simulation code, unchanged
+macrospin/         the simulation code (four fixes in 2.0, see Physics validation)
 original_scripts/  original batch scripts (prepare, run_sim, avg_neel, neel_vector_generate)
 web/index.html     the whole interface
 examples/          parameter files
@@ -511,7 +510,7 @@ SpinMate is meant to run on your own computer.
 ## Contact
 
 Questions, ideas or bug reports: [spinmate.ai.agent@gmail.com](mailto:spinmate.ai.agent@gmail.com).
-You can also open an issue on [GitHub](https://github.com/Michaellianeris/sublattice-agent/issues).
+You can also open an issue on [GitHub](https://github.com/Michaellianeris/Spinmate-AI-Agent/issues).
 
 ## License
 

@@ -1,7 +1,7 @@
 """Run the original macrospin code in the current directory.
 
 Called as: python -m spinmate_core.runner   (cwd = run folder containing parameters.txt)
-The physics code in macrospin/ is not modified. This wrapper only:
+This wrapper does not change the physics code in macrospin/. It only:
   - counts Heun steps to report progress
   - silences the per-step print in the temperature-dependent branch
   - adds a font fallback (Times New Roman is missing in Docker)
