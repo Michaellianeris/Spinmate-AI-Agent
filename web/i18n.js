@@ -112,6 +112,13 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Give me the user guide and the presentation": "Δώσε μου τον οδηγό χρήσης και την παρουσίαση",
+  "Here are the SpinMate user guide and the presentation. Open them in a new tab or download them:": "Ορίστε ο οδηγός χρήσης του SpinMate και η παρουσίαση. Ανοίξτε τα σε νέα καρτέλα ή κατεβάστε τα:",
+  "Here is the SpinMate user guide. Open it in a new tab or download it:": "Ορίστε ο οδηγός χρήσης του SpinMate. Ανοίξτε τον σε νέα καρτέλα ή κατεβάστε τον:",
+  "User guide (PDF)": "Οδηγός χρήσης (PDF)",
+  "Presentation (PDF)": "Παρουσίαση (PDF)",
+  "Open": "Άνοιγμα",
+  "Download": "Λήψη",
   "Not used until it works.": "Δεν χρησιμοποιείται μέχρι να λειτουργήσει.",
   "Key from the server's .env:": "Κλειδί από το .env του server:",
   "The key was rejected.": "Το κλειδί απορρίφθηκε.",
@@ -705,6 +712,13 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Give me the user guide and the presentation": "Dame la guía de usuario y la presentación",
+  "Here are the SpinMate user guide and the presentation. Open them in a new tab or download them:": "Aquí tienes la guía de usuario de SpinMate y la presentación. Ábrelas en una pestaña nueva o descárgalas:",
+  "Here is the SpinMate user guide. Open it in a new tab or download it:": "Aquí tienes la guía de usuario de SpinMate. Ábrela en una pestaña nueva o descárgala:",
+  "User guide (PDF)": "Guía de usuario (PDF)",
+  "Presentation (PDF)": "Presentación (PDF)",
+  "Open": "Abrir",
+  "Download": "Descargar",
   "Not used until it works.": "No se usa hasta que funcione.",
   "Key from the server's .env:": "Clave del .env del servidor:",
   "The key was rejected.": "La clave fue rechazada.",
@@ -1298,6 +1312,13 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Give me the user guide and the presentation": "Gib mir das Benutzerhandbuch und die Präsentation",
+  "Here are the SpinMate user guide and the presentation. Open them in a new tab or download them:": "Hier sind das SpinMate-Benutzerhandbuch und die Präsentation. Öffnen Sie sie in einem neuen Tab oder laden Sie sie herunter:",
+  "Here is the SpinMate user guide. Open it in a new tab or download it:": "Hier ist das SpinMate-Benutzerhandbuch. Öffnen Sie es in einem neuen Tab oder laden Sie es herunter:",
+  "User guide (PDF)": "Benutzerhandbuch (PDF)",
+  "Presentation (PDF)": "Präsentation (PDF)",
+  "Open": "Öffnen",
+  "Download": "Herunterladen",
   "Not used until it works.": "Wird erst verwendet, wenn er funktioniert.",
   "Key from the server's .env:": "Schlüssel aus der .env des Servers:",
   "The key was rejected.": "Der Schlüssel wurde abgelehnt.",
@@ -1891,6 +1912,13 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Give me the user guide and the presentation": "Dammi la guida utente e la presentazione",
+  "Here are the SpinMate user guide and the presentation. Open them in a new tab or download them:": "Ecco la guida utente di SpinMate e la presentazione. Aprile in una nuova scheda o scaricale:",
+  "Here is the SpinMate user guide. Open it in a new tab or download it:": "Ecco la guida utente di SpinMate. Aprila in una nuova scheda o scaricala:",
+  "User guide (PDF)": "Guida utente (PDF)",
+  "Presentation (PDF)": "Presentazione (PDF)",
+  "Open": "Apri",
+  "Download": "Scarica",
   "Not used until it works.": "Non viene usata finché non funziona.",
   "Key from the server's .env:": "Chiave dal .env del server:",
   "The key was rejected.": "La chiave è stata rifiutata.",
