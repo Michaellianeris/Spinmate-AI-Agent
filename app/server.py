@@ -28,7 +28,23 @@ WEB = Path(__file__).resolve().parent.parent / "web"
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 MAX_UPLOAD = 200_000
 
-app = FastAPI(title="Sublattice Agent")
+# MCP for other agents at /mcp; same process, so it shares the run queue with the web app
+import contextlib
+
+import spinmate_mcp
+
+MCP = spinmate_mcp.build()
+_mcp_routes = MCP.streamable_http_app(streamable_http_path="/mcp").routes
+
+
+@contextlib.asynccontextmanager
+async def _lifespan(_app):
+    async with MCP.session_manager.run():
+        yield
+
+
+app = FastAPI(title="Sublattice Agent", lifespan=_lifespan)
+app.router.routes.extend(_mcp_routes)
 S.recover_interrupted()
 # newer summary fields for old runs, then the catalog, without delaying startup
 def _startup_jobs():

@@ -15,6 +15,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY spinmate_mcp ./spinmate_mcp
 COPY macrospin ./macrospin
 COPY web ./web
 COPY examples ./examples
