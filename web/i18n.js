@@ -112,6 +112,12 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Not used until it works.": "Δεν χρησιμοποιείται μέχρι να λειτουργήσει.",
+  "Key from the server's .env:": "Κλειδί από το .env του server:",
+  "The key was rejected.": "Το κλειδί απορρίφθηκε.",
+  "This server cannot reach the provider (network or proxy).": "Ο server δεν φτάνει στον πάροχο (δίκτυο ή proxy).",
+  "The key has no credit or hit a rate limit.": "Το κλειδί δεν έχει υπόλοιπο ή έφτασε το όριο αιτημάτων.",
+  "Delete this key": "Διαγραφή αυτού του κλειδιού",
   "New conversation ({k})": "Νέα συζήτηση ({k})",
   "All runs: search, compare, figures, reports ({k})": "Όλες οι εκτελέσεις: αναζήτηση, σύγκριση, γραφήματα, αναφορές ({k})",
   "Keyboard shortcuts": "Συντομεύσεις πληκτρολογίου",
@@ -699,6 +705,12 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Not used until it works.": "No se usa hasta que funcione.",
+  "Key from the server's .env:": "Clave del .env del servidor:",
+  "The key was rejected.": "La clave fue rechazada.",
+  "This server cannot reach the provider (network or proxy).": "Este servidor no llega al proveedor (red o proxy).",
+  "The key has no credit or hit a rate limit.": "La clave no tiene crédito o alcanzó el límite.",
+  "Delete this key": "Borrar esta clave",
   "New conversation ({k})": "Nueva conversación ({k})",
   "All runs: search, compare, figures, reports ({k})": "Todas las ejecuciones: buscar, comparar, figuras, informes ({k})",
   "Keyboard shortcuts": "Atajos de teclado",
@@ -1286,6 +1298,12 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Not used until it works.": "Wird erst verwendet, wenn er funktioniert.",
+  "Key from the server's .env:": "Schlüssel aus der .env des Servers:",
+  "The key was rejected.": "Der Schlüssel wurde abgelehnt.",
+  "This server cannot reach the provider (network or proxy).": "Dieser Server erreicht den Anbieter nicht (Netzwerk oder Proxy).",
+  "The key has no credit or hit a rate limit.": "Der Schlüssel hat kein Guthaben oder erreichte das Limit.",
+  "Delete this key": "Diesen Schlüssel löschen",
   "New conversation ({k})": "Neues Gespräch ({k})",
   "All runs: search, compare, figures, reports ({k})": "Alle Läufe: suchen, vergleichen, Abbildungen, Berichte ({k})",
   "Keyboard shortcuts": "Tastenkürzel",
@@ -1873,6 +1891,12 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Not used until it works.": "Non viene usata finché non funziona.",
+  "Key from the server's .env:": "Chiave dal .env del server:",
+  "The key was rejected.": "La chiave è stata rifiutata.",
+  "This server cannot reach the provider (network or proxy).": "Questo server non raggiunge il fornitore (rete o proxy).",
+  "The key has no credit or hit a rate limit.": "La chiave non ha credito o ha raggiunto il limite.",
+  "Delete this key": "Elimina questa chiave",
   "New conversation ({k})": "Nuova conversazione ({k})",
   "All runs: search, compare, figures, reports ({k})": "Tutte le esecuzioni: cerca, confronta, figure, report ({k})",
   "Keyboard shortcuts": "Scorciatoie da tastiera",

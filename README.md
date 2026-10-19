@@ -50,7 +50,8 @@ on this computer (`BIND_ADDRESS=127.0.0.1`); see [Security](#security) before sh
 
 If you leave the keys empty you can paste them in the settings of the page instead. They are kept in that
 browser tab only and sent to your own server with each message; under each key the page shows whether it
-works and how many models it can use.
+works and how many models it can use. One working key is enough: SpinMate uses only the providers whose key
+works, and the × in a key field deletes that key from the tab.
 
 Results are stored in the `sublattice-data` Docker volume. To keep them in a folder on disk, replace the
 volume line in `docker-compose.yml` with `- ./workspace:/data`.
