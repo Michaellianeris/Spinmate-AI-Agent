@@ -206,3 +206,40 @@ def create_account(name, email, app_url="http://localhost:8421"):
             ACCOUNTS.write_text(json.dumps(accounts, indent=1))
     return {"ok": True, "sent": sent, "mode": mode,
             "message": "Welcome email sent." if sent else "No mail server is set up, so no email was sent."}
+
+
+# ---- admin page (only with ADMIN_TOKEN)
+def mail_mode():
+    if gmail_settings():
+        return "gmail"
+    if smtp_settings():
+        return "smtp"
+    return "relay" if relay_url() else "outbox"
+
+
+def accounts_list():
+    return sorted(_load().values(), key=lambda a: -(a.get("created") or 0))
+
+
+def outbox_list():
+    if not OUTBOX.exists():
+        return []
+    return [{"name": f.name, "bytes": f.stat().st_size, "time": f.stat().st_mtime}
+            for f in sorted(OUTBOX.glob("*.eml"), key=lambda f: -f.stat().st_mtime)]
+
+
+def delete_account(email):
+    """Removes an account and its unsent outbox copies; returns True if it existed."""
+    key = (email or "").strip().lower()
+    with _lock:
+        accounts = _load()
+        found = accounts.pop(key, None) is not None
+        if found:
+            ACCOUNTS.write_text(json.dumps(accounts, indent=1))
+    for f in OUTBOX.glob("*.eml") if OUTBOX.exists() else []:
+        try:
+            if key and key in f.read_text(errors="ignore").lower():
+                f.unlink()
+        except OSError:
+            pass
+    return found

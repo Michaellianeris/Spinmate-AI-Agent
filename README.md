@@ -28,6 +28,7 @@ explains the results from the actual magnetization dynamics, with figures and re
 - [Behind a corporate proxy](#behind-a-corporate-proxy)
 - [How it works](#how-it-works)
 - [Version 2.0 (in development)](#version-20-in-development)
+- [Admin page](#admin-page)
 - [Prompt evaluation](#prompt-evaluation)
 - [Development](#development)
 - [Security](#security)
@@ -99,10 +100,10 @@ dist\SpinMate\SpinMate.exe --selftest
 | 7 | Left bar | **Connect to Claude.** The commands that add SpinMate to Claude Code, Claude Desktop or any MCP agent, with copy buttons. |
 | 8 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
 | 9 | Left bar | **Settings.** Language, colour theme (Light, Dark, Spin), the Anthropic, OpenAI and Gemini API keys with a check of each, and the model behind each god. |
-| 10 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). |
+| 10 | Message box | **Ask** in plain language, or attach a `.txt` parameter file with the paperclip (drag and drop works too). The chart icon next to it opens a **sweep or threshold search form**: parameter in convenient units, range, steps, duration; it writes the request with SI values and warns about unusual numbers. |
 | 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
-| 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. |
+| 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. Click the counter for **usage and cost** per day and per provider (Claude, OpenAI, Gemini). |
 | 14 | Start here | **Find a skill.** Ready questions for the common scenarios; click one to ask it. |
 | 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
@@ -142,6 +143,9 @@ cheaper one is clearly enough. There is no fixed provider order; if a call fails
 score is used. Pro models are used only when you pin them. Each answer shows the model, the reason and the
 cost in €. To always use one model for a god, open Settings and pick it under *Model behind each god*.
 The logic is in `app/router.py`, the prices in `app/pricing.py`.
+
+**Ask another god.** Under every answer, *Ask another god* sends the same question to another model level and
+shows both answers side by side, for example Dionysus next to Zeus, or Claude next to Gemini.
 
 The temple icon in the left bar opens *Model gods*, a comparison of the four levels with their speed and
 depth and the model each would use now. The god logos are read from `web/gods/`; until a file exists the
@@ -305,6 +309,8 @@ Set these in `.env`.
 | `EUR_PER_USD` | daily ECB rate | fixed exchange rate for the cost estimate; empty = the ECB reference rate, refreshed daily |
 | `APP_URL` | `http://localhost:8421` | address used in emails and in the links that MCP results return |
 | `MAIL_RELAY` | project relay | where the welcome email is sent from; `off` saves it to `workspace/outbox` |
+| `ADMIN_TOKEN` | empty (off) | turns on `/admin` and is its password |
+| `ADMIN_SHEET_URL` | empty | link to the SpinMate users Sheet, shown on the admin page |
 | `MUMAX3_BIN` | empty | path of the mumax3 binary, only for the optional mumax3 engine |
 | `PRICES_JSON` | built-in table | token prices, `{"model-prefix": [input, output, cache write, cache read]}` in USD per million |
 
@@ -512,7 +518,19 @@ to its authors. Details in `plugins/spinmate-mumax3/README.md`.
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
 an MCP client, a second engine (mumax3), Gemini as a third model provider and the 2.0 controls of the page
-(engine menu, validation badge, connect dialog, key check). `main` keeps the stable 1.x release.
+(engine menu, validation badge, connect dialog, key check), then usage and cost per provider, the admin page,
+*Ask another god* and the sweep/threshold form. `main` keeps the stable 1.x release.
+
+## Admin page
+
+`/admin` is off unless you set `ADMIN_TOKEN` in `.env` (a long random value:
+`python -c "import secrets; print(secrets.token_urlsafe(24))"`). With it, the page asks for the token and shows
+the accounts of this server, which welcome emails were sent and when, the outbox and the cost per day and
+provider, and can delete an account on request. It shows only the server it runs on.
+
+Sign-ups from every SpinMate install are written by the mail relay to the **SpinMate users** Google Sheet of the
+relay's account (see `relay/README.md`); only that account can open it. Put its link in `ADMIN_SHEET_URL` to show
+it on the admin page. Athena tells people at sign-up that their email is kept and how to have it deleted.
 
 ## Prompt evaluation
 

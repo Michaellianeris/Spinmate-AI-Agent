@@ -1,7 +1,9 @@
 """HTTP API and static UI."""
+import hmac
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
@@ -17,6 +19,7 @@ from . import mailer
 from . import pricing
 from . import reports
 from . import tools
+from . import usage
 from . import catalog
 from . import guide
 from . import gemini_provider
@@ -199,6 +202,57 @@ def models(x_api_key: str | None = Header(default=None),
                          "gemini": gemini_provider.DEFAULT_MODEL}}
 
 
+def _chain(first, rest):
+    if first:
+        yield first
+    yield from rest
+
+
+# ---- admin page: off unless ADMIN_TOKEN is set; shows this server's accounts, emails, outbox and usage
+def _admin_token():
+    return os.environ.get("ADMIN_TOKEN", "").strip()
+
+
+def _admin_check(token):
+    want = _admin_token()
+    if not want:
+        raise HTTPException(404, "Not Found")
+    if not token or not hmac.compare_digest(token.encode(), want.encode()):
+        time.sleep(1)             # slows down guessing
+        raise HTTPException(401, "wrong admin token")
+
+
+class AdminDeleteIn(BaseModel):
+    email: str
+
+
+@app.get("/admin")
+def admin_page():
+    if not _admin_token():
+        raise HTTPException(404, "Not Found")
+    return FileResponse(WEB / "admin.html", headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
+
+
+@app.get("/api/admin/summary")
+def admin_summary(x_admin_token: str | None = Header(default=None)):
+    _admin_check(x_admin_token)
+    return {"accounts": mailer.accounts_list(), "outbox": mailer.outbox_list(), "mail_mode": mailer.mail_mode(),
+            "relay": mailer.relay_url() if mailer.mail_mode() == "relay" else None,
+            "sheet_url": os.environ.get("ADMIN_SHEET_URL") or None, "usage": usage.summary(30),
+            "runs": len(S.list_runs(100000)), "workspace": str(S.WORKSPACE)}
+
+
+@app.post("/api/admin/accounts/delete")
+def admin_delete_account(body: AdminDeleteIn, x_admin_token: str | None = Header(default=None)):
+    _admin_check(x_admin_token)
+    return {"deleted": mailer.delete_account(body.email)}
+
+
+@app.get("/api/usage")
+def usage_summary(days: int = 30):
+    return usage.summary(max(1, min(days, 366)))
+
+
 @app.post("/api/chat")
 def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
          x_openai_api_key: str | None = Header(default=None),
@@ -244,9 +298,14 @@ def chat(body: ChatIn, x_api_key: str | None = Header(default=None),
                 note = reason if i == 0 else f"fallback after an API error ({reason})" if reason else "fallback"
                 yield json.dumps({"type": "model", "provider": t["provider"], "model": t["model"],
                                   "god": body.god, "auto": bool(body.auto), "reason": note}) + "\n"
-                if first:
-                    yield json.dumps(first, default=str) + "\n"
-                for ev in events:
+                who = re.sub(r"[^\w .'-]", "", body.name or "")[:40].strip() or None
+                for ev in _chain(first, events):
+                    if ev.get("type") == "usage":
+                        try:
+                            usage.record(t["provider"], ev.get("model") or t["model"], ev.get("input"), ev.get("output"),
+                                         ev.get("cost_usd"), body.god, body.mode, who)
+                        except OSError:
+                            pass
                     yield json.dumps(ev, default=str) + "\n"
                 return
         except Exception as e:  # keep the stream well-formed for the page

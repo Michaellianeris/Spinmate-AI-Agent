@@ -25,4 +25,14 @@ curl -sL "<web app URL>"                                  # {"ok":true,"service"
 curl -sL -X POST "<web app URL>" -H 'Content-Type: application/json' -d '{"name":"Test","email":"you@example.com"}'
 ```
 
+## Who signed up: the "SpinMate users" Sheet
+
+Every request (sent, already sent today, daily limit) is written to a Google Sheet named **SpinMate users** in
+the account that runs the relay: time, name, email, app address and result. It covers every SpinMate install,
+and only that account, or whoever it shares the Sheet with, can open it. To turn it on, or after updating the
+code: choose **setupSheet** in the editor and press **Run** once. It asks for the Sheets permission and prints
+the Sheet's link in the log (*Execution log*). The Sheet is also in Google Drive of that account.
+
+People are told at sign-up that their email is kept for this and can be deleted on request: delete their row.
+
 After changing `Code.gs`, use **Deploy > Manage deployments > Edit > New version**, so the URL stays the same.

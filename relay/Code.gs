@@ -3,7 +3,8 @@
  * user guide and presentation as PDFs) from the Google account that deploys it.
  *
  * The app sends only {name, email, app_url}. The email text, the logo and the PDFs are read from the public
- * repository, so they always match the latest version on main. Setup: relay/README.md.
+ * repository, so they always match the latest version on main. Every request is also written to the
+ * "SpinMate users" Google Sheet of this account (time, name, email, app address, result). Setup: relay/README.md.
  */
 const RAW = 'https://raw.githubusercontent.com/Michaellianeris/Spinmate-AI-Agent/main/web/';
 const DAILY_LIMIT = 80;            // consumer Gmail sends to about 100 recipients a day
@@ -36,14 +37,19 @@ function handle_(req) {
     const day = Utilities.formatDate(new Date(), 'UTC', 'yyyyMMdd');
     clean_(props, day);
     const toKey = 'to:' + day + ':' + hash_(email.toLowerCase());
-    if (props.getProperty(toKey)) return {ok: false, error: 'A welcome email was already sent to this address today.'};
+    if (props.getProperty(toKey)) {
+      log_(name, email, appUrl, 'already sent today');
+      return {ok: false, error: 'A welcome email was already sent to this address today.'};
+    }
     const count = Number(props.getProperty('count:' + day) || 0);
     if (count >= DAILY_LIMIT || MailApp.getRemainingDailyQuota() < 1) {
+      log_(name, email, appUrl, 'daily limit');
       return {ok: false, error: 'The SpinMate mail relay reached its daily limit; try again tomorrow.'};
     }
     send_(name, email, appUrl);
     props.setProperty('count:' + day, String(count + 1));
     props.setProperty(toKey, '1');
+    log_(name, email, appUrl, 'sent');
     return {ok: true};
   } finally {
     lock.releaseLock();
@@ -74,8 +80,36 @@ function testSend() {
   send_('Michael', Session.getEffectiveUser().getEmail(), 'http://localhost:8421');
 }
 
-function clean_(props, day) {                    // forget the counters of earlier days
-  props.getKeys().forEach(k => { if (k.indexOf(':' + day) < 0) props.deleteProperty(k); });
+function clean_(props, day) {                    // forget the counters of earlier days (not SHEET_ID)
+  props.getKeys().forEach(k => {
+    if ((k.indexOf('count:') === 0 || k.indexOf('to:') === 0) && k.indexOf(':' + day) < 0) props.deleteProperty(k);
+  });
+}
+
+// The log of every request, in a Google Sheet of this account. Only this account (and whoever it shares the
+// Sheet with) can open it. Created on first use; its id is kept in the script properties.
+function sheet_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('SHEET_ID');
+  let ss = null;
+  if (id) { try { ss = SpreadsheetApp.openById(id); } catch (e) { ss = null; } }
+  if (!ss) {
+    ss = SpreadsheetApp.create('SpinMate users');
+    const sh = ss.getSheets()[0];
+    sh.appendRow(['Time (UTC)', 'Name', 'Email', 'App address', 'Result']);
+    sh.setFrozenRows(1);
+    props.setProperty('SHEET_ID', ss.getId());
+  }
+  return ss.getSheets()[0];
+}
+
+function log_(name, email, appUrl, result) {
+  try { sheet_().appendRow([new Date(), name, email, appUrl, result]); } catch (e) { /* the email matters more */ }
+}
+
+// Run once from the editor after updating the code: asks for the Sheets permission and prints the Sheet's link.
+function setupSheet() {
+  Logger.log(sheet_().getParent().getUrl());
 }
 
 function hash_(s) {
