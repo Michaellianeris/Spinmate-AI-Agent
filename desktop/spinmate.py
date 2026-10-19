@@ -39,7 +39,7 @@ def configure(base):
     env = base / ".env"
     if not env.exists():
         env.write_text("# SpinMate settings. Restart the app after a change.\n"
-                       "ANTHROPIC_API_KEY=\nOPENAI_API_KEY=\n", encoding="utf-8")
+                       "ANTHROPIC_API_KEY=\nOPENAI_API_KEY=\nGEMINI_API_KEY=\n", encoding="utf-8")
     load_env(env)
     os.environ.setdefault("WORKSPACE", str(base / "data"))
     os.environ.setdefault("DATABASE_URL", "sqlite:///" + str(base / "catalog.db"))

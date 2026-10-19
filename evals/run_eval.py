@@ -5,7 +5,7 @@ then writes a report (tools used, model calls, tokens, answer length, checks).
   python -m evals.run_eval --label v1 --prompt v1     # the old prompt, for comparison
   python -m evals.run_eval --compare evals/results/v1.json evals/results/v2.json
 
-Needs ANTHROPIC_API_KEY (or OPENAI_API_KEY with --provider openai). Uses a temporary workspace and a SQLite
+Needs ANTHROPIC_API_KEY (or OPENAI_API_KEY / GEMINI_API_KEY with --provider openai / gemini). Uses a temporary workspace and a SQLite
 catalog, so your own runs are not touched. In Docker:
   docker compose exec -e ANTHROPIC_API_KEY=sk-... sublattice-agent python -m evals.run_eval --label v2
 """
@@ -170,7 +170,7 @@ def main():
     ap.add_argument("--label", default="eval")
     ap.add_argument("--prompt", help="'v1' for the old prompt, or a path to a prompts.py")
     ap.add_argument("--model")
-    ap.add_argument("--provider", default="anthropic", choices=["anthropic", "openai"])
+    ap.add_argument("--provider", default="anthropic", choices=["anthropic", "openai", "gemini"])
     ap.add_argument("--cases", help="comma separated case ids (default: all)")
     ap.add_argument("--out", default=str(HERE / "results"))
     ap.add_argument("--keep-env", action="store_true", help="use WORKSPACE and DATABASE_URL as they are")
@@ -187,10 +187,11 @@ def main():
     override = load_prompt(args.prompt)
     if override:
         agent.prompts = override
-    args.key = os.environ.get("OPENAI_API_KEY" if args.provider == "openai" else "ANTHROPIC_API_KEY")
+    args.key = os.environ.get({"openai": "OPENAI_API_KEY", "gemini": "GEMINI_API_KEY"}.get(args.provider, "ANTHROPIC_API_KEY"))
     if not args.key:
-        sys.exit("set ANTHROPIC_API_KEY (or OPENAI_API_KEY with --provider openai)")
-    model = args.model or (agent.openai_provider.DEFAULT_MODEL if args.provider == "openai" else agent.DEFAULT_MODEL)
+        sys.exit("set ANTHROPIC_API_KEY (or OPENAI_API_KEY / GEMINI_API_KEY with --provider openai / gemini)")
+    model = args.model or {"openai": agent.openai_provider.DEFAULT_MODEL,
+                           "gemini": agent.gemini_provider.DEFAULT_MODEL}.get(args.provider, agent.DEFAULT_MODEL)
     wanted = set(args.cases.split(",")) if args.cases else None
 
     results = []

@@ -1,7 +1,8 @@
 """Token prices, to show an estimated cost next to the token counts.
 
 USD per million tokens: input, output, cache write (5 min), cache read. Anthropic prices from
-platform.claude.com/docs/en/about-claude/pricing (October 2026); OpenAI from its public price list.
+platform.claude.com/docs/en/about-claude/pricing (October 2026); OpenAI from its public price list; Gemini
+from ai.google.dev/gemini-api/docs/pricing (October 2026, paid tier, prompts up to 200k tokens).
 Override with PRICES_JSON='{"model-prefix": [in, out, cache_write, cache_read], ...}' and the
 exchange rate with EUR_PER_USD (default: the daily ECB rate, see fx.py). Haiku 5.5 costs 5x more above 100k prompt tokens; not modelled here.
 """
@@ -31,6 +32,16 @@ PRICES = {
     "gpt-4o-mini": (0.15, 0.60, 0.15, 0.075), "gpt-4o": (2.5, 10, 2.5, 1.25),
     "gpt-4.1-nano": (0.10, 0.40, 0.10, 0.025), "gpt-4.1-mini": (0.40, 1.60, 0.40, 0.10),
     "gpt-4.1": (2, 8, 2, 0.50),
+    # Gemini (paid tier; implicit caching, so no cache write charge)
+    "gemini-4-argon": (2, 10, 2, 0.10),
+    "gemini-3.8-flash": (0.75, 3.75, 0.75, 0.075), "gemini-3.7-flash": (0.75, 3.75, 0.75, 0.075),
+    "gemini-3.6-flash": (0.75, 3.75, 0.75, 0.075),
+    "gemini-3.5-flash-lite": (0.30, 2.5, 0.30, 0.03), "gemini-3.5-flash": (1.5, 9, 1.5, 0.15),
+    "gemini-3.1-pro": (2, 12, 2, 0.20), "gemini-3.1-flash-lite": (0.25, 1.5, 0.25, 0.025),
+    "gemini-3-pro": (2, 12, 2, 0.20), "gemini-3-flash": (0.50, 3, 0.50, 0.05),
+    "gemini-2.5-pro": (1.25, 10, 1.25, 0.125), "gemini-2.5-flash-lite": (0.10, 0.40, 0.10, 0.01),
+    "gemini-2.5-flash": (0.30, 2.5, 0.30, 0.03),
+    "gemini-2.0-flash-lite": (0.075, 0.30, 0.075, 0.02), "gemini-2.0-flash": (0.10, 0.40, 0.10, 0.025),
 }
 # used when a model id is not in the table: the price of its family's current model
 FAMILY = [
@@ -39,6 +50,8 @@ FAMILY = [
     (r"^gpt-.*-pro", (30, 180, 30, 30)), (r"^gpt-.*nano", (0.20, 1.25, 0.20, 0.02)),
     (r"^gpt-.*mini", (0.75, 4.5, 0.75, 0.075)), (r"^gpt-5", (2.5, 15, 2.5, 0.25)),
     (r"^o\d", (2, 8, 2, 0.50)), (r"^(gpt-|chatgpt-)", (2.5, 10, 2.5, 1.25)),
+    (r"^gemini-.*flash-lite", (0.30, 2.5, 0.30, 0.03)), (r"^gemini-.*flash", (0.75, 3.75, 0.75, 0.075)),
+    (r"^gemini-.*pro", (2, 12, 2, 0.20)), (r"^gemini-", (2, 10, 2, 0.10)),
 ]
 try:
     PRICES.update({k: tuple(v) for k, v in json.loads(os.environ.get("PRICES_JSON") or "{}").items()})

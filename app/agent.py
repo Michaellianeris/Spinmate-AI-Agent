@@ -1,10 +1,11 @@
-"""Claude tool-use loop. The conversation lives in the browser and is sent on every turn."""
+"""Tool-use loop for Claude, OpenAI and Gemini. The conversation lives in the browser and is sent on every turn."""
 import copy
 import os
 import re
 
 import anthropic
 
+from . import gemini_provider
 from . import openai_provider
 from . import fx
 from . import pricing
@@ -128,7 +129,8 @@ def _anthropic_stream(messages, api_key=None, model=None, mode=None, name=None, 
             return
         try:
             resp = client.messages.create(model=model, max_tokens=MAX_TOKENS, system=system,
-                                          tools=mcp_client.tool_defs(), messages=_prune_images(messages), timeout=90)
+                                          tools=mcp_client.tool_defs(),
+                                          messages=_prune_images(gemini_provider.strip(messages)), timeout=90)
         except anthropic.AuthenticationError:
             yield {"type": "error", "status": 401, "error": "The API key was rejected. Check it in console.anthropic.com."}
             return
@@ -301,11 +303,82 @@ def _openai_stream(messages, api_key=None, model=None, mode=None, name=None, def
     yield {"type": "done", "messages": messages}
 
 
+def _gemini_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None, approved=False,
+                   lang=None):
+    model = model or gemini_provider.DEFAULT_MODEL
+    messages = list(messages)
+    instructions = _system_text(messages, mode, name, defaults_text, lang)
+    turn_in = turn_out = 0
+    turn_cost = 0.0
+    priced = pricing.price(model) is not None
+
+    def usage_event():
+        return {"type": "usage", "input": turn_in, "output": turn_out,
+                "session": tokens_used(), "budget": TOKEN_BUDGET,
+                "cost_usd": round(turn_cost, 6) if priced else None, "eur_per_usd": fx.eur_per_usd(),
+                "cost_estimate": pricing.is_estimate(model), "model": model}
+
+    for step in range(MAX_STEPS):
+        if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET:
+            yield usage_event()
+            yield {"type": "error", "status": 429,
+                   "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
+            return
+        try:
+            response = gemini_provider.create(model, instructions, gemini_provider.to_contents(_prune_images(messages)),
+                                              mcp_client.tool_defs(), api_key, MAX_TOKENS, 90)
+            blocks, calls = gemini_provider.output_blocks(response, step)
+        except gemini_provider.GeminiError as e:
+            yield {"type": "error", "status": e.status, "error": str(e)}
+            return
+
+        inp, out = _account_values(*gemini_provider.usage(response))
+        cached = gemini_provider.cached_tokens(response)
+        turn_in += inp
+        turn_out += out
+        turn_cost += _cost(pricing.cost_usd(model, inp - cached, out, 0, cached))
+        if TOKEN_BUDGET and tokens_used() >= TOKEN_BUDGET and calls:
+            yield usage_event()
+            yield {"type": "error", "status": 429,
+                   "error": f"Token budget of {TOKEN_BUDGET:,} reached. No run was started."}
+            return
+
+        if blocks:
+            messages.append({"role": "assistant", "content": blocks})
+        for block in blocks:
+            if block["type"] == "text" and block["text"].strip():
+                yield {"type": "text", "text": block["text"]}
+        if not calls:
+            yield usage_event()
+            yield {"type": "done", "messages": messages}
+            return
+
+        results = []
+        for call in calls:
+            yield {"type": "tool_start", "id": call["id"], "name": call["name"], "input": call["input"]}
+            try:
+                value, event = mcp_client.call(call["name"], call["input"], approved)
+                is_error = '"ok": false' in value if isinstance(value, str) else False
+            except Exception as e:
+                value, event, is_error = f"tool failed: {e}", {"tool": call["name"], "error": str(e)}, True
+            yield {"type": "tool_done", "id": call["id"], "event": event, "is_error": is_error}
+            results.append({"type": "tool_result", "tool_use_id": call["id"], "content": value, "is_error": is_error})
+        messages.append({"role": "user", "content": results})
+
+    messages.append({"role": "assistant", "content": [{"type": "text",
+        "text": "I stopped after too many tool calls in one turn. Tell me how to continue."}]})
+    yield usage_event()
+    yield {"type": "done", "messages": messages}
+
+
+STREAMS = {"anthropic": _anthropic_stream, "openai": _openai_stream, "gemini": _gemini_stream}
+
+
 def chat_stream(messages, api_key=None, model=None, mode=None, name=None, defaults_text=None,
                 approved=False,
                 provider="anthropic", lang=None):
-    """Provider-neutral tool loop; yields the same events for Anthropic and OpenAI."""
-    stream = _openai_stream if provider == "openai" else _anthropic_stream
+    """Provider-neutral tool loop; yields the same events for Anthropic, OpenAI and Gemini."""
+    stream = STREAMS.get(provider, _anthropic_stream)
     yield from stream(messages, api_key, model, mode, name, defaults_text, approved, lang=lang)
 
 
