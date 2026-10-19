@@ -27,6 +27,7 @@ explains the results from the actual magnetization dynamics, with figures and re
 - [Configuration](#configuration)
 - [Behind a corporate proxy](#behind-a-corporate-proxy)
 - [How it works](#how-it-works)
+- [Version 2.0 (in development)](#version-20-in-development)
 - [Development](#development)
 - [Security](#security)
 - [License](#license)
@@ -338,6 +339,62 @@ run catalog (app/catalog.py) --> Postgres: runs and sweeps, read-only SQL for qu
 `app/runner.py` wraps the original code without changing its equations. It counts Heun steps for the
 progress bar, silences the per-step print of the temperature branch, adds a font fallback and writes the
 summary. Parameter files are parsed with the original `importdata.py`. `app/guide.py` backs Athena, the guide.
+
+## Version 2.0 (in development)
+
+Version 2.0 turns SpinMate from a standalone app into a reusable scientific capability. The physics engine
+becomes a Python package with no LLM inside, every agent reaches it through MCP (Model Context Protocol),
+and the web app becomes one client among many.
+
+<img src="docs/architecture-v1-v2.png" alt="Version 1.0 next to version 2.0. In 1.0 the browser talks to a FastAPI server and one agent loop inside Docker. In 2.0 the web app, Claude apps and any agent harness reach a spinmate-mcp server through a physics subagent; the server sits on spinmate-core, a package with the tools, the run queue and an engine interface with plug-ins (macrospin today, mumax3 next) and a physics validation suite" width="900">
+
+| | Version 1.0 (today) | Version 2.0 |
+|---|---|---|
+| Who can use it | the SpinMate web app | the web app, Claude Desktop and Claude Code, any MCP agent |
+| Interface | FastAPI and one agent loop | MCP server: tools, resources, prompts, over stdio or HTTP |
+| Physics knowledge | in the app's system prompt | a physics subagent (skill and prompts) usable in any harness |
+| Engine | the macrospin code, built in | an engine interface with plug-ins: macrospin, then mumax3 |
+| Validation | tests of the app | a physics validation suite: AFMR and Kittel frequencies, energy at α=0, \|m\|=1, SOT threshold |
+| Package | one app | `spinmate-core` (no LLM), `spinmate-mcp`, the web app |
+
+<img src="docs/architecture-v2.png" alt="SpinMate version 2.0 architecture" width="900">
+
+### Use SpinMate from Claude and other agents (MCP)
+
+The first step of 2.0 is ready: SpinMate is also an MCP server. It offers the same tools as the chat
+(validate, run, sweep, wait, get_run with the plot, compare, figure, report and SQL on the catalog), the
+runs and the parameter reference as resources, and short instructions for the agent. Large requests return
+`needs_confirmation`; the agent asks you and calls again with `confirmed=true`.
+
+**Claude Code**, with the Docker app running (same process, same run queue as the web app):
+
+```bash
+claude mcp add --transport http spinmate http://localhost:8421/mcp
+```
+
+**Claude Desktop**, in *Settings → Developer → Edit config* (`claude_desktop_config.json`), with the Docker
+app running:
+
+```json
+{
+  "mcpServers": {
+    "spinmate": {
+      "command": "docker",
+      "args": ["compose", "-f", "/path/to/sublattice-agent/docker-compose.yml",
+               "exec", "-T", "sublattice-agent", "python", "-m", "spinmate_mcp"]
+    }
+  }
+}
+```
+
+This starts the server over stdio inside the container, on the same `/data`. Without Docker, run
+`python -m spinmate_mcp` from the repository (stdio), or `python -m spinmate_mcp --http` for
+`http://127.0.0.1:8422/mcp`. Links in the results (figures, reports) point to `APP_URL`, by default
+`http://localhost:8421`.
+
+Development happens on the `development` branch, one feature branch per step: the MCP server first, then
+`spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
+an MCP client and a second engine (mumax3). `main` keeps the stable 1.x release.
 
 ## Prompt evaluation
 
