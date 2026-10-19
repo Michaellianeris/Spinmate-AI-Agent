@@ -2244,7 +2244,7 @@ const changedText = ch => Object.entries(ch || {}).map(([k, v]) =>
 function runSummaryLine(r) {
   const s = r.summary || {};
   if (r.status !== "done") return esc(r.status || "");
-  const parts = [`<b>${s.order_initial} → ${s.order_final}</b>`];
+  const parts = [s.order_final ? `<b>${s.order_initial} → ${s.order_final}</b>` : `<b>${esc(s.engine || "run")}</b>`];
   const sw = s.neel_z_switches ?? s.neel_z_sign_changes;
   if (sw != null) parts.push(`<span>${sw} switch${sw === 1 ? "" : "es"}</span>`);
   parts.push(`<span>${s.settle_time_s != null ? `settled ${fmt(s.settle_time_s * 1e12, 1)} ps` : "not settled"}</span>`);

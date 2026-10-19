@@ -10,6 +10,12 @@ _BUILTIN = {"macrospin": MacrospinEngine}
 _cache = {}
 
 
+def register(name, factory):
+    """Adds an engine at run time (tests, notebooks); installed plug-ins use the entry point instead."""
+    _BUILTIN[name] = factory
+    _cache.pop(name, None)
+
+
 def available():
     """Engine names: the built-in ones and every installed plug-in."""
     names = set(_BUILTIN)
@@ -32,4 +38,4 @@ def get(name=None):
     return _cache[name]
 
 
-__all__ = ["Engine", "Validation", "available", "get", "DEFAULT"]
+__all__ = ["Engine", "Validation", "available", "get", "register", "DEFAULT"]

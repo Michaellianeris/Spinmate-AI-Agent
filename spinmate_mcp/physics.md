@@ -5,6 +5,11 @@ original two-sublattice macrospin solver: two coupled LLG equations (sublattices
 inter-sublattice exchange A0, uniaxial anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise and
 time-dependent drives, integrated with Heun steps.
 
+## Engines
+- macrospin (default): the two-sublattice model above. mumax3, when installed: finite-difference micromagnetics
+  of one ferromagnet on a grid (GPU). Call list_engines to see what is installed and the parameters of each, and
+  pass engine="mumax3" to validate_parameters and start_simulation. Sweeps and continue_run are macrospin only.
+
 ## Rules
 - Report only numbers that come from a tool result or from this guide. If something was not computed, say so
   or run it; never estimate a result you could have simulated.

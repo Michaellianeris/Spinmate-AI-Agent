@@ -460,6 +460,37 @@ Only the Run button approves a large request; the model never sees the `confirme
 of its system prompt (how to read a run, the scales of the material) comes from `spinmate_mcp/physics.md`, the
 same file as the MCP prompts and the Claude Code subagent.
 
+### mumax3 engine (plug-in)
+
+`plugins/spinmate-mumax3` adds [mumax3](https://mumax.github.io) (GPU micromagnetics) as a second engine,
+through the same interface as macrospin. The input is either SpinMate lines, turned into an `.mx3` script,
+
+```text
+--Nx=128
+--Ny=128
+--Msat=800e3
+--Aex=13e-12
+--alpha=0.02
+--B_ext=0,0,0.1
+--t=2e-9
+```
+
+or a complete `.mx3` script. The run card, exports and figures show the average magnetisation ⟨m⟩(t); the
+script and the mumax3 table are kept in the run folder. Agents call `list_engines` and pass `engine="mumax3"`.
+
+The Docker image installs the plug-in. mumax3 itself needs an NVIDIA GPU: install it from the mumax3 releases
+and set `MUMAX3_BIN` to the binary (in Docker, add the GPU to the service with the NVIDIA Container Toolkit).
+Without it, `validate_parameters` warns and the run fails with "mumax3 not found". Outside Docker:
+
+```bash
+pip install -e plugins/spinmate-mumax3
+```
+
+mumax3 is free software under the GNU GPL v3 (with a CUDA exception); SpinMate only starts it as a separate
+program and stays under the MIT License. If you publish results obtained with mumax3, cite Vansteenkiste et
+al., *The design and verification of MuMax3*, AIP Advances 4, 107133 (2014). The mumax3 name and logo belong
+to its authors. Details in `plugins/spinmate-mumax3/README.md`.
+
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
 an MCP client and a second engine (mumax3). `main` keeps the stable 1.x release.
