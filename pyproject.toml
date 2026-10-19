@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spinmate"
+version = "2.0.0.dev0"
+description = "Two-sublattice macrospin simulations as a reusable capability: a core package, an MCP server and a web app"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+# spinmate_core needs only these; no LLM library
+dependencies = ["numpy", "scipy", "matplotlib", "SciencePlots", "latex2mathml"]
+
+[project.optional-dependencies]
+mcp = ["mcp>=2.2"]
+catalog = ["psycopg[binary]"]
+web = ["fastapi", "uvicorn[standard]", "python-multipart", "anthropic", "mcp>=2.2"]
+
+[project.scripts]
+spinmate-core = "spinmate_core.__main__:main"
+spinmate-mcp = "spinmate_mcp.__main__:main"
+
+# other engines register here, e.g.  mumax3 = "spinmate_mumax3:Mumax3Engine"
+[project.entry-points."spinmate.engines"]
+
+[tool.setuptools.packages.find]
+include = ["spinmate_core*", "spinmate_mcp*", "app*"]

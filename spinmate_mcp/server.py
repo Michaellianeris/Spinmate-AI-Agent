@@ -9,8 +9,9 @@ import anyio
 import mcp_types as types
 from mcp.server.lowlevel import Server
 
-from app import prompts, tools
-from app import simulations as S
+from app import prompts
+from spinmate_core import simulations as S
+from spinmate_core import tools
 
 VERSION = "2.0.0-dev"
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"

@@ -326,17 +326,17 @@ If the container cannot reach `api.anthropic.com` you will see one of two messag
 browser (web/index.html)
    |  conversation kept in the page, sent every turn, answer streamed back as events
    v
-FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/agent.py, app/tools.py)
+FastAPI (app/server.py) --> provider-neutral tool loop (Claude or OpenAI; app/agent.py, spinmate_core/tools.py)
    |                                   model picked per request by capability and price (app/router.py)
    |                                   |  validate, start, sweep, get_run, cancel
    v                                   v
-run queue (app/simulations.py) --> python -m app.runner   (one process per run)
+run queue (spinmate_core/simulations.py) --> python -m spinmate_core.runner   (one process per run)
    |                                   imports macrospin/main.py unchanged
    v
-run catalog (app/catalog.py) --> Postgres: runs and sweeps, read-only SQL for query_runs
+run catalog (spinmate_core/catalog.py) --> Postgres: runs and sweeps, read-only SQL for query_runs
 ```
 
-`app/runner.py` wraps the original code without changing its equations. It counts Heun steps for the
+`spinmate_core/runner.py` wraps the original code without changing its equations. It counts Heun steps for the
 progress bar, silences the per-step print of the temperature branch, adds a font fallback and writes the
 summary. Parameter files are parsed with the original `importdata.py`. `app/guide.py` backs Athena, the guide.
 
@@ -391,6 +391,28 @@ This starts the server over stdio inside the container, on the same `/data`. Wit
 `python -m spinmate_mcp` from the repository (stdio), or `python -m spinmate_mcp --http` for
 `http://127.0.0.1:8422/mcp`. Links in the results (figures, reports) point to `APP_URL`, by default
 `http://localhost:8421`.
+
+### spinmate-core: the engine without an LLM
+
+Parameters, runs, sweeps, the catalog, figures, reports and the tools live in `spinmate_core/`, a package
+that loads no LLM library. The web app (`app/`) and the MCP server (`spinmate_mcp/`) sit on top of it. It has
+its own command line:
+
+```bash
+python -m spinmate_core engines                   # the simulation engines
+python -m spinmate_core validate params.txt       # check a file with the solver's own parser
+python -m spinmate_core run params.txt            # run it, wait, print the summary
+```
+
+Every engine implements one interface (`spinmate_core/engines/base.py`): `parameter_schema()`, `validate()`,
+`run_command()` and `outputs()`. The macrospin solver is the built-in engine and every run records which
+engine produced it. Other engines are plug-ins, installed as Python packages that register under the entry
+point group `spinmate.engines`:
+
+```toml
+[project.entry-points."spinmate.engines"]
+mumax3 = "spinmate_mumax3:Mumax3Engine"
+```
 
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
