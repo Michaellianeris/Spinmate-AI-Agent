@@ -466,7 +466,7 @@ same file as the MCP prompts and the Claude Code subagent.
 
 ### mumax3 engine (plug-in)
 
-`plugins/spinmate-mumax3` adds [mumax3](https://mumax.github.io) (GPU micromagnetics) as a second engine,
+`plugins/spinmate-mumax3` adds [mumax3](https://mumax.github.io) (GPU micromagnetics) as an optional second engine,
 through the same interface as macrospin. The input is either SpinMate lines, turned into an `.mx3` script,
 
 ```text
