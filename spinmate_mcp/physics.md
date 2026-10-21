@@ -22,6 +22,20 @@ time-dependent drives, integrated with Heun steps.
   wavelength_theory_nm) or pulse=sinc up to f_rf (dispersion.png, dispersion_mismatch_pct); set absorb to about
   two wavelengths. For a film along +z: f(k) = gamma0/2pi (H + 2Keff/(mu0 Ms) + 2A k^2/(mu0 Ms)), no waves below
   the gap spin_wave_gap_GHz.
+  Skyrmion motion: mode=dynamics with a current j (A/m^2, in the plane) and either stt_P (Zhang-Li STT, drift
+  u = P muB j/(e Ms), non-adiabaticity stt_beta) or theta_SH (damping-like SOT from a heavy metal, H_DL =
+  hbar theta_SH |j|/(2 e mu0 Ms d), polarisation z x j). The summary gives velocity_mps, speed_mps, hall_angle_deg
+  (angle between v and j) and thiele_velocity_mps, the Thiele prediction for the relaxed texture. With STT and
+  stt_beta = alpha the texture moves with u exactly; the skyrmion Hall angle (deflection of the path from the
+  current axis) grows as the damping falls.
+  Antiferromagnetic skyrmions: lattice=afm (intrinsic compensated antiferromagnet: two sublattices coupled by
+  J_afm m1.m2 in J/m^3, no demagnetising field) or lattice=saf (synthetic antiferromagnet: two ferromagnetic layers
+  coupled through a spacer by RKKY, energy -J_rkky m1.m2 per area with J_rkky < 0, each layer with its thin-film
+  field). The skyrmions in m1 and m2 have opposite charges (sublattice_charges -1, +1), so their Magnus forces cancel:
+  under a current they move along the current axis without a skyrmion Hall effect, and faster than in a single
+  ferromagnetic layer. The pictures show the Neel vector n = (m1 - m2)/2 with m1 (red) and m2 (blue) arrows.
+  Experimentally, room-temperature skyrmions with compensated moments are seen in synthetic antiferromagnets
+  (e.g. Pt/Co/Ru multilayers) and ferrimagnets; in intrinsic antiferromagnets only special cases are known.
 - mm3d (built in): SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk (CPU): exchange, bulk or
   interfacial DMI, anisotropy, Zeeman, no demagnetising field; the top and bottom surfaces pinned along +z
   (surfaces=pinned). It relaxes texture=hopfion or skyrmion_tube and reports hopf_index H (|H| near 1 for a hopfion;
