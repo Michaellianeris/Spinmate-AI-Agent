@@ -1,4 +1,4 @@
-"""Simulation engines. macrospin (two sublattices) and mm2d (2D micromagnetics) are built in; other engines
+"""Simulation engines. macrospin (two sublattices), mm2d and mm3d (2D and 3D micromagnetics) are built in; other engines
 (mumax3) are plug-ins found through the Python entry point group "spinmate.engines"."""
 from importlib.metadata import entry_points
 
@@ -13,7 +13,12 @@ def _mm2d():
     return MM2DEngine()
 
 
-_BUILTIN = {"macrospin": MacrospinEngine, "mm2d": _mm2d}
+def _mm3d():
+    from ..mm3d import MM3DEngine
+    return MM3DEngine()
+
+
+_BUILTIN = {"macrospin": MacrospinEngine, "mm2d": _mm2d, "mm3d": _mm3d}
 _cache = {}
 
 

@@ -101,18 +101,70 @@ def md_to_html(text):
     return "\n".join(out)
 
 
-def _figures(ids, labels):
-    """(caption, png bytes) pairs: overlays for several runs, components for each run."""
+MICRO = ("mm2d", "mm3d")
+METHOD_MM = (r"Micromagnetics of SpinMate's own finite-difference solvers: mm2d for a film one cell thick, mm3d for a "
+             r"slab or nanodisk. The effective field holds exchange $2A\nabla^2\mathbf{m}/(\mu_0 M_\mathrm{s})$, "
+             r"uniaxial anisotropy, the applied field and interfacial or bulk Dzyaloshinskii-Moriya interaction; mm2d adds "
+             r"the local thin-film demagnetising field $-M_\mathrm{s} m_z$. Stable textures are found by energy "
+             r"minimisation (steepest descent with Barzilai-Borwein steps), dynamics with an adaptive Dormand-Prince "
+             r"Runge-Kutta solver of the Landau-Lifshitz-Gilbert equation. Textures are classified by the topological "
+             r"charge $Q$ of a layer and, in 3D, by the Hopf index $H$.")
+# pictures the micromagnetic engines leave in the run folder, in the order they go into a report
+MICRO_PICS = [("texture_3d_2d.png", "the final texture, tilted 3D view and top view"),
+              ("spinwave_3d_2d.png", "spin waves, 3D view and top view (colour = phase of the precession)"),
+              ("dispersion.png", "spin-wave dispersion with the analytic curve"),
+              ("spinwave_profile.png", "change of m_x along y = 0")]
+
+
+def _engine(info):
+    return (info.get("summary") or {}).get("engine") or info.get("engine") or "macrospin"
+
+
+def _figures(ids, labels, engines=None):
+    """(caption, png bytes) pairs: overlays for several runs, components for each run; the texture pictures of
+    micromagnetic runs."""
+    engines = engines or {}
+    macro = [r for r in ids if engines.get(r, "macrospin") not in MICRO]
     out = []
-    if len(ids) > 1:
-        out.append((r"Néel vector $n_z$ of all runs", figures.render(ids, ["nz"], style="science", fmt="png",
+    if len(macro) > 1:
+        out.append((r"Néel vector $n_z$ of all runs", figures.render(macro, ["nz"], style="science", fmt="png",
                                                                   width_in=5.5, height_in=3.0, labels=labels)[0]))
-        out.append((r"$\mathbf{m}_1\cdot\mathbf{m}_2$ of all runs", figures.render(ids, ["dot"], style="science", fmt="png",
+        out.append((r"$\mathbf{m}_1\cdot\mathbf{m}_2$ of all runs", figures.render(macro, ["dot"], style="science", fmt="png",
                                                         width_in=5.5, height_in=3.0, labels=labels)[0]))
     for rid in ids[:6]:
+        if engines.get(rid) in MICRO:
+            shown = 0
+            for name, cap in MICRO_PICS:
+                f = S.RUNS / rid / name
+                if f.exists() and not (name == "texture_3d_2d.png" and shown):
+                    if engines.get(rid) == "mm3d" and name == "texture_3d_2d.png":
+                        cap = "the m_z = 0 surface in 3D, coloured by the in-plane direction, and the cuts y = 0 and z = 0"
+                    out.append((f"{rid}: {cap}", f.read_bytes()))
+                    shown += 1
+            continue
         out.append((rf"{rid}: $m_{{1z}}$, $m_{{2z}}$ and $n_z$", figures.render([rid], ["m1z", "m2z", "nz"], style="science",
                                                                fmt="png", width_in=5.5, height_in=2.8)[0]))
     return out
+
+
+def _micro_row(i, label):
+    s = i.get("summary") or {}
+    tex_ = (s.get("texture") or "").replace("_", " ")
+    if s.get("engine") == "mm3d":
+        top = f"H = {_num(s.get('hopf_index'))}"
+    else:
+        top = f"Q = {_num(s.get('topological_charge'))}"
+    if s.get("wavelength_nm") is not None:
+        size = f"λ = {s['wavelength_nm']:.1f} nm" + (f" (theory {s['wavelength_theory_nm']:.1f})" if s.get("wavelength_theory_nm") else "")
+    elif s.get("rings_nm"):
+        size = ", ".join(f"{r:.1f}" for r in s["rings_nm"]) + " nm"
+    elif s.get("radius_nm"):
+        size = f"{s['radius_nm']:.1f} nm"
+    else:
+        size = "–"
+    e = s.get("energy_final_J")
+    return [i["id"], label, s.get("engine", ""), tex_, top, size, f"{e * 1e18:.4g}" if e is not None else "–",
+            _num(s.get("runtime_s"))]
 
 
 def build(run_ids, title="", notes="", author=""):
@@ -125,19 +177,25 @@ def build(run_ids, title="", notes="", author=""):
     labels = {i["id"]: i.get("label") or i["id"] for i in infos}
     title = (title or "SpinMate report: " + ", ".join(ids)).strip()[:150]
     cmp = S.compare(ids) if len(ids) > 1 else None
-    figs = _figures(ids, labels)
+    engines_ = {i['id']: _engine(i) for i in infos}
+    figs = _figures(ids, labels, engines_)
+    micro = [i for i in infos if engines_[i['id']] in MICRO]
+    macro_infos = [i for i in infos if engines_[i['id']] not in MICRO]
     date = time.strftime("%Y-%m-%d %H:%M")
 
     head = ["Run", "Label", "Order", r"$\mathbf{m}_1\cdot\mathbf{m}_2$ (end)", r"$n_z$ switches", "First switch (ps)",
             "Settled (ps)", r"$f(m_{1x})$ (GHz)", "Duration (ns)", "Runtime (s)"]
     rows = []
-    for i in infos:
+    for i in macro_infos:
         s = i.get("summary") or {}
         dur = (s.get("t_end_s") or 0) - (s.get("t_start_s") or 0)
         rows.append([i["id"], labels[i["id"]], f"{s.get('order_initial')} → {s.get('order_final')}",
                      _num(s.get("m1_dot_m2_final")), _num(s.get("neel_z_switches", s.get("neel_z_sign_changes"))),
                      _ps(s.get("first_neel_z_switch_s")), _ps(s.get("settle_time_s")),
                      _num(s.get("dominant_freq_m1x_GHz")), f"{dur * 1e9:.3g}", _num(s.get("runtime_s"))])
+    mhead = ["Run", "Label", "Engine", "Texture", "Topological index", "Size", "Energy (aJ)", "Runtime (s)"]
+    mrows = [_micro_row(i, labels[i["id"]]) for i in micro]
+    method = " ".join(([METHOD] if macro_infos else []) + ([METHOD_MM] if micro else []))
     changed = [(i["id"], i.get("changed_from_defaults") or {}) for i in infos]
     differ = (cmp or {}).get("differing_parameters") or {}
     common = {k: v for k, v in changed[0][1].items()
@@ -152,8 +210,8 @@ def build(run_ids, title="", notes="", author=""):
 
     parts = [_logo_html(), f"<h1>{tex(title)}</h1>",
              f"<p class='meta'>{date}{' · ' + html.escape(author) if author else ''} · runs {', '.join(ids)}</p>",
-             "<h2>Method</h2>", f"<p>{tex(METHOD)}</p>",
-             "<h2>Results</h2>", table(head, rows)]
+             "<h2>Method</h2>", f"<p>{tex(method)}</p>",
+             "<h2>Results</h2>"] + ([table(head, rows)] if rows else []) + ([table(mhead, mrows)] if mrows else [])
     if common:
         parts += ["<h2>Parameters shared by all runs (differing from the defaults)</h2>",
                   table(["Parameter", "Value"], [[k, fmt_val(v)] for k, v in sorted(common.items())], True)]
@@ -186,7 +244,8 @@ def build(run_ids, title="", notes="", author=""):
 
     # ---- Markdown + figures
     md = ["![SpinMate](spinmate-logo.png)", "", f"# {title}", "", f"{date}{' · ' + author if author else ''} · runs {', '.join(ids)}", "",
-          "## Method", "", METHOD, "", "## Results", "", md_table(head, rows), ""]
+          "## Method", "", method, "", "## Results", ""] + ([md_table(head, rows), ""] if rows else []) + \
+         ([md_table(mhead, mrows), ""] if mrows else [])
     if common:
         md += ["## Parameters shared by all runs (differing from the defaults)", "",
                md_table(["Parameter", "Value"], [[f"`{k}`", fmt_val(v)] for k, v in sorted(common.items())]), ""]

@@ -135,7 +135,7 @@ docker compose up -d      # then open http://localhost:8421</pre>
 server is set up, brings this guide as a welcome email; otherwise she gives you the download link.</li>
 <li><b>API key:</b> Settings (gear) → paste an Anthropic, OpenAI and/or Gemini key (Gemini keys: aistudio.google.com/api-keys). A pasted key stays in that browser tab;
 a key in <code>.env</code> serves everyone on the server.</li>
-<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i>.</li></ol>
+<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i> (FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, spin waves, FeRh heating).</li></ol>
 <div class="tip">No key? <i>Run setup</i> (play icon) runs a preset or your parameter file directly; only the chat needs a model.</div></div>
 </div>
 
@@ -253,13 +253,14 @@ python -m spinmate_mcp --http   # port 8422</pre></div>
 </table>
 <div class="ask">Use spinmate to find the smallest DC SOT current that makes the Néel vector rotate.</div>
 
-<h2><span class="n">9</span>Engines: macrospin, mm2d and mumax3</h2>
-<p><b>Two engines are built in:</b> macrospin (two sublattices) and mm2d (2D micromagnetics: skyrmions, domain walls). mumax3 or any other engine is an optional plug-in, added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
+<h2><span class="n">9</span>Engines: macrospin, mm2d, mm3d and mumax3</h2>
+<p><b>Three engines are built in:</b> macrospin (two sublattices), mm2d (2D micromagnetics: skyrmions, domain walls, spin waves) and mm3d (3D micromagnetics: hopfions). mumax3 or any other engine is an optional plug-in, added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
 in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine="mm2d"</code> or <code>engine="mumax3"</code>. <b>Run setup</b> (Deep mode) has an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 without a GPU) is marked “not installed”.</p>
 <table>
 <tr><th style="width:24mm">Engine</th><th>What it computes</th><th style="width:56mm">Notes</th></tr>
 <tr><td><b>macrospin</b><br>(default)</td><td>Two coupled LLG equations for the sublattices m₁ and m₂: exchange A0, anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise, time-dependent drives.</td><td>Built in; sweeps, continuation and combination of runs.</td></tr>
 <tr><td><b>mm2d</b><br>(built in)</td><td>SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick: exchange, perpendicular anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. Finds skyrmions, skyrmionium and domain walls, or runs LLG dynamics.</td><td>Part of SpinMate: CPU only, nothing to install; a 128 × 128 film relaxes in seconds.</td></tr>
+<tr><td><b>mm3d</b><br>(built in)</td><td>SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk with the top and bottom surfaces pinned along +z: exchange, bulk or interfacial DMI, anisotropy, field. Relaxes hopfions and skyrmion tubes and gives the Hopf index.</td><td>CPU only; the default hopfion takes about a minute. No demagnetising field.</td></tr>
 <tr><td><b>mumax3</b><br>(optional plug-in)</td><td>Finite-difference micromagnetics of one ferromagnet on a grid, on the GPU. Input as SpinMate lines (turned into an <code>.mx3</code> script) or a complete <code>.mx3</code> script; the card shows ⟨m⟩(t).</td><td>Needs an NVIDIA GPU and the mumax3 binary in <code>MUMAX3_BIN</code>; without it validation warns. Single runs only.</td></tr>
 </table>
 <pre>--Nx=128
@@ -340,6 +341,31 @@ wavelengths so the waves do not come back from the edges. Below the gap (here 56
 </div>
 <div class="tip">Limits: the film is one cell thick and the demagnetising field is local (−Ms·m<sub>z</sub>), so there is no long-range
 stray field; no temperature yet. Two sublattices and a GPU version are planned.</div>
+
+<h3>3D micromagnetics: hopfions with mm3d</h3>
+<p>Choose <b>mm3d</b> in the Engine menu, or ask for a hopfion in the chat (it is also a card under <i>Find a skill</i>).
+A hopfion is a 3D soliton: the surface where m<sub>z</sub> = 0 is a torus, and the in-plane direction turns once around it,
+so every pair of preimages is linked once; the Hopf index H counts that linking. It is bound in a chiral magnet nanodisk
+about 2p across and about p thick (p = 4πA/D) with the surfaces pinned up, at small fields. In a periodic slab it unwinds
+or grows into helices, and Check warns about it.</p>
+<pre>--texture=hopfion
+--Aex=10e-12
+--D=5.236e-3
+--Nz=24
+--geometry=disk
+--disk_diameter=54e-9
+--B_ext=0,0,0.3</pre>
+<figure><img src="../mm3d-hopfion.png"><figcaption>A relaxed hopfion in a 54 nm × 24 nm chiral nanodisk: the m<sub>z</sub> = 0 torus and the cuts y = 0 and z = 0. H = −0.89 on the grid (|H| = 1), core ring at 8.5 nm.</figcaption></figure>
+<div class="side" style="grid-template-columns:1fr 1fr">
+<figure><img src="../screenshots/mm3d-hopfion-chat.png"><figcaption>In the chat: a hopfion from a question.</figcaption></figure>
+<figure><img src="../screenshots/report-micromagnetics.png"><figcaption>A report of a hopfion and a Bloch skyrmion: the texture pictures are in it.</figcaption></figure>
+</div>
+<table>
+<tr><th>mm3d check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Helix with q = D/2A (bulk DMI)</td><td>−D²/4A</td><td>within 2 % (exact on the lattice)</td></tr>
+<tr><td>One layer against mm2d</td><td>same fields</td><td>identical</td></tr>
+<tr><td>Hopfion through relaxation</td><td>|H| stays ≈ 1</td><td>|H| = 0.89 (grid)</td></tr>
+</table>
 
 <h2><span class="n">10</span>Physics validation</h2>
 <div class="side">

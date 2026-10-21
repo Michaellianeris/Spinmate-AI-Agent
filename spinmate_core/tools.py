@@ -39,7 +39,7 @@ TOOLS = [
     },
     {
         "name": "list_engines",
-        "description": "The simulation engines installed here (macrospin and mm2d are built in; mumax3 and others are "
+        "description": "The simulation engines installed here (macrospin, mm2d and mm3d are built in; mumax3 and others are "
                          "plug-ins), with what they model and their parameters.",
         "input_schema": {"type": "object", "properties": {}},
     },
