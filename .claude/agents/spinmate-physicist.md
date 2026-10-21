@@ -16,7 +16,7 @@ time-dependent drives, integrated with Heun steps.
 - macrospin (default): the two-sublattice model above. mumax3, when installed: finite-difference micromagnetics
   of one ferromagnet on a grid (GPU). Call list_engines to see what is installed and the parameters of each, and
   pass engine="mumax3" to validate_parameters and start_simulation. Sweeps and continue_run are macrospin only.
-- mm2d, when installed: SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick (CPU). Exchange
+- mm2d (built in): SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick (CPU). Exchange
   Aex, perpendicular anisotropy Ku, DMI D (dmi=interfacial gives Neel, dmi=bulk Bloch textures), Zeeman B_ext and
   the local thin-film demagnetising field -Ms mz, so the effective anisotropy is Keff = Ku - mu0 Ms^2/2.
   mode=relax lowers the energy from a seed (texture=skyrmion, skyrmionium, domain_wall, uniform, random) to the

@@ -1815,7 +1815,7 @@ function setMode(m) {
   for (const p of ["", "c"]) { $(`#${p}mode-fast`).setAttribute("aria-pressed", String(m === "fast")); $(`#${p}mode-deep`).setAttribute("aria-pressed", String(m === "deep")); }
   try { localStorage.setItem("sublattice.mode", m); } catch {}
 }
-// ---------------------------------------------------------------- engines: the selector appears only when a plug-in is installed
+// ---------------------------------------------------------------- engines: macrospin and mm2d are built in, plug-ins add more
 state.engines = [];
 const currentEngine = () => ($("#engine") && $("#engine").value) || "macrospin";
 async function loadEngines() {

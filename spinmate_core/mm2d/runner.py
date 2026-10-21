@@ -1,13 +1,13 @@
 """Runs one mm2d simulation in the current run folder (parameters.txt is there).
-Called as: python -m spinmate_mm2d.runner"""
+Called as: python -m spinmate_core.mm2d.runner"""
 import json
 import time
 from pathlib import Path
 
 import numpy as np
 
-from spinmate_mm2d import parse
-from spinmate_mm2d import solver as S
+from spinmate_core.mm2d import parse
+from spinmate_core.mm2d import solver as S
 
 
 def _progress(step, total, t0):
@@ -92,7 +92,7 @@ def main():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from spinmate_mm2d import render
+    from spinmate_core.mm2d import render
     fig, ax = plt.subplots(figsize=(6, 3.5))
     xs = rows[:, 0] * (1e9 if vals["mode"] == "dynamics" else 1)
     for i, c in enumerate("xyz"):

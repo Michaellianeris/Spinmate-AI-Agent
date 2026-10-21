@@ -1,0 +1,21 @@
+<section id="skyrmions" data-transition="fade" style="background:radial-gradient(ellipse at 88% 92%, #1E2A6A 0%, #120D26 60%);color:#F4EEFF;font-family:'Inter', Arial, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<h2 style="font-size:64px;font-weight:700;line-height:1.1;color:#FFFFFF">Skyrmions with mm2d <span style="color:#9FB0FF;font-weight:600">· built-in 2D micromagnetics</span></h2>
+<div style="display:flex;gap:36px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:14px;width:900px">
+<img src="../mm2d-skyrmion.png" alt="A relaxed Néel skyrmion from mm2d: tilted view with 3D arrows and top view with nm axes" style="width:900px;height:372px;object-fit:contain;border-radius:16px;background:#FFFFFF">
+<img src="../mm2d-skyrmionium.png" alt="Skyrmionium from mm2d: a skyrmion inside a skyrmion, Q = 0" style="width:900px;height:372px;object-fit:contain;border-radius:16px;background:#FFFFFF">
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:22px">
+<p style="font-size:26px;line-height:1.4;color:#CFC4EA">A thin film one cell thick: exchange, anisotropy, interfacial or bulk DMI, field and thin-film demag. Relax to the stable texture, or run LLG with a field pulse.</p>
+<table style="width:100%;font-size:22px;color:#CFC4EA"><tr><th style="text-align:left;padding:7px 8px;color:#C79BFF;border-bottom:2px solid #3A2E5C">Check</th><th style="text-align:left;padding:7px 8px;color:#C79BFF;border-bottom:2px solid #3A2E5C">Result</th></tr>
+<tr><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">Wall energy 4√(A·Keff) − π|D|</td><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">within 0.3 %</td></tr>
+<tr><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">Wall width √(A/Keff)</td><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">within 1 %</td></tr>
+<tr><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">Kittel frequency</td><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">within 0.2 %</td></tr>
+<tr><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">Energy at α = 0</td><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">drift &lt; 1e-4</td></tr>
+<tr><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">Skyrmion / skyrmionium Q</td><td style="padding:7px 8px;border-bottom:1px solid #3A2E5C">−1.00 / 0.00</td></tr></table>
+<div style="display:flex;gap:28px"><div><p style="font-size:56px;font-weight:800;color:#9FB0FF">5 s</p><p style="font-size:22px;color:#BDB2DA">128 × 128 skyrmion, CPU</p></div><div><p style="font-size:56px;font-weight:800;color:#9FB0FF">14.4 nm</p><p style="font-size:22px;color:#BDB2DA">skyrmion radius, D = 3.5 mJ/m²</p></div></div>
+<p style="font-size:22px;line-height:1.4;color:#9A8CC2">Colour: in-plane direction; light = up, dark = down.</p>
+</div></div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between"><p style="font-size:24px;color:#9A8CC2">engine="mm2d" · texture=skyrmion | skyrmionium | domain_wall · mode=relax | dynamics</p><p style="font-size:24px;color:#9A8CC2">15</p></div>
+<aside>mm2d is SpinMate's own finite-difference solver, written in NumPy, for a ferromagnetic film one cell thick. It relaxes a seed to the nearest stable texture, here a Néel skyrmion of radius 14.4 nanometres and a skyrmionium with rings at 8.5 and 34.4 nanometres, in a few seconds on the CPU. It is checked against analytic wall energies and widths, the Kittel frequency and energy conservation. The run card shows the texture as a tilted 3D view and a top view.</aside>
+</section>
