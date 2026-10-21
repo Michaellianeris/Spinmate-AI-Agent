@@ -135,7 +135,7 @@ docker compose up -d      # then open http://localhost:8421</pre>
 server is set up, brings this guide as a welcome email; otherwise she gives you the download link.</li>
 <li><b>API key:</b> Settings (gear) → paste an Anthropic, OpenAI and/or Gemini key (Gemini keys: aistudio.google.com/api-keys). A pasted key stays in that browser tab;
 a key in <code>.env</code> serves everyone on the server.</li>
-<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i> (FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, spin waves, FeRh heating).</li></ol>
+<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i> (FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, a skyrmion at 300 K, spin waves, FeRh heating).</li></ol>
 <div class="tip">No key? <i>Run setup</i> (play icon) runs a preset or your parameter file directly; only the chat needs a model.</div></div>
 </div>
 
@@ -354,6 +354,23 @@ axis with no skyrmion Hall effect. The pictures show the Néel vector with the a
 <tr><td>SAF velocity, 2e11 A/m²</td><td>Thiele 132.2 m/s</td><td>131.1 m/s</td></tr>
 </table>
 <figure><img src="../screenshots/mm2d-saf-chat.png" style="width:72%"><figcaption>In the chat: does a synthetic-AFM skyrmion show a skyrmion Hall effect?</figcaption></figure>
+<h3>Temperature</h3>
+<p><code>Temp</code> (K) in <code>mode=dynamics</code> adds the stochastic thermal field of Brown,
+⟨H<sub>i</sub>(t)H<sub>j</sub>(t′)⟩ = 2αk<sub>B</sub>T/(μ₀M<sub>s</sub>γ₀V) δ<sub>ij</sub>δ(t − t′), and integrates with fixed Heun steps
+(<code>thermal_dt</code>, by default 0.15 of the fastest precession period). That is slower than at 0 K, so keep thermal
+runs to about 64 × 64 cells and 1 ns. For a skyrmion without current the card gives the diffusion constant from the mean
+squared displacement, ⟨r²⟩ = 4Dτ, next to the stochastic Thiele value; one 1 ns trajectory has a statistical error of
+about 25 %.</p>
+<div class="side" style="grid-template-columns:1.5fr 1fr">
+<figure><img src="../mm2d-thermal-skyrmion.png"><figcaption>A Néel skyrmion at 300 K.</figcaption></figure>
+<figure><img src="../mm2d-thermal-track.png"><figcaption>Its Brownian path over 1 ns: D = 49.7 nm²/ns, Thiele 40.8 nm²/ns.</figcaption></figure>
+</div>
+<table>
+<tr><th>Thermal check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Independent spins, 300 K, α = 0.1 and 0.5</td><td>Boltzmann ⟨m<sub>z</sub>⟩ = 0.058</td><td>0.058 ± 0.002</td></tr>
+<tr><td>Skyrmion diffusion, 300 K, α = 0.3</td><td>Thiele 40.8 nm²/ns</td><td>49.7 nm²/ns (one trajectory, ±25 %)</td></tr>
+</table>
+<figure><img src="../screenshots/mm2d-thermal-chat.png" style="width:72%"><figcaption>In the chat: how far does a skyrmion wander at 300 K?</figcaption></figure>
 <h3>Spin waves</h3>
 <p>With <code>excite=stripe</code> or <code>excite=dot</code> the field pulse acts on an antenna instead of the whole film.
 <code>pulse=sine</code> at <code>f_rf</code> sends a monochromatic wave: the card gives its wavelength next to the theory.

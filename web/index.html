@@ -1147,6 +1147,7 @@ function emptyState() {
     ["Hopfion", "Relax a hopfion with mm3d in a chiral magnet nanodisk, 54 nm across and 24 nm thick, with bulk DMI D = 5.236 mJ/m², A = 10 pJ/m, Ms = 500 kA/m, the surfaces pinned up and B = 0.3 T. What is its Hopf index?"],
     ["Skyrmion motion", "Push a Néel skyrmion with mm2d by spin-orbit torque: current 1e12 A/m² along x, spin Hall angle 0.1, damping 0.1, 400 ps. How fast does it move and what is its skyrmion Hall angle?"],
     ["Synthetic AFM skyrmion", "Push a skyrmion in a synthetic antiferromagnet with mm2d (two layers coupled by RKKY J = -1 mJ/m²) by spin-orbit torque, 2e11 A/m² along x, 200 ps. Does it show a skyrmion Hall effect?"],
+    ["Skyrmion at 300 K", "Run a Néel skyrmion with mm2d on a 64 × 64 nm film at 300 K for 1 ns, damping 0.3, no current. How far does it wander, and does its diffusion match the Thiele equation?"],
     ["Spin waves", "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?"],
     ["FeRh heating", "Heat a FeRh layer through its transition: positive A0 = 0.248e-12, temperature 370 K ± 60 K at 0.25 GHz, 2 ns. When does it go from AFM to FM?"],
   ];
@@ -1757,6 +1758,9 @@ function mm2dView(box, id, r) {
     ["Energy", `${num(s.energy_final_J * 1e18, 4)} aJ`], ["<m> final", `(${(s.m_final || []).map(x => fmt(x, 3)).join(", ")})`],
     s.relax_iterations != null ? ["Relaxation", `${s.relax_iterations.toLocaleString()} ${t("iterations")}, max |m×H| ${num(s.relax_torque_A_per_m, 2)} A/m`] : null,
     s.peak_frequency_mx_GHz != null ? ["Main frequency <mx>", num(s.peak_frequency_mx_GHz, 3) + " GHz"] : null,
+    s.temperature_K ? ["Temperature", num(s.temperature_K, 4) + " K"] : null,
+    s.diffusion_m2ps != null ? ["Diffusion constant", num(s.diffusion_m2ps * 1e9, 3) + " nm²/ns" + (s.diffusion_thiele_m2ps ? ` (Thiele ${num(s.diffusion_thiele_m2ps * 1e9, 3)})` : "")] : null,
+    s.rms_displacement_nm != null ? ["RMS displacement", num(s.rms_displacement_nm, 3) + " nm"] : null,
     s.velocity_mps ? ["Velocity", `(${s.velocity_mps.map(v => fmt(v, 1)).join(", ")}) m/s, |v| = ${num(s.speed_mps, 1)} m/s`] : null,
     s.hall_angle_deg != null ? ["Skyrmion Hall angle", num(s.hall_angle_deg, 1) + "°"] : null,
     s.thiele_velocity_mps ? ["Thiele prediction", `(${s.thiele_velocity_mps.map(v => fmt(v, 1)).join(", ")}) m/s`] : null,
@@ -1771,7 +1775,7 @@ function mm2dView(box, id, r) {
   box.innerHTML = `<figure class="rc-texture"><a href="${f(pic)}" target="_blank" rel="noopener"><img src="${f(pic)}" alt="${t("Tilted view and top view of the final texture")}" loading="lazy"></a>
     <figcaption>${t(wave ? "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size." : "Colour: in-plane direction; light = up, dark = down. Click a picture to open it full size.")}</figcaption></figure>
     <div class="rc-mm2d"><table>${rows.map(([k, v]) => `<tr><td>${esc(t(k))}</td><td class="mono">${v}</td></tr>`).join("")}</table>
-    <a href="${f(side)}" target="_blank" rel="noopener"><img src="${f(side)}" alt="${esc(t(side === "skyrmion_track.png" ? "Path of the skyrmion under the current" : side === "dispersion.png" ? "Spin-wave dispersion" : side === "spinwave_profile.png" ? "Change of mx" : s.mode === "dynamics" ? "<m> in time" : "<m> during the relaxation"))}" loading="lazy"></a></div>`;
+    <a href="${f(side)}" target="_blank" rel="noopener"><img src="${f(side)}" alt="${esc(t(side === "skyrmion_track.png" ? "Path of the skyrmion" : side === "dispersion.png" ? "Spin-wave dispersion" : side === "spinwave_profile.png" ? "Change of mx" : s.mode === "dynamics" ? "<m> in time" : "<m> during the relaxation"))}" loading="lazy"></a></div>`;
 }
 
 // ---------------------------------------------------------------- setup dialog, fast / deep
@@ -2696,6 +2700,8 @@ function runSummaryLine(r) {
     if (s.engine === "mm3d") p.push(`<span>H = ${fmt(s.hopf_index, 2)}</span>`);
     else if (s.texture !== "spin_waves") p.push(`<span>Q = ${fmt(s.topological_charge, 2)}</span>`);
     if (s.texture === "skyrmion" && s.radius_nm) p.push(`<span>R = ${fmt(s.radius_nm, 1)} nm</span>`);
+    if (s.temperature_K) p.push(`<span>T = ${fmt(s.temperature_K, 4)} K</span>`);
+    if (s.diffusion_m2ps != null) p.push(`<span>D = ${fmt(s.diffusion_m2ps * 1e9, 3)} nm²/ns</span>`);
     if (s.speed_mps != null) p.push(`<span>v = ${fmt(s.speed_mps, 1)} m/s, ${t("Hall angle")} ${fmt(s.hall_angle_deg, 1)}°</span>`);
     if (s.wavelength_nm != null) p.push(`<span>λ = ${fmt(s.wavelength_nm, 1)} nm</span>`);
     if (s.dispersion_mismatch_pct != null) p.push(`<span>${t("dispersion")} ±${fmt(s.dispersion_mismatch_pct, 1)} %</span>`);

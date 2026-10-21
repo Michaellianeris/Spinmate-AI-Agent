@@ -49,6 +49,8 @@ PARAMS = {
     "f_rf": (0.0, "float", "Hz", "frequency of the sine, or cut-off of the sinc"),
     "absorb": (0.0, "float", "m", "absorbing edges: the damping rises to 1 over this width at the x edges "
                "(and y edges for a dot), so spin waves do not come back"),
+    "Temp": (0.0, "float", "K", "temperature (dynamics): stochastic thermal field, fixed Heun steps"),
+    "thermal_dt": (0.0, "float", "s", "time step with temperature (0 = 0.15 / the fastest precession)"),
     "j": ((0.0, 0.0, 0.0), "vector", "A/m^2", "current density in the plane (dynamics): drives spin torques"),
     "stt_P": (0.0, "float", "", "spin polarisation of the current in the film (Zhang-Li STT); 0 = no STT"),
     "stt_beta": (0.0, "float", "", "non-adiabatic STT parameter beta"),
@@ -122,6 +124,12 @@ def check(vals):
     if vals["mode"] == "dynamics" and vals["pulse"] != "step" and vals["table_dt"] > 1 / (2.5 * vals["f_rf"]):
         warnings.append(f"table_dt is too coarse for f_rf = {vals['f_rf'] / 1e9:.3g} GHz: use at most "
                         f"{1 / (2.5 * vals['f_rf']):.2g} s")
+    if vals["Temp"] < 0:
+        errors.append("Temp must be zero or positive")
+    if vals["Temp"] > 0 and vals["mode"] != "dynamics":
+        warnings.append("temperature acts only in mode=dynamics (relaxation is at 0 K)")
+    if vals["Temp"] > 0 and vals["mode"] == "dynamics":
+        warnings.append("with temperature the solver takes fixed Heun steps: slower than at 0 K")
     if any(vals["j"]) and vals["mode"] != "dynamics":
         warnings.append("a current acts only in mode=dynamics")
     if any(vals["j"]) and not (vals["stt_P"] or vals["theta_SH"]):
@@ -159,6 +167,8 @@ def estimate_s(vals):
     cells = vals["Nx"] * vals["Ny"]
     relax = 0.2e-6 * cells * 3000 if (vals["mode"] == "relax" or vals["relax_first"]) else 0
     dyn = 50e-6 * (1e-9 / vals["dx"]) ** 2 * cells * vals["t"] / 1e-12 if vals["mode"] == "dynamics" else 0
+    if vals["Temp"] > 0:                              # fixed Heun steps
+        dyn *= 1.5
     if vals["lattice"] != "ferro":                    # two sublattices and the faster exchange precession
         J = vals["J_afm"] if vals["lattice"] == "afm" else -vals["J_rkky"] / vals["thickness"]
         relax, dyn = 2 * relax, 2.5 * dyn * max(1.0, J / 2e7) ** 0.5

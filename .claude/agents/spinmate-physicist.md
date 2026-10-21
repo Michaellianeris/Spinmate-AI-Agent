@@ -41,6 +41,12 @@ time-dependent drives, integrated with Heun steps.
   field). The skyrmions in m1 and m2 have opposite charges (sublattice_charges -1, +1), so their Magnus forces cancel:
   under a current they move along the current axis without a skyrmion Hall effect, and faster than in a single
   ferromagnetic layer. The pictures show the Neel vector n = (m1 - m2)/2 with m1 (red) and m2 (blue) arrows.
+  Temperature: Temp (K) in mode=dynamics adds the stochastic thermal field (Brown), integrated with fixed Heun steps
+  (thermal_dt, default 0.15 / the fastest precession), so it is slower than at 0 K: keep thermal runs to about
+  64 x 64 cells and 1 ns (some minutes). For a localised texture without current the summary gives
+  diffusion_m2ps from the mean squared displacement and diffusion_thiele_m2ps from the stochastic Thiele
+  equation; one trajectory of 1 ns has a statistical error of roughly 25 %. mean_mz_thermal is the time average of
+  <m_z> after the first fifth of the run.
   Experimentally, room-temperature skyrmions with compensated moments are seen in synthetic antiferromagnets
   (e.g. Pt/Co/Ru multilayers) and ferrimagnets; in intrinsic antiferromagnets only special cases are known.
 - mm3d (built in): SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk (CPU): exchange, bulk or

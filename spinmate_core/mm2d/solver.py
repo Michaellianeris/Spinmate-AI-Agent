@@ -112,6 +112,32 @@ def _norm(m):
 
 
 HBAR, QE, MUB = 1.054571817e-34, 1.602176634e-19, 9.2740100783e-24
+KB = 1.380649e-23
+
+
+def thermal_sigma(film, alpha, T, dt, thickness):
+    """Standard deviation (A/m) of each component of the thermal field for one step dt (Brown):
+    <H_i(t) H_j(t')> = 2 alpha kB T / (mu0 Ms gamma0 V) delta_ij delta(t - t'), V = dx^2 thickness."""
+    V = film.dx * film.dx * thickness
+    return np.sqrt(2 * np.asarray(alpha) * KB * T / (MU0 * film.Ms * GAMMA0 * V * dt))
+
+
+def boltzmann_mz(Ms, V, Keff, H, T):
+    """<m_z> of one macrospin with energy -mu0 Ms V H cos(theta) - Keff V cos^2(theta) at temperature T."""
+    th = np.linspace(0, np.pi, 20001)
+    E = -MU0 * Ms * V * H * np.cos(th) - Keff * V * np.cos(th) ** 2
+    w = np.exp(-(E - E.min()) / (KB * T)) * np.sin(th)
+    return float(np.trapezoid(np.cos(th) * w, th) / np.trapezoid(w, th))
+
+
+def diffusion_thiele(film, m, alpha, thickness):
+    """Brownian diffusion constant (m^2/s) of a rigid texture from the stochastic Thiele equation:
+    D = kB T alpha Dd / (G^2 + alpha^2 Dd^2) with G, Dd in units of mu0 Ms d / gamma0 (multiply by kB T outside)."""
+    d = [film.ddx(m), film.ddy(m)]
+    c = MU0 * film.Ms * thickness / GAMMA0
+    G = c * float(np.sum(m * np.cross(d[0], d[1], axis=0))) * film.dx ** 2
+    Dd = c * float(np.sum(d[0] * d[0])) * film.dx ** 2
+    return alpha * Dd / (G ** 2 + alpha ** 2 * Dd ** 2)      # times kB T
 
 
 def spin_torque(film, m):

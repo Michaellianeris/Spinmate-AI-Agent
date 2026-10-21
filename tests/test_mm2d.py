@@ -244,3 +244,29 @@ def test_lattice_checks():
     assert not e.validate("--lattice=saf\n--J_rkky=1e-3\n").ok
     assert not e.validate("--lattice=afm\n--mode=dynamics\n--excite=stripe\n--pulse=sine\n--f_rf=8e10\n").ok
     assert M.parse("--lattice=afm\n")["lattice"] == "afm"
+
+
+@pytest.mark.parametrize("alpha", [0.1, 0.5])
+def test_thermal_equilibrium_is_boltzmann(alpha):
+    """Independent spins (A = 0) at 300 K: <m_z> against the Boltzmann average, for two dampings."""
+    Ms, dx, d, T, B = 0.58e6, 3e-9, 1e-9, 300.0, 0.1
+    f = F.Film(16, 16, dx, Ms, 0.0, KU, 0.0, B=(0, 0, B))
+    exact = F.boltzmann_mz(Ms, dx * dx * d, KU - 0.5 * F.MU0 * Ms ** 2, B / F.MU0, T)
+    dt, rng = 0.05 / f.max_freq(), np.random.default_rng(3)
+    m, base, acc = F.initial(f, "uniform"), f.H_ext.copy(), []
+    n = int(3e-9 / dt)
+    for k in range(n):
+        f.H_ext = base + F.thermal_sigma(f, alpha, T, dt, d) * rng.normal(size=m.shape)
+        m = F.heun(f, m, dt, alpha)
+        if k > n // 5 and k % 5 == 0:
+            acc.append(m[2].mean())
+    assert np.mean(acc) == pytest.approx(exact, abs=0.012)
+
+
+def test_temperature_run(tmp_path, monkeypatch):
+    s = _run(tmp_path, monkeypatch, "--mode=dynamics\n--texture=skyrmion\n--Nx=40\n--Ny=40\n--R0=6e-9\n--alpha=0.3\n"
+             "--Temp=300\n--t=40e-12\n--table_dt=1e-12\n")
+    assert s["temperature_K"] == 300 and s["thermal_dt_s"] > 0 and s["diffusion_m2ps"] > 0
+    assert s["diffusion_thiele_m2ps"] > 0 and s["texture"] == "skyrmion"
+    assert (tmp_path / "skyrmion_track.png").exists()
+    assert any("Heun" in w for w in M.MM2DEngine().validate("--mode=dynamics\n--Temp=300\n").warnings)
