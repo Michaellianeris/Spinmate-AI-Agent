@@ -1,4 +1,4 @@
-"""SpinMate's own 2D micromagnetic engine: physics checks against analytic results and a run through the tools."""
+"""SpinMate's own 2D micromagnetic engine (built in): physics checks against analytic results and a run through the tools."""
 import json
 import sys
 from pathlib import Path
@@ -7,12 +7,9 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-PLUGIN = ROOT / "plugins" / "spinmate-mm2d"
-sys.path.insert(0, str(PLUGIN))
-
 from spinmate_core import engines, simulations as S, tools  # noqa: E402
-import spinmate_mm2d as M  # noqa: E402
-from spinmate_mm2d import solver as F  # noqa: E402
+import spinmate_core.mm2d as M  # noqa: E402
+from spinmate_core.mm2d import solver as F  # noqa: E402
 
 A, KU, MS, TH = 15e-12, 0.8e6, 0.58e6, 1e-9
 KEFF = KU - 0.5 * F.MU0 * MS ** 2
@@ -90,9 +87,8 @@ def test_parse_and_validate():
 
 
 @pytest.fixture
-def mm2d(monkeypatch):
-    monkeypatch.setenv("PYTHONPATH", str(PLUGIN))
-    engines.register("mm2d", M.MM2DEngine)
+def mm2d():
+    assert "mm2d" in engines.available()      # built in, no install
     yield engines.get("mm2d")
 
 
@@ -113,7 +109,7 @@ def test_dynamics_run_finds_the_kittel_mode(tmp_path, monkeypatch):
     (tmp_path / "parameters.txt").write_text("--mode=dynamics\n--texture=uniform\n--Nx=8\n--Ny=8\n--D=0\n"
                                              "--B_ext=0,0,0.2\n--B_pulse=0.01,0,0\n--t_pulse=2e-12\n--t=500e-12\n"
                                              "--alpha=0.001\n")
-    from spinmate_mm2d import runner
+    from spinmate_core.mm2d import runner
     runner.main()
     s = json.loads((tmp_path / "summary.json").read_text())
     f_th = F.GAMMA0 / (2 * np.pi) * (0.2 / F.MU0 + 2 * KEFF / (F.MU0 * MS)) / 1e9

@@ -81,7 +81,7 @@ figcaption{font-size:8pt;color:#6B5A86;margin-top:1mm}
     and explains the results from the actual magnetization dynamics, with figures and reports ready to share.</p>
   </div>
   <div class="c-feat">
-    <div><b>Validated solver</b><span>Macrospin LLG checked on 9 analytic cases; mumax3 plug-in</span></div>
+    <div><b>Validated solvers</b><span>Macrospin LLG on 9 analytic cases; 2D micromagnetics for skyrmions; mumax3 plug-in</span></div>
     <div><b>Claude, OpenAI, Gemini</b><span>Routed per request by capability and cost</span></div>
     <div><b>Any agent (MCP)</b><span>Web app, Claude Code, Claude Desktop</span></div>
     <div><b>Runs locally</b><span>Docker or Windows app; your keys, your data</span></div>
@@ -110,14 +110,14 @@ results from the actual magnetization dynamics, with figures and reports ready t
 <li>Chat-driven runs, sweeps and threshold searches on the two-sublattice macrospin (LLG) solver</li>
 <li>Answers grounded in computed metrics: switches, settling, frequencies</li>
 <li><b>New in 2.0:</b> an MCP server, so Claude Code, Claude Desktop or any agent uses the same tools</li>
-<li><b>New in 2.0:</b> a physics validation suite against analytic results, and a mumax3 engine plug-in</li>
+<li><b>New in 2.0:</b> a physics validation suite against analytic results, SpinMate's own built-in 2D micromagnetic engine (skyrmions, domain walls) and a mumax3 engine plug-in</li>
 <li>Claude, OpenAI and Gemini behind four personas, chosen per request by capability and price</li>
 <li>Figures (IEEE, Nature), reports with LaTeX math, a searchable run catalog</li>
 <li>Six interface languages; runs locally with Docker or a Windows app</li></ul></div>
 <div class="box"><h3>Contents</h3><ol class="toc">
 <li>Getting started</li><li>Your first simulation</li><li>Reading a run card</li><li>Fast, Deep and next steps</li>
 <li>Models and personas</li><li>The tools</li><li>Architecture</li><li>From Claude and other agents</li>
-<li>Engines: macrospin and mumax3</li><li>Physics validation</li><li>Sweeps and continuing runs</li>
+<li>Engines: macrospin, mm2d and mumax3</li><li>Physics validation</li><li>Sweeps and continuing runs</li>
 <li>Compare, figures, reports</li><li>Runs panel and catalog</li><li>Settings and conversations</li>
 <li>Data, privacy and security</li><li>Configuration</li><li>Parameters</li><li>Troubleshooting</li></ol></div>
 </div>
@@ -219,7 +219,7 @@ over MCP they return <code>needs_confirmation</code> and run only when called ag
 <tr><td>Model router (<code>app/router.py</code>)</td><td>Scores the persona's models on capability and price for each request.</td></tr>
 <tr><td>MCP server (<code>spinmate_mcp/</code>)</td><td>Tools, resources (parameters, physics guide, validation, runs, examples) and prompts, over stdio or HTTP. <code>physics.md</code> is the physics guide shared by the server, the chat and the Claude Code subagent.</td></tr>
 <tr><td>spinmate-core (<code>spinmate_core/</code>)</td><td>The engine without an LLM: tools, run queue, sweeps and continuation, catalog, figures, reports, validation suite and a command line (<code>python -m spinmate_core</code>).</td></tr>
-<tr><td>Engines (<code>spinmate_core/engines/</code>)</td><td>One interface: <code>parameter_schema</code>, <code>validate</code>, <code>run_command</code>, <code>outputs</code>. macrospin is built in; plug-ins such as mumax3 register under <code>spinmate.engines</code>.</td></tr>
+<tr><td>Engines (<code>spinmate_core/engines/</code>)</td><td>One interface: <code>parameter_schema</code>, <code>validate</code>, <code>run_command</code>, <code>outputs</code>. macrospin and mm2d are built in; plug-ins such as mumax3 register under <code>spinmate.engines</code>.</td></tr>
 <tr><td>Run catalog</td><td>Postgres in Docker, SQLite in the desktop app: one row per run, queried with read-only SQL.</td></tr>
 <tr><td>Data volume</td><td><code>/data</code>: runs, sweeps, figures, reports, validation, accounts, exchange-rate cache.</td></tr>
 </table>
@@ -253,13 +253,13 @@ python -m spinmate_mcp --http   # port 8422</pre></div>
 </table>
 <div class="ask">Use spinmate to find the smallest DC SOT current that makes the Néel vector rotate.</div>
 
-<h2><span class="n">9</span>Engines: macrospin and mumax3</h2>
-<p><b>Plug-ins are optional:</b> SpinMate runs fully with the built-in macrospin engine, and mumax3 or any other engine is added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
-in the chat simply ask for mumax3, over MCP pass <code>engine="mumax3"</code>. When a plug-in is installed, <b>Run setup</b> also
-shows an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 without a GPU) is marked “not installed”.</p>
+<h2><span class="n">9</span>Engines: macrospin, mm2d and mumax3</h2>
+<p><b>Two engines are built in:</b> macrospin (two sublattices) and mm2d (2D micromagnetics: skyrmions, domain walls). mumax3 or any other engine is an optional plug-in, added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
+in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine="mm2d"</code> or <code>engine="mumax3"</code>. <b>Run setup</b> (Deep mode) has an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 without a GPU) is marked “not installed”.</p>
 <table>
 <tr><th style="width:24mm">Engine</th><th>What it computes</th><th style="width:56mm">Notes</th></tr>
 <tr><td><b>macrospin</b><br>(default)</td><td>Two coupled LLG equations for the sublattices m₁ and m₂: exchange A0, anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise, time-dependent drives.</td><td>Built in; sweeps, continuation and combination of runs.</td></tr>
+<tr><td><b>mm2d</b><br>(built in)</td><td>SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick: exchange, perpendicular anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. Finds skyrmions, skyrmionium and domain walls, or runs LLG dynamics.</td><td>Part of SpinMate: CPU only, nothing to install; a 128 × 128 film relaxes in seconds.</td></tr>
 <tr><td><b>mumax3</b><br>(optional plug-in)</td><td>Finite-difference micromagnetics of one ferromagnet on a grid, on the GPU. Input as SpinMate lines (turned into an <code>.mx3</code> script) or a complete <code>.mx3</code> script; the card shows ⟨m⟩(t).</td><td>Needs an NVIDIA GPU and the mumax3 binary in <code>MUMAX3_BIN</code>; without it validation warns. Single runs only.</td></tr>
 </table>
 <pre>--Nx=128
@@ -272,6 +272,42 @@ shows an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 
 <div class="tip">mumax3 is free software under the GNU GPL v3; SpinMate starts it as a separate program and stays MIT. If you
 publish results obtained with it, cite Vansteenkiste et al., <i>The design and verification of MuMax3</i>, AIP Advances 4,
 107133 (2014). Outside Docker: <code>pip install -e plugins/spinmate-mumax3</code>.</div>
+
+<h3>2D micromagnetics: skyrmions with mm2d</h3>
+<p>Choose <b>mm2d</b> in the Engine menu of Run setup (Deep mode), or ask in the chat, for example
+“relax a Néel skyrmion with D = 3.5 mJ/m²”. <code>mode=relax</code> lowers the energy from a seed
+(<code>texture=skyrmion</code>, <code>skyrmionium</code>, <code>domain_wall</code>, <code>uniform</code>, <code>random</code>) to the
+nearest stable state; <code>mode=dynamics</code> relaxes first and then solves LLG in time, with an optional field pulse
+<code>B_pulse</code> for <code>t_pulse</code>, and reports the main frequency.</p>
+<pre>--mode=relax
+--texture=skyrmion
+--Aex=15e-12
+--Ku=0.8e6
+--Msat=580e3
+--D=3.5e-3
+--Nx=128
+--Ny=128</pre>
+<figure><img src="../mm2d-skyrmion.png"><figcaption>A relaxed Néel skyrmion: tilted view with 3D arrows (left) and top view with nm axes (right). Colour: in-plane direction; light = up, dark = down. Q = −1, radius 14.4 nm.</figcaption></figure>
+<figure><img src="../mm2d-skyrmionium.png"><figcaption>Skyrmionium, a skyrmion inside a skyrmion: Q = 0, rings at 8.5 nm and 34.4 nm.</figcaption></figure>
+<div class="side">
+<div>
+<p><b>The run card</b> of an mm2d run shows the final texture in both views, then a table with the texture it found,
+the topological charge Q, the radius or the rings where m<sub>z</sub> = 0, the energy and how far the relaxation went,
+and ⟨m⟩ during the relaxation or in time. <code>m_final.npz</code> keeps the full state; click a picture to open it full size.</p>
+<table>
+<tr><th>mm2d check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Wall energy, D = 0 / 2 mJ/m²</td><td>4√(A·Keff) − π|D|</td><td>within 0.3 %</td></tr>
+<tr><td>Wall width</td><td>√(A/Keff)</td><td>within 1 %</td></tr>
+<tr><td>Wall type</td><td>Néel (interfacial), Bloch (bulk)</td><td>as expected</td></tr>
+<tr><td>Kittel frequency</td><td>γ₀/2π·(H + 2Keff/μ₀Ms)</td><td>within 0.2 %</td></tr>
+<tr><td>Energy, α = 0</td><td>conserved</td><td>drift &lt; 1e-4</td></tr>
+<tr><td>Skyrmion / skyrmionium</td><td>Q = −1 / 0</td><td>−1.00 / 0.00</td></tr>
+</table>
+</div>
+<figure><img src="../screenshots/mm2d-card.png"><figcaption>The run card of an mm2d skyrmion.</figcaption></figure>
+</div>
+<div class="tip">Limits: the film is one cell thick and the demagnetising field is local (−Ms·m<sub>z</sub>), so there is no long-range
+stray field; no temperature yet. Two sublattices and a GPU version are planned.</div>
 
 <h2><span class="n">10</span>Physics validation</h2>
 <div class="side">

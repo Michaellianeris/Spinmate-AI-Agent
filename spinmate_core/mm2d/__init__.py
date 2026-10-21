@@ -1,4 +1,4 @@
-"""SpinMate's own 2D micromagnetic engine (CPU, NumPy): skyrmions, skyrmionium, domain walls and uniform modes in a
+"""SpinMate's own 2D micromagnetic engine, built in (CPU, NumPy): skyrmions, skyrmionium, domain walls and uniform modes in a
 thin ferromagnetic film one cell thick.
 
 Input: SpinMate lines (--Nx=128 --D=3.5e-3 ...). mode=relax lowers the energy to the nearest stable texture;
@@ -6,9 +6,8 @@ mode=dynamics relaxes first (optional) and then solves the LLG equation in time,
 import re
 import sys
 
-from spinmate_core.engines import Validation
+from ..engines.base import Validation
 
-__version__ = "0.1.0"
 MU0 = 4e-7 * 3.141592653589793
 
 # name: (default, kind, unit, description); a "choice" lists its values after the description
@@ -127,7 +126,7 @@ def estimate_s(vals):
 
 class MM2DEngine:
     name = "mm2d"
-    title = "SpinMate 2D micromagnetics (CPU)"
+    title = "2D micromagnetics: skyrmions (built in)"
     description = ("SpinMate's own finite-difference solver for a thin film one cell thick: exchange, perpendicular "
                    "anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. "
                    "Finds skyrmions, skyrmionium and domain walls (mode=relax) or runs LLG dynamics with a field "
@@ -160,7 +159,7 @@ class MM2DEngine:
                           warnings=warnings, extra={"cleaned_text": (parameters_text or "").strip() + "\n"})
 
     def run_command(self):
-        return [sys.executable, "-m", "spinmate_mm2d.runner"]
+        return [sys.executable, "-m", "spinmate_core.mm2d.runner"]
 
     def outputs(self):
         return {"texture_3d.png": "tilted view of the final texture with 3D arrows",
