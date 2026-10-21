@@ -135,7 +135,7 @@ docker compose up -d      # then open http://localhost:8421</pre>
 server is set up, brings this guide as a welcome email; otherwise she gives you the download link.</li>
 <li><b>API key:</b> Settings (gear) → paste an Anthropic, OpenAI and/or Gemini key (Gemini keys: aistudio.google.com/api-keys). A pasted key stays in that browser tab;
 a key in <code>.env</code> serves everyone on the server.</li>
-<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i> (FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, spin waves, FeRh heating).</li></ol>
+<li><b>Ask</b> in the message box, or pick a card under <i>Find a skill</i> (FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, spin waves, FeRh heating).</li></ol>
 <div class="tip">No key? <i>Run setup</i> (play icon) runs a preset or your parameter file directly; only the chat needs a model.</div></div>
 </div>
 
@@ -274,7 +274,7 @@ in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine=
 publish results obtained with it, cite Vansteenkiste et al., <i>The design and verification of MuMax3</i>, AIP Advances 4,
 107133 (2014). Outside Docker: <code>pip install -e plugins/spinmate-mumax3</code>.</div>
 
-<h3>2D micromagnetics: skyrmions and spin waves with mm2d</h3>
+<h3>2D micromagnetics: skyrmions, their motion and spin waves with mm2d</h3>
 <p>Choose <b>mm2d</b> in the Engine menu of Run setup (Deep mode), or ask in the chat, for example
 “relax a Néel skyrmion with D = 3.5 mJ/m²” or “send 80 GHz spin waves from a stripe antenna”. <code>mode=relax</code> lowers the energy from a seed
 (<code>texture=skyrmion</code>, <code>skyrmionium</code>, <code>domain_wall</code>, <code>uniform</code>, <code>random</code>) to the
@@ -313,6 +313,47 @@ and ⟨m⟩ during the relaxation or in time. <code>m_final.npz</code> keeps the
 <figure><img src="../screenshots/mm2d-skyrmion-chat.png"><figcaption>In the chat: a skyrmion from a question.</figcaption></figure>
 <figure><img src="../screenshots/mm2d-spinwaves-chat.png"><figcaption>In the chat: spin waves from a question.</figcaption></figure>
 </div>
+<h3>Skyrmion motion with a current</h3>
+<p>In <code>mode=dynamics</code> a current density <code>j</code> (A/m², in the plane) moves the texture. <code>stt_P</code> turns on
+spin-transfer torque in the film (Zhang-Li, drift velocity u = P μ<sub>B</sub> j/(e M<sub>s</sub>), non-adiabaticity
+<code>stt_beta</code>); <code>theta_SH</code> turns on the damping-like spin-orbit torque from a heavy metal under the film
+(H<sub>DL</sub> = ħ θ<sub>SH</sub> |j|/(2e μ₀ M<sub>s</sub> d), polarisation σ = z × j). The card shows the path of the centre, the
+velocity, the skyrmion Hall angle and the Thiele prediction for the relaxed texture.</p>
+<pre>--mode=dynamics
+--texture=skyrmion
+--Nx=96
+--Ny=96
+--alpha=0.1
+--j=1e12,0,0
+--theta_SH=0.1
+--t=400e-12</pre>
+<div class="side" style="grid-template-columns:1fr 1fr">
+<figure><img src="../mm2d-motion-sot.png"><figcaption>SOT, 1e12 A/m²: 116 m/s, deflected 80° from the current (skyrmion Hall angle); Thiele within 3 %.</figcaption></figure>
+<figure><img src="../mm2d-motion-stt.png"><figcaption>STT, u = 50 m/s, β = 0.2, α = 0.1: Hall angle 9.2°; Thiele (51.3, 8.4) m/s.</figcaption></figure>
+</div>
+<table>
+<tr><th>Motion check</th><th>Expected (Thiele)</th><th>Measured</th></tr>
+<tr><td>STT, β = α</td><td>v = u = 50 m/s</td><td>49.8 m/s, no Hall angle</td></tr>
+<tr><td>STT, β = 2α</td><td>(51.4, 8.2) m/s</td><td>(51.5, 8.1) m/s</td></tr>
+<tr><td>SOT, 2e11 A/m²</td><td>(−3.8, −22.1) m/s</td><td>(−3.8, −22.0) m/s</td></tr>
+</table>
+<figure><img src="../screenshots/mm2d-motion-chat.png" style="width:72%"><figcaption>In the chat: how fast a skyrmion moves under SOT.</figcaption></figure>
+<h3>Antiferromagnetic skyrmions</h3>
+<p><code>lattice=saf</code> is a synthetic antiferromagnet: two ferromagnetic layers coupled antiparallel through a spacer
+(RKKY, <code>J_rkky</code> &lt; 0, energy −J<sub>rkky</sub> m₁·m₂ per area), each with its own thin-film field, as in
+Pt/Co/Ru multilayers where such skyrmions are observed at room temperature. <code>lattice=afm</code> is an intrinsic,
+compensated antiferromagnet with two sublattices coupled by <code>J_afm</code> and no demagnetising field. The two skyrmions
+have opposite charges (Q₁ = −1, Q₂ = +1): their Magnus forces cancel, so under a current they move along the current
+axis with no skyrmion Hall effect. The pictures show the Néel vector with the arrows of both layers (m₁ red, m₂ blue).</p>
+<figure><img src="../mm2d-saf-skyrmion.png"><figcaption>A skyrmion in a synthetic antiferromagnet, J<sub>rkky</sub> = −1 mJ/m²: R = 14.5 nm, Q₁ = −1, Q₂ = +1.</figcaption></figure>
+<figure><img src="../mm2d-motion-fm-vs-saf.png"><figcaption>The same SOT current, 2e11 A/m²: one ferromagnetic layer (left), 22 m/s deflected 80°; the synthetic antiferromagnet (right), 131 m/s along the current.</figcaption></figure>
+<table>
+<tr><th>Antiferromagnet check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>AFM skyrmion profile</td><td>ferromagnet without demag</td><td>same radius</td></tr>
+<tr><td>Skyrmion Hall angle (AFM, SAF)</td><td>0</td><td>0.0°</td></tr>
+<tr><td>SAF velocity, 2e11 A/m²</td><td>Thiele 132.2 m/s</td><td>131.1 m/s</td></tr>
+</table>
+<figure><img src="../screenshots/mm2d-saf-chat.png" style="width:72%"><figcaption>In the chat: does a synthetic-AFM skyrmion show a skyrmion Hall effect?</figcaption></figure>
 <h3>Spin waves</h3>
 <p>With <code>excite=stripe</code> or <code>excite=dot</code> the field pulse acts on an antenna instead of the whole film.
 <code>pulse=sine</code> at <code>f_rf</code> sends a monochromatic wave: the card gives its wavelength next to the theory.

@@ -154,3 +154,93 @@ def test_spin_wave_checks():
     assert not e.validate("--mode=dynamics\n--pulse=sine\n").ok                       # needs f_rf
     v = e.validate("--mode=dynamics\n--excite=stripe\n--pulse=sine\n--f_rf=100e9\n--table_dt=1e-11\n")
     assert v.ok and any("too coarse" in w for w in v.warnings) and any("absorb" in w for w in v.warnings)
+
+
+def _skyrmion(N=64):
+    f = F.Film(N, N, 1e-9, MS, A, KU, 3.5e-3)
+    m, _, _ = F.minimise(f, F.initial(f, "skyrmion", R0=8e-9), tol=5)
+    return f, m
+
+
+def _move(f, m, alpha, T):
+    c0 = np.array(F.centre(f, m)); t, dt = 0.0, 1e-14
+    while t < T:
+        m, used, dt = F.rk45_step(f, m, min(dt, T - t), alpha, tol=1e-6)
+        t += used
+    L = f.Nx * f.dx
+    return ((np.array(F.centre(f, m)) - c0 + L / 2) % L - L / 2) / T, m
+
+
+def test_stt_with_beta_equal_alpha_moves_with_u():
+    """Thiele: with beta = alpha a rigid texture drifts exactly with the electrons, v = u."""
+    f, m = _skyrmion()
+    f.stt_u, f.stt_beta = np.array([50.0, 0, 0]), 0.1
+    v, m1 = _move(f, m, 0.1, 60e-12)
+    assert v[0] == pytest.approx(50, rel=0.02) and abs(v[1]) < 0.5
+    assert F.topological_charge(m1) == pytest.approx(-1, abs=0.02)
+
+
+@pytest.mark.parametrize("torque", ["stt", "sot"])
+def test_motion_matches_thiele(torque):
+    f, m = _skyrmion()
+    if torque == "stt":
+        f.stt_u, f.stt_beta = np.array([50.0, 0, 0]), 0.2
+    else:
+        f.sot_h, f.sot_sigma = 1e4, (0, 1, 0)
+    th = F.thiele_velocity(f, m, 0.1)
+    v, _ = _move(f, m, 0.1, 60e-12)
+    assert np.hypot(*v) == pytest.approx(np.hypot(*th), rel=0.04)       # speed
+    assert np.hypot(*(v - th)) < 0.12 * np.hypot(*th)                    # direction (the texture deforms a little)
+    if torque == "stt":
+        assert th[1] > 5                                          # a skyrmion Hall effect
+
+
+def test_current_run_reports_velocity(tmp_path, monkeypatch):
+    s = _run(tmp_path, monkeypatch, "--mode=dynamics\n--texture=skyrmion\n--Nx=48\n--Ny=48\n--R0=6e-9\n--alpha=0.1\n"
+             "--j=1e12,0,0\n--theta_SH=0.1\n--t=60e-12\n--table_dt=2e-12\n")
+    assert s["sot_sigma"] == [0.0, 1.0, 0.0] and s["sot_field_A_per_m"] > 0
+    assert np.hypot(*(np.array(s["velocity_mps"]) - s["thiele_velocity_mps"])) < 0.15 * s["speed_mps"]
+    assert -180 <= s["hall_angle_deg"] <= 180 and (tmp_path / "skyrmion_track.png").exists()
+    assert (tmp_path / "track.dat").exists()
+
+
+def test_afm_skyrmion_profile_matches_ferromagnet_without_demag():
+    f = F.Film(64, 64, 1e-9, MS, A, 0.6e6, 3.5e-3, demag="none")
+    mf, _, _ = F.minimise(f, F.initial(f, "skyrmion", R0=8e-9), tol=5)
+    a = F.AFMFilm(64, 64, 1e-9, MS, A, 0.6e6, 3.5e-3, J_afm=2e7)
+    ma, _, _ = F.minimise(a, np.stack([mf, -mf], 1), tol=5)
+    assert F.texture_metrics(f, a.neel(ma))["rings_nm"] == pytest.approx(F.texture_metrics(f, mf)["rings_nm"], abs=0.05)
+    assert F.topological_charge(ma[:, 0]) == pytest.approx(-1, abs=0.02)
+    assert F.topological_charge(ma[:, 1]) == pytest.approx(1, abs=0.02)
+    assert np.abs(ma[:, 0] + ma[:, 1]).max() < 1e-6                          # exactly antiparallel at rest
+
+
+@pytest.mark.parametrize("lattice", ["afm", "saf"])
+def test_antiferromagnetic_skyrmion_has_no_hall_effect(lattice):
+    if lattice == "afm":
+        a = F.AFMFilm(64, 64, 1e-9, MS, A, 0.6e6, 3.5e-3, J_afm=2e7)
+    else:
+        a = F.AFMFilm(64, 64, 1e-9, MS, A, KU, 3.5e-3, J_afm=1e-3 / 1e-9, demag="local")
+    m1 = F.initial(a, "skyrmion", R0=8e-9)
+    m, _, _ = F.minimise(a, np.stack([m1, -m1], 1), tol=5)
+    a.sot_h, a.sot_sigma = 1e4, (0, 1, 0)
+    th = F.thiele_velocity(a, m, 0.1)
+    assert abs(th[1]) < 1e-6 * abs(th[0])                                   # Magnus forces of m1 and m2 cancel
+    def advance(m, T):                       # the AFM texture accelerates first: measure the steady part
+        t, dt = 0.0, 1e-15
+        while t < T:
+            m, used, dt = F.rk45_step(a, m, min(dt, T - t), 0.1, tol=1e-6)
+            t += used
+        return m
+    m = advance(m, 40e-12)
+    c0 = np.array(F.centre(a, a.neel(m)))
+    m = advance(m, 40e-12)
+    v = ((np.array(F.centre(a, a.neel(m))) - c0 + 32e-9) % 64e-9 - 32e-9) / 40e-12
+    assert abs(v[1]) < 0.02 * abs(v[0]) and v[0] == pytest.approx(th[0], rel=0.05)
+
+
+def test_lattice_checks():
+    e = M.MM2DEngine()
+    assert not e.validate("--lattice=saf\n--J_rkky=1e-3\n").ok
+    assert not e.validate("--lattice=afm\n--mode=dynamics\n--excite=stripe\n--pulse=sine\n--f_rf=8e10\n").ok
+    assert M.parse("--lattice=afm\n")["lattice"] == "afm"

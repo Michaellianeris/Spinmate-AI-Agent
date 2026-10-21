@@ -34,6 +34,55 @@ def excitation_mask(film, vals):
     return m[None].astype(float)
 
 
+def roll_to(film, m, sx, sy):
+    """m shifted by (sx, sy) metres on the periodic film (whole cells)."""
+    return np.roll(m, (int(round(sy / film.dx)), int(round(sx / film.dx))), axis=(1, 2))
+
+
+def set_torques(film, vals):
+    """Spin torques from the current density j: Zhang-Li STT and damping-like SOT. Returns what was set."""
+    j = np.asarray(vals["j"], float)
+    jn = float(np.linalg.norm(j))
+    out = {}
+    if jn == 0:
+        return out
+    if vals["stt_P"]:
+        film.stt_u = vals["stt_P"] * S.MUB * j / (S.QE * film.Ms)       # g = 2
+        film.stt_beta = vals["stt_beta"]
+        out["stt_u_mps"] = [round(float(v), 3) for v in film.stt_u[:2]]
+    if vals["theta_SH"]:
+        film.sot_h = S.HBAR * vals["theta_SH"] * jn / (2 * S.QE * S.MU0 * film.Ms * vals["thickness"])
+        sig = np.asarray(vals["sot_sigma"], float)
+        if not np.any(sig):
+            sig = np.cross([0.0, 0.0, 1.0], j / jn)                   # spin Hall effect: z x j
+        film.sot_sigma = sig / np.linalg.norm(sig)
+        out["sot_field_A_per_m"] = round(float(film.sot_h), 2)
+        out["sot_sigma"] = [round(float(v), 4) for v in film.sot_sigma]
+    if out:
+        out["current_A_per_m2"] = [float(v) for v in j[:2]]
+    return out
+
+
+def motion_summary(film, vals, track):
+    """Velocity of the texture centre (fit over the second half of the run) and the Hall angle to j."""
+    t, x, y = track[:, 0], track[:, 1], track[:, 2]
+    ok = ~np.isnan(x)
+    t, x, y = t[ok], x[ok], y[ok]
+    Lx, Ly = film.Nx * film.dx, film.Ny * film.dx
+    x = np.unwrap(2 * np.pi * x / Lx) * Lx / (2 * np.pi)            # crossings of the periodic edges
+    y = np.unwrap(2 * np.pi * y / Ly) * Ly / (2 * np.pi)
+    h = len(t) // 2
+    vx, vy = np.polyfit(t[h:], x[h:], 1)[0], np.polyfit(t[h:], y[h:], 1)[0]
+    j = np.asarray(vals["j"], float)[:2]
+    jh = j / np.linalg.norm(j)
+    v_par, v_perp = vx * jh[0] + vy * jh[1], -vx * jh[1] + vy * jh[0]     # along j and along z x j
+    hall = float(np.degrees(np.arctan2(v_perp, abs(v_par)))) * (1 if v_par >= 0 else -1)
+    direction = float(np.degrees(np.arctan2(v_perp, v_par)))
+    np.savetxt("track.dat", np.column_stack([t, x, y]), fmt="%.8E", header="t (s), x (m), y (m) of the texture centre")
+    return {"velocity_mps": [round(float(vx), 3) + 0.0, round(float(vy), 3) + 0.0], "speed_mps": round(float(np.hypot(vx, vy)), 3),
+            "hall_angle_deg": round(hall, 2) + 0.0, "direction_to_j_deg": round(direction, 2) + 0.0, "distance_nm": round(float(np.hypot(x[-1] - x[0], y[-1] - y[0])) * 1e9, 2)}
+
+
 def damping(film, vals):
     """Gilbert damping, rising to 1 over `absorb` at the x edges (and y edges for a dot)."""
     a, w = vals["alpha"], vals["absorb"]
@@ -139,10 +188,24 @@ def save_wave_arrows(render, film, vals, summary, m, m0, x_nm, y_nm, cap):
 def main():
     t0 = time.time()
     vals = parse(Path("parameters.txt").read_text())
-    film = S.Film(vals["Nx"], vals["Ny"], vals["dx"], vals["Msat"], vals["Aex"], vals["Ku"], vals["D"],
-                  dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"])
+    afm = vals["lattice"] in ("afm", "saf")
+    if afm:
+        saf = vals["lattice"] == "saf"
+        J = -vals["J_rkky"] / vals["thickness"] if saf else vals["J_afm"]     # RKKY per area -> per volume
+        film = S.AFMFilm(vals["Nx"], vals["Ny"], vals["dx"], vals["Msat"], vals["Aex"], vals["Ku"], vals["D"],
+                         J_afm=J, dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"],
+                         demag="local" if saf else "none")
+    else:
+        film = S.Film(vals["Nx"], vals["Ny"], vals["dx"], vals["Msat"], vals["Aex"], vals["Ku"], vals["D"],
+                      dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"])
     d = vals["thickness"]
     m = S.initial(film, vals["texture"], R0=vals["R0"], m0=vals["m0"], seed=vals["seed"])
+    if afm:
+        m = np.stack([m, -m], 1)                      # sublattice 2 antiparallel to sublattice 1
+    view = film.neel if afm else (lambda mm: mm)          # what the pictures and the texture metrics look at
+    avg = (lambda mm: mm[:, 0].mean((1, 2))) if afm else (lambda mm: mm.mean((1, 2)))
+    avg2 = (lambda mm: mm[:, 1].mean((1, 2))) if afm else avg
+    rows2 = []
     summary = {"engine": "mm2d", "mode": vals["mode"], "texture_seed": vals["texture"],
                "grid": [vals["Nx"], vals["Ny"]], "cell_nm": vals["dx"] * 1e9,
                "energy_initial_J": film.energy(m, d)}
@@ -153,7 +216,7 @@ def main():
         total = vals["max_iter"] if vals["mode"] == "relax" else vals["max_iter"] + int(vals["t"] / vals["table_dt"])
 
         def cb(it, torque, mm):
-            rows.append((it, *mm.mean((1, 2))))
+            rows.append((it, *avg(mm))); rows2.append((it, *avg2(mm)))
             erows.append((it, film.energy(mm, d), torque))
             if it % 200 == 0:
                 _progress(it, total, t0)
@@ -162,12 +225,19 @@ def main():
                        relaxed=bool(torque < vals["tol"]))
     wave = None
     if vals["mode"] == "dynamics":
-        rows, erows = [], []
+        rows, rows2, erows = [], [], []
         n_out = int(round(vals["t"] / vals["table_dt"]))
         start = summary.get("relax_iterations", 0)
         mask = excitation_mask(film, vals)
         pulse = np.asarray(vals["B_pulse"], float).reshape(3, 1, 1) / S.MU0 * mask
+        if afm:
+            pulse = pulse[:, None]                        # the same field on both sublattices
         alpha = damping(film, vals)
+        current = set_torques(film, vals)
+        if current:
+            summary.update(current)
+            summary["thiele_velocity_mps"] = [round(float(v), 3) + 0.0 for v in S.thiele_velocity(film, m, vals["alpha"])]
+        track = [(0.0, *(S.centre(film, view(m)) or (np.nan, np.nan)))]
         base = film.H_ext.copy()
         shape, f_rf, t_p = vals["pulse"], vals["f_rf"], vals["t_pulse"]
         h_max = 1 / (24 * f_rf) if shape != "step" else np.inf      # the field changes within a period
@@ -183,8 +253,8 @@ def main():
         t, dt, steps = 0.0, 0.1 / film.max_freq(), 0
         row_j = film.Ny // 2
         m0 = m.copy()
-        wave = [m[0, row_j].copy()]
-        rows.append((0.0, *m.mean((1, 2)))); erows.append((0.0, film.energy(m, d)))
+        wave = [view(m)[0, row_j].copy()]
+        rows.append((0.0, *avg(m))); rows2.append((0.0, *avg2(m))); erows.append((0.0, film.energy(m, d)))
         for k in range(1, n_out + 1):
             t_target = k * vals["table_dt"]
             while t < t_target * (1 - 1e-12):
@@ -195,13 +265,17 @@ def main():
                 m, used, dt = S.rk45_step(film, m, h, alpha, tol=vals["rk_tol"])
                 t += used; steps += 1
             film.H_ext = base
-            rows.append((t, *m.mean((1, 2)))); erows.append((t, film.energy(m, d)))
-            wave.append(m[0, row_j].copy())
+            rows.append((t, *avg(m))); rows2.append((t, *avg2(m))); erows.append((t, film.energy(m, d)))
+            wave.append(view(m)[0, row_j].copy())
+            if current:
+                track.append((t, *(S.centre(film, view(m)) or (np.nan, np.nan))))
             _progress(start + k, start + n_out, t0)
         summary.update(dynamics_steps=steps, t_end_s=t, points=len(rows))
+        if current and len(track) > 4:
+            summary.update(motion_summary(film, vals, np.array(track)))
         tt = np.array([r[0] for r in rows])
         sel = tt >= t_p
-        if sel.sum() > 16 and vals["excite"] == "uniform":   # main frequency of <mx> and <mz> after the pulse
+        if sel.sum() > 16 and vals["excite"] == "uniform" and not current:   # main frequency after the pulse
             for comp, idx in (("mx", 1), ("mz", 3)):
                 sig = np.array([r[idx] for r in rows])[sel]
                 sig = sig - sig.mean()
@@ -216,19 +290,31 @@ def main():
             summary.update(spin_wave_summary(film, vals, tt, wave, m[0] - m0[0]))
     _progress(1, 1, t0)
 
-    rows = np.array(rows) if rows else np.array([[0.0, *m.mean((1, 2))]])
+    rows = np.array(rows) if rows else np.array([[0.0, *avg(m)]])
+    rows2 = np.array(rows2) if len(rows2) == len(rows) else np.column_stack([rows[:, 0], np.tile(avg2(m), (len(rows), 1))])
     np.savetxt("output1.dat", rows, fmt="%.10E")
-    np.savetxt("output2.dat", rows, fmt="%.10E")    # the viewer draws two sublattices; a ferromagnet has one
+    np.savetxt("output2.dat", rows2 if afm else rows, fmt="%.10E")    # a ferromagnet has one sublattice
     if erows:
         np.savetxt("energy.dat", np.array(erows), fmt="%.10E")
     np.savez_compressed("m_final.npz", m=m.astype(np.float32), x=film.x, y=film.y)
 
-    Q = round(S.topological_charge(m), 4) + 0.0      # no -0.00
-    metrics = S.texture_metrics(film, m)
+    Q = round(S.topological_charge(view(m)), 4) + 0.0      # no -0.00
+    if afm:
+        summary["sublattice_charges"] = [round(S.topological_charge(m[:, k]), 4) + 0.0 for k in (0, 1)]
+        summary["max_canting"] = round(float(np.abs(m[:, 0] + m[:, 1]).max() / 2), 6)
+    shift = (0.0, 0.0)
+    if film.boundary == "periodic" and not (wave is not None and vals["excite"] != "uniform"):
+        c = S.centre(film, view(m))            # a texture that moved across the edge: show it whole, centred
+        if c is not None and not S.texture_metrics(film, view(m)).get("crosses_film"):
+            shift = (-c[0], -c[1])
+    m_view = roll_to(film, view(m), *shift)
+    metrics = S.texture_metrics(film, m_view)
     summary.update(topological_charge=round(Q, 4), energy_final_J=film.energy(m, d),
-                   m_final=[round(float(v), 6) for v in m.mean((1, 2))], runtime_s=round(time.time() - t0, 2),
+                   m_final=[round(float(v), 6) for v in avg(m)], runtime_s=round(time.time() - t0, 2),
                    **{k: v for k, v in metrics.items()})
-    summary["m1_final"] = summary["m2_final"] = summary["m_final"]
+    summary["m1_final"] = summary["m_final"]
+    summary["m2_final"] = [round(float(v), 6) for v in avg2(m)]
+    summary["lattice"] = vals["lattice"]
     summary["texture"] = name_texture(Q, metrics)
     if vals["mode"] == "dynamics" and vals["excite"] != "uniform":
         summary["texture"] = "spin_waves"
@@ -249,15 +335,29 @@ def main():
     half = None
     if summary["texture"] in ("skyrmion", "skyrmionium", "antiskyrmion") and metrics.get("rings_nm"):
         half = 1.6 * max(metrics["rings_nm"]) + 6
-    mc, xc, yc = render.crop(m, x_nm, y_nm, metrics.get("centre_nm"), half)
+    mc, xc, yc = render.crop(m_view, x_nm, y_nm, metrics.get("centre_nm"), half)
+    pair = None
+    if afm:                                       # the two sublattices, cropped like the Néel vector
+        pair = [render.crop(roll_to(film, m[:, k], *shift), x_nm, y_nm, metrics.get("centre_nm"), half)[0] for k in (0, 1)]
     dmi = f"D = {vals['D'] * 1e3:.3g} mJ/m² ({vals['dmi']})" if vals["D"] else "no DMI"
     kind = summary["texture"].replace("_", " ")
     if summary["texture"] in ("skyrmion", "skyrmionium") and vals["D"]:
         kind = ("Bloch " if vals["dmi"] == "bulk" else "Néel ") + kind
+
     caption = (f"{kind} · Q = {Q:+.2f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
                f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³, Ms = {vals['Msat'] / 1e3:.4g} kA/m · {vals['dx'] * 1e9:.3g} nm cells")
+    if afm:
+        q1, q2 = summary["sublattice_charges"]
+        caption = (f"{'synthetic AFM' if vals['lattice'] == 'saf' else 'AFM'} {kind} · Q1 = {q1:+.0f}, Q2 = {q2:+.0f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
+                   f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³ · arrows: m1 red, m2 blue; film: Néel vector n")
+    if "velocity_mps" in summary:
+        tr = np.loadtxt("track.dat")
+        mid = ((tr[0, 1] + tr[-1, 1]) / 2, (tr[0, 2] + tr[-1, 2]) / 2)    # the path in the middle of the picture
+        tr[:, 1] -= mid[0]; tr[:, 2] -= mid[1]
+        render.save_track(roll_to(film, view(m), -mid[0], -mid[1]), x_nm, y_nm, tr, summary, vals)
     if wave is None or vals["excite"] == "uniform":          # a uniform film with waves has no texture to show
-        render.save_views(mc, xc, yc, caption, round_view=half is not None)
+        render.save_views(mc, xc, yc, caption,
+                          round_view=half is not None, pair=pair)
     else:
         wtxt = (f"λ = {summary['wavelength_nm']:.1f} nm (theory {summary['wavelength_theory_nm']:.1f} nm)"
                 if summary.get("wavelength_theory_nm") else "")

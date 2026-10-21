@@ -105,7 +105,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
 | 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. Click the counter for **usage and cost** per day and per provider (Claude, OpenAI, Gemini). |
-| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, spin waves and FeRh heating; click one to ask it. |
+| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, spin waves and FeRh heating; click one to ask it. |
 | 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file
@@ -519,6 +519,44 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 - **Results.** The run card shows the final texture as a tilted 3D view and a top view (colour: in-plane
   direction; light = up, dark = down), with the topological charge Q, the radius or the rings and, in dynamics,
   the main frequency. `m_final.npz` keeps the full state.
+- **Skyrmion motion.** With a current `j` the skyrmion moves by spin-transfer torque (`stt_P`, `stt_beta`,
+  Zhang-Li) or by spin-orbit torque from a heavy metal (`theta_SH`, damping-like, σ = z × j). The card shows its
+  path, the velocity, the skyrmion Hall angle and the Thiele prediction for the relaxed texture.
+
+```text
+--mode=dynamics
+--texture=skyrmion
+--Nx=96
+--Ny=96
+--alpha=0.1
+--j=1e12,0,0
+--theta_SH=0.1
+--t=400e-12
+```
+
+<table>
+<tr>
+<td width="50%"><img src="docs/mm2d-motion-sot.png" alt="A Néel skyrmion pushed by spin-orbit torque: its path is deflected 80 degrees from the current, v = (-20.2, -114.2) m/s, Thiele (-19.1, -110.7) m/s"></td>
+<td width="50%"><img src="docs/mm2d-motion-stt.png" alt="A Néel skyrmion pushed by spin-transfer torque with beta = 0.2 and alpha = 0.1: v = (51.1, 8.3) m/s, Hall angle 9.2 degrees, Thiele (51.3, 8.4) m/s"></td>
+</tr>
+<tr><td align="center"><i>SOT, 1e12 A/m²: 116 m/s, deflected 80° (skyrmion Hall angle)</i></td><td align="center"><i>STT, u = 50 m/s, β = 2α: Hall angle 9°</i></td></tr>
+</table>
+
+<img src="docs/screenshots/mm2d-motion-chat.png" alt="In the chat: a question asks how fast a skyrmion moves under SOT; the card shows the skyrmion, its path and the velocity, and the answer compares it with the Thiele equation" width="70%">
+
+- **Antiferromagnetic skyrmions.** `lattice=saf` is a synthetic antiferromagnet: two ferromagnetic layers coupled
+  antiparallel through a spacer (RKKY, `J_rkky` < 0), each with its own thin-film field, as in Pt/Co/Ru
+  multilayers where such skyrmions are observed. `lattice=afm` is an intrinsic, compensated antiferromagnet with two
+  sublattices coupled by `J_afm`. The two skyrmions have opposite charges, so their Magnus forces cancel: under the
+  same current a synthetic-AFM skyrmion moves straight along the current, about six times faster than in a single
+  layer. The pictures show the Néel vector with the arrows of the two layers (m1 red, m2 blue).
+
+<img src="docs/mm2d-saf-skyrmion.png" alt="A skyrmion in a synthetic antiferromagnet: red arrows of layer 1 and blue arrows of layer 2 alternate on a checkerboard over the film coloured by the Néel vector, next to the top view" width="100%">
+
+<img src="docs/mm2d-motion-fm-vs-saf.png" alt="Same spin-orbit current, 2e11 A/m²: left a ferromagnetic skyrmion moves at 22 m/s deflected 80 degrees; right a synthetic-antiferromagnet skyrmion moves at 131 m/s along the current, Hall angle 0" width="100%">
+
+<img src="docs/screenshots/mm2d-saf-chat.png" alt="In the chat: a question asks whether a synthetic-AFM skyrmion shows a skyrmion Hall effect; the answer gives 131 m/s, Hall angle 0, Thiele within 1 percent" width="70%">
+
 - **Spin waves.** `excite=stripe` or `dot` puts the field pulse on an antenna; `pulse=sine` at `f_rf` gives
   a monochromatic wave and its wavelength, `pulse=sinc` up to `f_rf` gives the whole dispersion f(k); `absorb`
   makes the edges absorbing. The run card shows the wave with the same 3D arrows (colour = phase of the
@@ -548,7 +586,9 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 - **Validated** in `tests/test_mm2d.py` against analytic results: wall energy 4√(A·Keff) − π|D| and width
   √(A/Keff) for both DMI types, the Kittel frequency, energy conservation without damping, |m| = 1, and
   Q = −1 for a skyrmion and 0 for skyrmionium, and for spin waves the wavelength at 80 GHz (49.3 nm against
-  49.6 nm) and the dispersion f(k) (within 1 %).
+  49.6 nm) the dispersion f(k) (within 1 %), and for currents the Thiele equation: v = u for STT with β = α (within
+  1 %), the velocity under STT with β ≠ α and under SOT, and for antiferromagnets the static profile against a
+  ferromagnet without demag and the absence of a skyrmion Hall effect.
 - **Limits.** One cell thick; the demagnetising field is local (−Ms·mz), so there is no long-range stray field.
   A 128 × 128 relaxation takes a few seconds. Two sublattices and a GPU version are planned.
 

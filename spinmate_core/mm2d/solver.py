@@ -80,16 +80,84 @@ class Film:
         return GAMMA0 * h
 
 
+class AFMFilm(Film):
+    """Two sublattices (or two layers of a synthetic antiferromagnet) m1, m2, each with Ms, coupled by the
+    homogeneous exchange J_afm m1.m2 (J/m^3, > 0 for antiparallel order).
+    m has shape (3, 2, Ny, Nx): component, sublattice, y, x. Each sublattice has exchange A, anisotropy Ku and DMI;
+    a compensated antiferromagnet has no net magnetisation, so there is no demagnetising field."""
+
+    def __init__(self, Nx, Ny, dx, Ms, A, Ku, D=0.0, J_afm=2e7, dmi="interfacial", boundary="periodic",
+                 B=(0.0, 0.0, 0.0), demag="none"):
+        # demag="local": a synthetic antiferromagnet, two ferromagnetic layers each with its thin-film field
+        super().__init__(Nx, Ny, dx, Ms, A, Ku, D, dmi=dmi, demag=demag, boundary=boundary, B=B)
+        self.J_afm = float(J_afm)
+        self.H_ext = self.H_ext.reshape(3, 1, 1, 1)
+
+    def h_internal(self, m):
+        h = super().h_internal(m)
+        c = self.J_afm / (MU0 * self.Ms)
+        h[:, 0] -= c * m[:, 1]
+        h[:, 1] -= c * m[:, 0]
+        return h
+
+    def max_freq(self):
+        return super().max_freq() + GAMMA0 * self.J_afm / (MU0 * self.Ms)
+
+    def neel(self, m):
+        return _norm(m[:, 0] - m[:, 1])
+
+
 def _norm(m):
     return m / np.linalg.norm(m, axis=0)
+
+
+HBAR, QE, MUB = 1.054571817e-34, 1.602176634e-19, 9.2740100783e-24
+
+
+def spin_torque(film, m):
+    """Spin torques in Gilbert form (added to -gamma0 m x H), or None.
+    film.stt_u: Zhang-Li drift velocity u (m/s, vector) with non-adiabaticity film.stt_beta:
+        -(u.grad)m + beta m x (u.grad)m
+    film.sot_h: damping-like spin-orbit field (A/m) with polarisation film.sot_sigma:  -gamma0 H_DL m x (m x sigma)"""
+    t = None
+    u = getattr(film, "stt_u", None)
+    if u is not None and np.any(u):
+        ug = u[0] * film.ddx(m) + u[1] * film.ddy(m)
+        t = -ug + film.stt_beta * np.cross(m, ug, axis=0)
+    hdl = getattr(film, "sot_h", 0.0)
+    if hdl:
+        sig = np.asarray(film.sot_sigma, float).reshape(3, *([1] * (m.ndim - 1)))
+        tt = -GAMMA0 * hdl * np.cross(m, np.cross(m, np.broadcast_to(sig, m.shape), axis=0), axis=0)
+        t = tt if t is None else t + tt
+    return t
+
+
+def thiele_velocity(film, m, alpha):
+    """Rigid-texture (Thiele) velocity (vx, vy) in m/s under the spin torques of the film: project
+    -(v.grad)m + alpha m x (v.grad)m = T on the translation modes m x d_i m."""
+    T = spin_torque(film, m)
+    if T is None:
+        return np.zeros(2)
+    d = [film.ddx(m), film.ddy(m)]
+    A = np.empty((2, 2)); b = np.empty(2)
+    for i in range(2):
+        w = np.cross(m, d[i], axis=0)
+        b[i] = float(np.sum(w * T))
+        for j in range(2):
+            A[i, j] = float(np.sum(w * (-d[j] + alpha * np.cross(m, d[j], axis=0))))
+    return np.linalg.solve(A, b)
 
 
 def llg_rhs(film, m, alpha, precess=True):
     h = film.h_eff(m)
     mxh = np.cross(m, h, axis=0)
-    damp = np.cross(m, mxh, axis=0)
-    pre = -GAMMA0 / (1 + alpha ** 2)
-    return pre * ((mxh if precess else 0) + alpha * damp)
+    extra = spin_torque(film, m) if precess else None
+    if extra is None:
+        damp = np.cross(m, mxh, axis=0)
+        pre = -GAMMA0 / (1 + alpha ** 2)
+        return pre * ((mxh if precess else 0) + alpha * damp)
+    T = -GAMMA0 * mxh + extra                       # Gilbert form dm/dt = T + alpha m x dm/dt, solved for dm/dt
+    return (T + alpha * np.cross(m, T, axis=0)) / (1 + alpha ** 2)
 
 
 def heun(film, m, dt, alpha, precess=True):
@@ -136,6 +204,21 @@ def topological_charge(m):
         return 2 * np.arctan2(num, den)
     m00 = m; m10 = np.roll(m, -1, 2); m01 = np.roll(m, -1, 1); m11 = np.roll(m10, -1, 1)
     return float((omega(m00, m10, m11) + omega(m00, m11, m01)).sum() / (4 * np.pi))
+
+
+def centre(film, m):
+    """Centre (x, y) of a localised texture, as circular means on the periodic film (m)."""
+    w = np.abs(np.sign(np.median(m[2]) or 1.0) - m[2])
+    if w.sum() < 1e-12:
+        return None
+    out = []
+    for coords, axis_len, axis in ((film.x, film.Nx, 1), (film.y, film.Ny, 0)):
+        L = axis_len * film.dx
+        ang = 2 * np.pi * (coords - coords[0]) / L
+        ww = w.sum(axis=1 - axis) if axis == 1 else w.sum(axis=1)
+        c = np.angle(np.sum(ww * np.exp(1j * ang)))
+        out.append(coords[0] + (c % (2 * np.pi)) / (2 * np.pi) * L)
+    return out
 
 
 def texture_metrics(film, m):

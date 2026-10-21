@@ -55,7 +55,10 @@ def _grid(m, x, y, step):
     return range(ci % step, len(y), step), range(cj % step, len(x), step)
 
 
-def draw_3d(ax, m, x, y, step, round_view=False):
+SUB1, SUB2 = np.array([1.0, 0.353, 0.259]), np.array([0.353, 0.451, 1.0])      # #FF5A42, #5A73FF
+
+
+def draw_3d(ax, m, x, y, step, round_view=False, pair=None):
     """x, y in nm; m shape (3, Ny, Nx). round_view: a disc around a localised texture (skyrmion)."""
     x, y = x - (x[0] + x[-1]) / 2, y - (y[0] + y[-1]) / 2       # no axes here: centre the film
     hx, hy = (x[-1] - x[0]) / 2 + (x[1] - x[0]) / 2, (y[-1] - y[0]) / 2 + (y[1] - y[0]) / 2
@@ -80,8 +83,13 @@ def draw_3d(ax, m, x, y, step, round_view=False):
         for j in cols_:
             if round_view and np.hypot(x[j], y[i]) > RD - 1:
                 continue
-            v = m[:, i, j] / np.linalg.norm(m[:, i, j])
-            base = colour(*v)
+            if pair is not None:                  # two sublattices on a checkerboard: m1 red, m2 blue
+                k = ((i - rows.start) // step + (j - cols_.start) // step) % 2
+                v = pair[k][:, i, j] / np.linalg.norm(pair[k][:, i, j])
+                base = SUB1 if k == 0 else SUB2
+            else:
+                v = m[:, i, j] / np.linalg.norm(m[:, i, j])
+                base = colour(*v)
             P, Nn = _arrow(np.array([x[j], y[i], 0.0]), v, L, 0.1 * L, 0.26 * L, 0.38 * L)
             for p, n in zip(P, Nn):
                 if n @ VIEW < -0.05:
@@ -140,12 +148,12 @@ def step_for(n):
     return max(1, int(round(n / 15)))
 
 
-def save_views(m, x_nm, y_nm, caption, prefix="texture", round_view=False, step=None):
+def save_views(m, x_nm, y_nm, caption, prefix="texture", round_view=False, step=None, pair=None):
     """Writes <prefix>_3d.png, <prefix>_2d.png and the combined <prefix>_3d_2d.png."""
     step = step or step_for(max(len(x_nm), len(y_nm)))
     asp = (y_nm[-1] - y_nm[0]) / max(x_nm[-1] - x_nm[0], 1e-9)
     fig, ax = plt.subplots(figsize=(11, 7 * min(max(asp, 0.5), 1.4)))
-    draw_3d(ax, m, x_nm, y_nm, step, round_view)
+    draw_3d(ax, m, x_nm, y_nm, step, round_view, pair)
     _wheel(fig, [0.86, 0.80, 0.09, 0.09], (0.905, 0.79))
     fig.text(0.05, 0.04, caption, fontsize=12, color=INK)
     fig.savefig(f"{prefix}_3d.png", dpi=140, bbox_inches="tight", pad_inches=0.2); plt.close(fig)
@@ -156,7 +164,7 @@ def save_views(m, x_nm, y_nm, caption, prefix="texture", round_view=False, step=
 
     fig = plt.figure(figsize=(17, 7.2))
     a3 = fig.add_axes([0.0, 0.1, 0.56, 0.88]); a2 = fig.add_axes([0.63, 0.14, 0.3, 0.8])
-    draw_3d(a3, m, x_nm, y_nm, step, round_view); draw_2d(a2, m, x_nm, y_nm, step)
+    draw_3d(a3, m, x_nm, y_nm, step, round_view, pair); draw_2d(a2, m, x_nm, y_nm, step)
     _wheel(fig, [0.935, 0.16, 0.06, 0.13], (0.965, 0.13))
     fig.text(0.02, 0.04, caption, fontsize=13, color=INK)
     fig.savefig(f"{prefix}_3d_2d.png", dpi=120, bbox_inches="tight", pad_inches=0.25); plt.close(fig)
@@ -240,4 +248,36 @@ def save_profile(x_nm, row, antenna_x, absorb_nm, lam_nm=None, name="spinwave_pr
     ax.ticklabel_format(axis="y", style="sci", scilimits=(-2, 2))
     if lam_nm:
         ax.set_title(f"λ = {lam_nm:.1f} nm · dashed: antenna · shaded: absorbing edges", fontsize=12, color=INK)
+    fig.tight_layout(); fig.savefig(name, dpi=130); plt.close(fig)
+
+
+def save_track(m, x_nm, y_nm, track, summary, vals, name="skyrmion_track.png"):
+    """Top view of the final texture with the path of its centre, the current direction and the velocity."""
+    fig, ax = plt.subplots(figsize=(8, 7))
+    dx = x_nm[1] - x_nm[0]
+    ax.imshow(colour(*m), extent=[x_nm[0] - dx / 2, x_nm[-1] + dx / 2, y_nm[0] - dx / 2, y_nm[-1] + dx / 2],
+              origin="lower", interpolation="bicubic")
+    Lx, Ly = len(x_nm) * dx, len(y_nm) * dx
+    px = (track[:, 1] * 1e9 - x_nm[0] + dx / 2) % Lx + x_nm[0] - dx / 2     # back into the periodic film
+    py = (track[:, 2] * 1e9 - y_nm[0] + dx / 2) % Ly + y_nm[0] - dx / 2
+    jumps = np.where((np.abs(np.diff(px)) > Lx / 2) | (np.abs(np.diff(py)) > Ly / 2))[0] + 1
+    for seg_x, seg_y in zip(np.split(px, jumps), np.split(py, jumps)):
+        ax.plot(seg_x, seg_y, color="#FFFFFF", lw=4.5, solid_capstyle="round")
+        ax.plot(seg_x, seg_y, color="#7A35A8", lw=2.2, solid_capstyle="round")
+    ax.plot(px[0], py[0], "o", ms=9, mfc="#FFFFFF", mec="#7A35A8", mew=2)
+    j = np.asarray(vals["j"], float)[:2]
+    jn = np.linalg.norm(j)
+    if jn:
+        L = 0.18 * min(Lx, Ly)
+        x0, y0 = x_nm[0] + 0.1 * Lx, y_nm[-1] - 0.1 * Ly
+        ax.annotate("", (x0 + L * j[0] / jn, y0 + L * j[1] / jn), (x0, y0),
+                    arrowprops=dict(arrowstyle="-|>", color="#FF5A42", lw=2.5, mutation_scale=22))
+        ax.text(x0, y0 - 0.06 * Ly, "j", color="#FF5A42", fontsize=16, fontweight="bold")
+    ax.set_xlabel("x (nm)", fontsize=16); ax.set_ylabel("y (nm)", fontsize=16); ax.tick_params(labelsize=13)
+    v = summary["velocity_mps"]
+    th = summary.get("thiele_velocity_mps")
+    ax.set_title(f"v = ({v[0]:.1f}, {v[1]:.1f}) m/s · Hall angle {summary['hall_angle_deg']:.1f}°"
+                 + (f" · Thiele ({th[0]:.1f}, {th[1]:.1f}) m/s" if th else ""), fontsize=12, color=INK)
+    for sp in ax.spines.values():
+        sp.set_color("#B9B0CC")
     fig.tight_layout(); fig.savefig(name, dpi=130); plt.close(fig)

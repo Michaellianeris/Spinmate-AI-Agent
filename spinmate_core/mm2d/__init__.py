@@ -13,6 +13,11 @@ MU0 = 4e-7 * 3.141592653589793
 # name: (default, kind, unit, description); a "choice" lists its values after the description
 PARAMS = {
     "mode": ("relax", "choice", "", "relax = find the stable texture; dynamics = LLG in time", ("relax", "dynamics")),
+    "lattice": ("ferro", "choice", "", "ferro = one magnetisation; afm = two antiparallel sublattices m1, m2 of an "
+                "intrinsic, compensated antiferromagnet; saf = synthetic antiferromagnet, two ferromagnetic layers "
+                "coupled through a spacer (RKKY)", ("ferro", "afm", "saf")),
+    "J_afm": (2e7, "float", "J/m^3", "afm: homogeneous exchange J_afm m1.m2 between the sublattices"),
+    "J_rkky": (-1e-3, "float", "J/m^2", "saf: interlayer coupling, energy -J_rkky m1.m2 per area (< 0 antiparallel)"),
     "texture": ("skyrmion", "choice", "", "initial state",
                 ("skyrmion", "skyrmionium", "domain_wall", "uniform", "random")),
     "Nx": (128, "int", "", "cells along x"), "Ny": (128, "int", "", "cells along y"),
@@ -44,6 +49,11 @@ PARAMS = {
     "f_rf": (0.0, "float", "Hz", "frequency of the sine, or cut-off of the sinc"),
     "absorb": (0.0, "float", "m", "absorbing edges: the damping rises to 1 over this width at the x edges "
                "(and y edges for a dot), so spin waves do not come back"),
+    "j": ((0.0, 0.0, 0.0), "vector", "A/m^2", "current density in the plane (dynamics): drives spin torques"),
+    "stt_P": (0.0, "float", "", "spin polarisation of the current in the film (Zhang-Li STT); 0 = no STT"),
+    "stt_beta": (0.0, "float", "", "non-adiabatic STT parameter beta"),
+    "theta_SH": (0.0, "float", "", "spin Hall angle of the heavy metal under the film (damping-like SOT); 0 = no SOT"),
+    "sot_sigma": ((0.0, 0.0, 0.0), "vector", "", "SOT spin polarisation; 0,0,0 = z x j (spin Hall effect)"),
 }
 EXTRA = {"Ms": "Msat", "A": "Aex", "Ku1": "Ku", "Dind": "D", "Dbulk": "D", "d": "thickness"}   # mumax-like names
 
@@ -101,17 +111,29 @@ def check(vals):
         errors.append("t and table_dt must be positive")
     if vals["pulse"] in ("sine", "sinc") and vals["f_rf"] <= 0:
         errors.append(f"pulse={vals['pulse']} needs f_rf > 0")
+    if vals["lattice"] != "ferro" and vals["excite"] != "uniform":
+        errors.append("spin waves from an antenna are for lattice=ferro only (for now)")
+    if vals["lattice"] == "afm" and vals["J_afm"] <= 0:
+        errors.append("J_afm must be positive for an antiferromagnet")
+    if vals["lattice"] == "saf" and vals["J_rkky"] >= 0:
+        errors.append("J_rkky must be negative for a synthetic antiferromagnet (antiparallel layers)")
     if errors:
         return errors, warnings
     if vals["mode"] == "dynamics" and vals["pulse"] != "step" and vals["table_dt"] > 1 / (2.5 * vals["f_rf"]):
         warnings.append(f"table_dt is too coarse for f_rf = {vals['f_rf'] / 1e9:.3g} GHz: use at most "
                         f"{1 / (2.5 * vals['f_rf']):.2g} s")
+    if any(vals["j"]) and vals["mode"] != "dynamics":
+        warnings.append("a current acts only in mode=dynamics")
+    if any(vals["j"]) and not (vals["stt_P"] or vals["theta_SH"]):
+        warnings.append("j is set but stt_P and theta_SH are 0: the current exerts no torque")
+    if (vals["stt_P"] or vals["theta_SH"]) and not any(vals["j"]):
+        warnings.append("stt_P or theta_SH is set but j = 0: no current flows")
     if vals["excite"] != "uniform" and vals["absorb"] == 0 and vals["boundary"] == "periodic":
         warnings.append("spin waves will wrap around the periodic film: set absorb, for example to a fifth of the film")
     Ms, A, Ku, D, dx = vals["Msat"], vals["Aex"], vals["Ku"], vals["D"], vals["dx"]
     l_ex = (2 * A / (MU0 * Ms ** 2)) ** 0.5
-    Keff = Ku - 0.5 * MU0 * Ms ** 2
-    if dx > l_ex:
+    Keff = Ku if vals["lattice"] == "afm" else Ku - 0.5 * MU0 * Ms ** 2     # no demag in a compensated AFM (an SAF keeps it)
+    if dx > l_ex and vals["lattice"] != "afm":
         warnings.append(f"cell {dx * 1e9:.2g} nm is larger than the exchange length {l_ex * 1e9:.2g} nm")
     if Keff > 0 and dx > (A / Keff) ** 0.5 / 2:
         warnings.append(f"cell {dx * 1e9:.2g} nm is coarse for the wall width {(A / Keff) ** 0.5 * 1e9:.2g} nm")
@@ -137,6 +159,9 @@ def estimate_s(vals):
     cells = vals["Nx"] * vals["Ny"]
     relax = 0.2e-6 * cells * 3000 if (vals["mode"] == "relax" or vals["relax_first"]) else 0
     dyn = 50e-6 * (1e-9 / vals["dx"]) ** 2 * cells * vals["t"] / 1e-12 if vals["mode"] == "dynamics" else 0
+    if vals["lattice"] != "ferro":                    # two sublattices and the faster exchange precession
+        J = vals["J_afm"] if vals["lattice"] == "afm" else -vals["J_rkky"] / vals["thickness"]
+        relax, dyn = 2 * relax, 2.5 * dyn * max(1.0, J / 2e7) ** 0.5
     return round(relax + dyn, 1)
 
 
@@ -145,8 +170,8 @@ class MM2DEngine:
     title = "2D micromagnetics: skyrmions (built in)"
     description = ("SpinMate's own finite-difference solver for a thin film one cell thick: exchange, perpendicular "
                    "anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. "
-                   "Finds skyrmions, skyrmionium and domain walls (mode=relax) or runs LLG dynamics with a field "
-                   "pulse, uniform or from an antenna for spin waves (mode=dynamics). Runs on any computer, no GPU needed.")
+                   "Finds skyrmions, skyrmionium and domain walls, in a ferromagnet or a two-sublattice antiferromagnet (lattice=afm) (mode=relax) or runs LLG dynamics with a field "
+                   "pulse, uniform or from an antenna for spin waves, or with a current that moves skyrmions by spin-transfer or spin-orbit torque (mode=dynamics). Runs on any computer, no GPU needed.")
 
     example = "--mode=relax\n--texture=skyrmion\n--D=3.5e-3\n--Nx=128\n--Ny=128"
 
@@ -181,6 +206,7 @@ class MM2DEngine:
         return {"texture_3d.png": "tilted view of the final texture with 3D arrows",
                 "texture_2d.png": "top view of the final texture with nm axes",
                 "texture_3d_2d.png": "both views side by side",
+                "skyrmion_track.png": "current-driven motion: the path of the texture centre, velocity and Hall angle",
                 "spinwave_3d_2d.png": "spin waves (excite = stripe or dot): 3D arrows and top view, colour = phase",
                 "spinwave_map.png": "spin waves: the change of mx as a tilted surface and as a map",
                 "spinwave_profile.png": "spin waves: the change of mx along y = 0",
