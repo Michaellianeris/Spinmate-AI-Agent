@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 # spinmate_core needs only these; no LLM library
-dependencies = ["numpy", "scipy", "matplotlib", "SciencePlots", "latex2mathml"]
+dependencies = ["numpy", "scipy", "matplotlib", "SciencePlots", "latex2mathml", "scikit-image"]
 
 [project.optional-dependencies]
 mcp = ["mcp>=2.2"]

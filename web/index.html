@@ -213,6 +213,7 @@ main{height:100vh;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);backgroun
 .skills-title{display:flex;align-items:center;gap:12px;margin:26px 0 12px;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .skills-title::before,.skills-title::after{content:"";flex:1;border-top:1px solid var(--line)}
 .starters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:0;text-align:left}
+.starters button:last-child:nth-child(odd){grid-column:1/-1}
 .starters button{display:flex;flex-direction:column;gap:3px;border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
 .starters button:hover{transform:translateY(-2px);border-color:var(--m1)}
 .starters b{color:var(--m1);font-size:.9rem}
@@ -1135,14 +1136,15 @@ function emptyState() {
   d.innerHTML = `<svg class="hero" viewBox="18 40 164 120" aria-hidden="true"><defs><linearGradient id="smg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF5A42"/><stop offset=".5" stop-color="#B24BD0"/><stop offset="1" stop-color="#5A73FF"/></linearGradient></defs><circle cx="72" cy="100" r="48" fill="#4A2540" stroke="#FF5A42" stroke-opacity=".55" stroke-width="2"/><circle cx="128" cy="100" r="48" fill="#26306A" stroke="#5A73FF" stroke-opacity=".55" stroke-width="2"/><path d="M100 61.01 A48 48 0 0 1 100 138.99 A48 48 0 0 1 100 61.01 Z" fill="url(#smg)"/><g class="s1"><line x1="55.35" y1="134.37" x2="64.85" y2="85.27" stroke="#FF5A42" stroke-width="9" stroke-linecap="round"/><path d="M68.65 65.63 L74.67 87.17 L55.03 83.37 Z" fill="#FF5A42"/><circle cx="60.1" cy="109.82" r="11" fill="#FF5A42"/></g><g class="s2"><line x1="144.65" y1="65.63" x2="135.15" y2="114.73" stroke="#5A73FF" stroke-width="9" stroke-linecap="round"/><path d="M131.35 134.37 L125.33 112.83 L144.97 116.63 Z" fill="#5A73FF"/><circle cx="139.9" cy="90.18" r="11" fill="#5A73FF"/></g></svg><div class="brand" aria-label="SpinMate">spinmate</div>
 
     <h2>Hi${name ? " " + esc(name) : ""}, what shall we simulate?</h2>
-    <p>Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D micromagnetic solver, and explains the result from the real dynamics.</p>
+    <p>Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D and 3D micromagnetic solvers, and explains the result from the real dynamics.</p>
     <div class="skills-title"><span>Find a skill</span></div>
     <div class="starters"></div>`;
   const starters = [
     ["FM → AFM", "Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937) and a negative exchange A0 = -0.248e-12, no current, 2 ns. Does it become antiferromagnetic?"],
     ["FM → FM", "Start with nearly parallel sublattices (m1 = 0.25,0,0.968 and m2 = 0.35,0,0.937) and a positive exchange A0 = 0.248e-12, no current, 2 ns. Does it stay ferromagnetic?"],
     ["Néel skyrmion", "Relax a Néel skyrmion with mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and interfacial D = 3.5 mJ/m². What are its radius and topological charge?"],
-    ["Bloch skyrmion (bulk DMI)", "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. How does it differ from the Néel one?"],
+    ["Bloch skyrmion (bulk DMI)", "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. What are its radius and topological charge?"],
+    ["Hopfion", "Relax a hopfion with mm3d in a chiral magnet nanodisk, 54 nm across and 24 nm thick, with bulk DMI D = 5.236 mJ/m², A = 10 pJ/m, Ms = 500 kA/m, the surfaces pinned up and B = 0.3 T. What is its Hopf index?"],
     ["Spin waves", "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?"],
     ["FeRh heating", "Heat a FeRh layer through its transition: positive A0 = 0.248e-12, temperature 370 K ± 60 K at 0.25 GHz, 2 ns. When does it go from AFM to FM?"],
   ];
@@ -1731,7 +1733,7 @@ async function paintCard(id, c, r) {
   files.hidden = false;
   setStep(el, "plot", "done", "Results below");
   const box = el.querySelector(".rc-view"); box.hidden = false;
-  if (r.summary.engine === "mm2d") { mm2dView(box, id, r); return; }   // a 2D texture, not two macrospins
+  if (["mm2d", "mm3d"].includes(r.summary.engine)) { mm2dView(box, id, r); return; }   // a texture, not two macrospins
   c.view = new RunView(box, r);
 }
 
@@ -1740,8 +1742,12 @@ function mm2dView(box, id, r) {
   const s = r.summary, f = name => `/api/runs/${id}/files/${name}`;
   const num = (v, d) => v == null ? "–" : fmt(v, d);
   const wave = r.files.includes("spinwave_3d_2d.png");
-  const rows = [["Texture", esc((s.texture || "").replace(/_/g, " "))], wave ? null : ["Topological charge Q", num(s.topological_charge, 3)],
+  const in3d = s.engine === "mm3d";
+  const rows = [["Texture", esc((s.texture || "").replace(/_/g, " "))],
+    wave ? null : in3d ? ["Hopf index H", num(s.hopf_index, 3)] : ["Topological charge Q", num(s.topological_charge, 3)],
+    in3d && s.helical_period_nm ? ["Helical period p", num(s.helical_period_nm, 3) + " nm"] : null,
     s.texture === "skyrmion" ? ["Radius (mz = 0)", num(s.radius_nm, 2) + " nm"] : null,
+    in3d && s.core_ring_radius_nm ? ["Core ring radius", num(s.core_ring_radius_nm, 2) + " nm"] : null,
     s.rings_nm && s.rings_nm.length ? ["Rings (mz = 0)", s.rings_nm.map(x => fmt(x, 2)).join(", ") + " nm"] : null,
     ["Energy", `${num(s.energy_final_J * 1e18, 4)} aJ`], ["<m> final", `(${(s.m_final || []).map(x => fmt(x, 3)).join(", ")})`],
     s.relax_iterations != null ? ["Relaxation", `${s.relax_iterations.toLocaleString()} ${t("iterations")}, max |m×H| ${num(s.relax_torque_A_per_m, 2)} A/m`] : null,
@@ -2675,9 +2681,10 @@ const changedText = ch => Object.entries(ch || {}).map(([k, v]) =>
 function runSummaryLine(r) {
   const s = r.summary || {};
   if (r.status !== "done") return esc(r.status || "");
-  if (s.engine === "mm2d") {        // 2D micromagnetics: the texture, its charge and size
+  if (s.engine === "mm2d" || s.engine === "mm3d") {        // micromagnetics: the texture, its charge and size
     const p = [`<b>${esc((s.texture || "texture").replace(/_/g, " "))}</b>`];
-    if (s.texture !== "spin_waves") p.push(`<span>Q = ${fmt(s.topological_charge, 2)}</span>`);
+    if (s.engine === "mm3d") p.push(`<span>H = ${fmt(s.hopf_index, 2)}</span>`);
+    else if (s.texture !== "spin_waves") p.push(`<span>Q = ${fmt(s.topological_charge, 2)}</span>`);
     if (s.texture === "skyrmion" && s.radius_nm) p.push(`<span>R = ${fmt(s.radius_nm, 1)} nm</span>`);
     if (s.wavelength_nm != null) p.push(`<span>λ = ${fmt(s.wavelength_nm, 1)} nm</span>`);
     if (s.dispersion_mismatch_pct != null) p.push(`<span>${t("dispersion")} ±${fmt(s.dispersion_mismatch_pct, 1)} %</span>`);

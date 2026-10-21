@@ -3,6 +3,7 @@ numpy==2.4.4
 scipy==1.17.1
 matplotlib==3.10.8
 SciencePlots==2.2.2
+scikit-image==0.26.0   # the m_z = 0 surface of 3D textures (mm3d)
 # web app + Claude agent
 fastapi==0.142.2
 uvicorn[standard]==0.54.0

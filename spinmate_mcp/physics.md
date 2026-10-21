@@ -21,7 +21,13 @@ time-dependent drives, integrated with Heun steps.
   Spin waves: mode=dynamics with excite=stripe or dot, pulse=sine at f_rf (summary: wavelength_nm and
   wavelength_theory_nm) or pulse=sinc up to f_rf (dispersion.png, dispersion_mismatch_pct); set absorb to about
   two wavelengths. For a film along +z: f(k) = gamma0/2pi (H + 2Keff/(mu0 Ms) + 2A k^2/(mu0 Ms)), no waves below
-  the gap spin_wave_gap_GHz. One cell thick and a local
+  the gap spin_wave_gap_GHz.
+- mm3d (built in): SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk (CPU): exchange, bulk or
+  interfacial DMI, anisotropy, Zeeman, no demagnetising field; the top and bottom surfaces pinned along +z
+  (surfaces=pinned). It relaxes texture=hopfion or skyrmion_tube and reports hopf_index H (|H| near 1 for a hopfion;
+  the grid gives about 0.85-0.9), core_ring_radius_nm and rings_nm in the middle layer. Hopfions are stable in a
+  nanodisk (geometry=disk) about 2p across and about p thick, p = 4πA/D, at small fields (0-0.3 T); in a periodic
+  slab they unwind or grow into helices. texture_3d_2d.png shows the m_z = 0 torus and the cuts y = 0 and z = 0. One cell thick and a local
   demagnetising field: no stray-field coupling between distant parts of the film.
 
 ## Rules

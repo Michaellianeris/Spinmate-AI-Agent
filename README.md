@@ -96,7 +96,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 2 | Left bar | **Conversation history.** Your earlier chats, kept per name. |
 | 3 | Left bar | **Runs panel** (Ctrl+/). Every run and sweep: search, filter, star, compare, plot or report (see [Run catalog](#run-catalog-postgres)). |
 | 4 | Left bar | **Default parameters.** The values Fast mode starts from, kept per name. |
-| 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. Its **Engine** menu picks macrospin or mm2d (2D micromagnetics: skyrmions), and mumax3 when installed. |
+| 5 | Left bar | **Run setup.** Run a preset or your `.txt` file directly, without the assistant or an API key. Its **Engine** menu picks macrospin, mm2d (2D: skyrmions, spin waves) or mm3d (3D: hopfions), and mumax3 when installed. |
 | 6 | Left bar | **Physics validation.** Green when the solver passes all its analytic checks; click for the report and the phase diagram (see [Physics validation](#physics-validation)). |
 | 7 | Left bar | **Connect to Claude.** The commands that add SpinMate to Claude Code, Claude Desktop or any MCP agent, with copy buttons. |
 | 8 | Left bar | **Model gods** (temple) and the **tools guide** (?): what each model level and each tool does. |
@@ -105,7 +105,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
 | 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. Click the counter for **usage and cost** per day and per provider (Claude, OpenAI, Gemini). |
-| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, spin waves and FeRh heating; click one to ask it. |
+| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, spin waves and FeRh heating; click one to ask it. |
 | 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file
@@ -361,7 +361,7 @@ spinmate-mcp (spinmate_mcp/): tools, resources, prompts, over stdio or HTTP (/mc
    v
 spinmate-core (spinmate_core/): tools, run queue, sweeps, catalog, figures, reports, validation
    v
-engine interface: macrospin and mm2d (built in) | mumax3 or another engine (optional plug-ins)
+engine interface: macrospin, mm2d and mm3d (built in) | mumax3 or another engine (optional plug-ins)
    |  python -m spinmate_core.runner, one process per run
    v
 run catalog (Postgres or SQLite): read-only SQL for query_runs
@@ -385,7 +385,7 @@ and the web app becomes one client among many.
 | Interface | FastAPI and one agent loop | MCP server: tools, resources, prompts, over stdio or HTTP |
 | Physics knowledge | in the app's system prompt | a physics subagent (skill and prompts) usable in any harness |
 | Models | Claude and OpenAI | Claude, OpenAI and Gemini |
-| Engine | the macrospin code, built in | an engine interface: macrospin and mm2d (2D micromagnetics) built in, mumax3 or any engine as an optional plug-in |
+| Engine | the macrospin code, built in | an engine interface: macrospin, mm2d and mm3d (2D and 3D micromagnetics) built in, mumax3 or any engine as an optional plug-in |
 | Validation | tests of the app | a physics validation suite: AFMR and Kittel frequencies, energy at α=0, \|m\|=1, damping, AFM/FM boundary, thermal field |
 | Package | one app | `spinmate-core` (no LLM), `spinmate-mcp`, the web app |
 
@@ -437,7 +437,7 @@ python -m spinmate_core run params.txt            # run it, wait, print the summ
 ```
 
 Every engine implements one interface (`spinmate_core/engines/base.py`): `parameter_schema()`, `validate()`,
-`run_command()` and `outputs()`. Two engines are built in, macrospin and mm2d, and every run records which
+`run_command()` and `outputs()`. Three engines are built in, macrospin, mm2d and mm3d, and every run records which
 engine produced it. Other engines are plug-ins, installed as Python packages that register under the entry
 point group `spinmate.engines`:
 
@@ -566,6 +566,42 @@ the result from the run card.
 <tr><td align="center"><i>A skyrmion from a question</i></td><td align="center"><i>Spin waves from a question</i></td></tr>
 </table>
 
+### mm3d engine: 3D micromagnetics and hopfions (built in)
+
+`spinmate_core/mm3d` extends the solver to three dimensions: a chiral magnet slab or nanodisk with exchange,
+bulk or interfacial DMI, anisotropy and field, the top and bottom surfaces pinned along +z. It relaxes hopfions
+and skyrmion tubes and computes the Hopf index H from the emergent field (with an FFT for its vector potential).
+
+```text
+--texture=hopfion
+--Aex=10e-12
+--D=5.236e-3
+--Nz=24
+--geometry=disk
+--disk_diameter=54e-9
+--B_ext=0,0,0.3
+```
+
+<img src="docs/mm3d-hopfion.png" alt="A relaxed hopfion from mm3d in a chiral nanodisk: the m_z = 0 surface is a torus coloured by the in-plane direction, next to the cuts y = 0 and z = 0 with arrows." width="100%">
+
+- **What binds it.** A disk about 2p across and about p thick, p = 4πA/D the helical period, with the surfaces
+  pinned up (strong surface anisotropy), at 0 to 0.3 T. In a periodic slab the hopfion unwinds or grows into
+  helices, and the engine warns about it.
+- **Results.** The card shows the m_z = 0 torus in 3D (colour = in-plane direction; it turns once around the
+  ring) and the cuts y = 0 and z = 0, with H, the core ring radius and the rings where m_z = 0. The default
+  hopfion relaxes in about a minute with H = −0.89 on the grid (|H| = 1).
+- **Validated** in `tests/test_mm3d.py`: the energy of a helix with q = D/2A against −D²/4A, the same fields as
+  mm2d in one layer, the Hopf index of the seed, and a hopfion that keeps |H| > 0.7 through the relaxation.
+- **Limits.** No demagnetising field; CPU only, so a few hundred thousand cells at most.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/mm3d-hopfion-chat.png" alt="A question asks for a hopfion in a chiral nanodisk; mm3d runs it, the card shows the torus and the cuts, and the answer gives H = -0.89 and the core ring radius 8.5 nm"></td>
+<td width="50%"><img src="docs/screenshots/report-micromagnetics.png" alt="A report of a hopfion and a Bloch skyrmion: method, results table with the Hopf index and Q, and both texture pictures"></td>
+</tr>
+<tr><td align="center"><i>A hopfion from a question</i></td><td align="center"><i>Reports include the texture pictures</i></td></tr>
+</table>
+
 ### mumax3 engine (optional plug-in)
 
 `plugins/spinmate-mumax3` adds [mumax3](https://mumax.github.io) (GPU micromagnetics) as an optional third engine,
@@ -599,7 +635,7 @@ to its authors. Details in `plugins/spinmate-mumax3/README.md`.
 
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
-an MCP client, a second engine (mumax3), SpinMate's own 2D micromagnetics (mm2d), Gemini as a third model provider and the 2.0 controls of the page
+an MCP client, a second engine (mumax3), SpinMate's own 2D and 3D micromagnetics (mm2d, mm3d), Gemini as a third model provider and the 2.0 controls of the page
 (engine menu, validation badge, connect dialog, key check), then usage and cost per provider, the admin page,
 *Ask another god* and the sweep/threshold form. `main` keeps the stable 1.x release.
 
@@ -641,7 +677,7 @@ pytest -q
 
 ```
 app/               web server, agent loop (Claude, OpenAI, Gemini), model router, MCP client, prompts, guide
-spinmate_core/     the engine without an LLM: tools, run queue, runner, the mm2d solver, catalog, figures, reports, validation
+spinmate_core/     the engine without an LLM: tools, run queue, runner, the mm2d and mm3d solvers, catalog, figures, reports, validation
 spinmate_mcp/      the MCP server and the physics guide (physics.md)
 plugins/           optional engines (spinmate-mumax3)
 macrospin/         the simulation code (four fixes in 2.0, see Physics validation)
