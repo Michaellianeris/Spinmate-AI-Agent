@@ -105,7 +105,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
 | 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. Click the counter for **usage and cost** per day and per provider (Claude, OpenAI, Gemini). |
-| 14 | Start here | **Find a skill.** Ready questions for the common scenarios; click one to ask it. |
+| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, spin waves and FeRh heating; click one to ask it. |
 | 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file

@@ -112,6 +112,13 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Néel skyrmion": "Skyrmion Néel",
+  "Bloch skyrmion (bulk DMI)": "Skyrmion Bloch (bulk DMI)",
+  "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. How does it differ from the Néel one?": "Χαλάρωσε ένα skyrmion Bloch με το mm2d με bulk DMI D = 3.5 mJ/m² σε φιλμ με A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. Σε τι διαφέρει από το Néel;",
+  "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D micromagnetic solver, and explains the result from the real dynamics.": "Περιγράψτε τις συνθήκες με λόγια ή επισυνάψτε ένα αρχείο παραμέτρων. Ο πράκτορας τις ελέγχει με τον parser του ίδιου του solver, τρέχει το μοντέλο macrospin δύο υποπλεγμάτων ή τον 2D μικρομαγνητικό solver και εξηγεί το αποτέλεσμα από την πραγματική δυναμική.",
+  "Spin waves": "Spin waves",
+  "Relax a Néel skyrmion with mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and interfacial D = 3.5 mJ/m². What are its radius and topological charge?": "Χαλάρωσε ένα skyrmion Néel με το mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m και interfacial D = 3.5 mJ/m². Ποια είναι η ακτίνα και το τοπολογικό φορτίο του;",
+  "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?": "Στείλε spin waves 80 GHz από κεραία-λωρίδα με το mm2d σε φιλμ με A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m και χωρίς DMI. Συμφωνεί το μήκος κύματος με τη θεωρία;",
   "theory": "θεωρία",
   "Wavelength": "Μήκος κύματος",
   "Spin-wave gap": "Χάσμα spin waves",
@@ -737,6 +744,13 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Néel skyrmion": "Skyrmion de Néel",
+  "Bloch skyrmion (bulk DMI)": "Skyrmion de Bloch (DMI de volumen)",
+  "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. How does it differ from the Néel one?": "Relaja un skyrmion de Bloch con mm2d usando DMI de volumen D = 3.5 mJ/m² en una película con A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. ¿En qué se diferencia del de Néel?",
+  "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D micromagnetic solver, and explains the result from the real dynamics.": "Describe las condiciones con palabras o adjunta un archivo de parámetros. El agente las comprueba con el propio analizador del solver, ejecuta el modelo macrospin de dos subredes o el solver micromagnético 2D, y explica el resultado a partir de la dinámica real.",
+  "Spin waves": "Ondas de espín",
+  "Relax a Néel skyrmion with mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and interfacial D = 3.5 mJ/m². What are its radius and topological charge?": "Relaja un skyrmion de Néel con mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m y D interfacial = 3.5 mJ/m². ¿Cuáles son su radio y su carga topológica?",
+  "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?": "Envía ondas de espín de 80 GHz desde una antena de banda con mm2d a través de una película con A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m y sin DMI. ¿Coincide la longitud de onda con la teoría?",
   "theory": "teoría",
   "Wavelength": "Longitud de onda",
   "Spin-wave gap": "Gap de ondas de espín",
@@ -1362,6 +1376,13 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Néel skyrmion": "Néel-Skyrmion",
+  "Bloch skyrmion (bulk DMI)": "Bloch-Skyrmion (Volumen-DMI)",
+  "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. How does it differ from the Néel one?": "Relaxiere ein Bloch-Skyrmion mit mm2d mit Volumen-DMI D = 3.5 mJ/m² in einem Film mit A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. Worin unterscheidet es sich vom Néel-Skyrmion?",
+  "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D micromagnetic solver, and explains the result from the real dynamics.": "Beschreiben Sie die Bedingungen in Worten oder hängen Sie eine Parameterdatei an. Der Agent prüft sie mit dem Parser des Solvers, führt das Makrospin-Modell mit zwei Untergittern oder den 2D-Mikromagnetik-Solver aus und erklärt das Ergebnis aus der echten Dynamik.",
+  "Spin waves": "Spinwellen",
+  "Relax a Néel skyrmion with mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and interfacial D = 3.5 mJ/m². What are its radius and topological charge?": "Relaxiere ein Néel-Skyrmion mit mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m und Grenzflächen-D = 3.5 mJ/m². Wie groß sind Radius und topologische Ladung?",
+  "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?": "Sende 80-GHz-Spinwellen von einer Streifenantenne mit mm2d durch einen Film mit A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m und ohne DMI. Passt die Wellenlänge zur Theorie?",
   "theory": "Theorie",
   "Wavelength": "Wellenlänge",
   "Spin-wave gap": "Spinwellen-Lücke",
@@ -1987,6 +2008,13 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Néel skyrmion": "Skyrmion di Néel",
+  "Bloch skyrmion (bulk DMI)": "Skyrmion di Bloch (DMI di volume)",
+  "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. How does it differ from the Néel one?": "Rilassa uno skyrmion di Bloch con mm2d usando DMI di volume D = 3.5 mJ/m² in un film con A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. In cosa differisce da quello di Néel?",
+  "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D micromagnetic solver, and explains the result from the real dynamics.": "Descrivi le condizioni a parole o allega un file di parametri. L'agente le controlla con il parser del solver, esegue il modello macrospin a due sottoreticoli o il solver micromagnetico 2D e spiega il risultato dalla dinamica reale.",
+  "Spin waves": "Onde di spin",
+  "Relax a Néel skyrmion with mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and interfacial D = 3.5 mJ/m². What are its radius and topological charge?": "Rilassa uno skyrmion di Néel con mm2d: A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m e D interfacciale = 3.5 mJ/m². Quali sono il raggio e la carica topologica?",
+  "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?": "Invia onde di spin a 80 GHz da un'antenna a striscia con mm2d in un film con A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m e senza DMI. La lunghezza d'onda concorda con la teoria?",
   "theory": "teoria",
   "Wavelength": "Lunghezza d'onda",
   "Spin-wave gap": "Gap delle onde di spin",

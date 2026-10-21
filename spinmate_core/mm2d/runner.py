@@ -251,7 +251,10 @@ def main():
         half = 1.6 * max(metrics["rings_nm"]) + 6
     mc, xc, yc = render.crop(m, x_nm, y_nm, metrics.get("centre_nm"), half)
     dmi = f"D = {vals['D'] * 1e3:.3g} mJ/m² ({vals['dmi']})" if vals["D"] else "no DMI"
-    caption = (f"{summary['texture'].replace('_', ' ')} · Q = {Q:+.2f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
+    kind = summary["texture"].replace("_", " ")
+    if summary["texture"] in ("skyrmion", "skyrmionium") and vals["D"]:
+        kind = ("Bloch " if vals["dmi"] == "bulk" else "Néel ") + kind
+    caption = (f"{kind} · Q = {Q:+.2f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
                f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³, Ms = {vals['Msat'] / 1e3:.4g} kA/m · {vals['dx'] * 1e9:.3g} nm cells")
     if wave is None or vals["excite"] == "uniform":          # a uniform film with waves has no texture to show
         render.save_views(mc, xc, yc, caption, round_view=half is not None)
