@@ -555,6 +555,17 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 Choose **mm2d** in the Engine menu of Run setup, or ask for a skyrmion in the chat. Agents call
 `list_engines` and pass `engine="mm2d"`.
 
+In the chat it works like the other tools: ask in plain language, the assistant picks mm2d, runs it and reads
+the result from the run card.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/mm2d-skyrmion-chat.png" alt="The question asks for a Néel skyrmion with D = 3.5 mJ/m²; the assistant runs mm2d, the card shows the skyrmion in 3D and top view, and the answer gives the radius 14.4 nm and Q = -1"></td>
+<td width="50%"><img src="docs/screenshots/mm2d-spinwaves-chat.png" alt="The question asks for 80 GHz spin waves from a stripe antenna; the card shows the waves as 3D arrows and the profile, and the answer gives a wavelength of 49.3 nm against 49.6 nm from theory"></td>
+</tr>
+<tr><td align="center"><i>A skyrmion from a question</i></td><td align="center"><i>Spin waves from a question</i></td></tr>
+</table>
+
 ### mumax3 engine (optional plug-in)
 
 `plugins/spinmate-mumax3` adds [mumax3](https://mumax.github.io) (GPU micromagnetics) as an optional third engine,
