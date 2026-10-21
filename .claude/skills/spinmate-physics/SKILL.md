@@ -24,7 +24,11 @@ time-dependent drives, integrated with Heun steps.
   The summary gives texture, topological_charge Q (skyrmion: |Q| = 1, skyrmionium: 0), radius_nm, rings_nm
   (where mz = 0 along the centre line), energies and, in dynamics, peak_frequency_mx_GHz. Scales: wall width
   sqrt(A/Keff), wall energy 4 sqrt(A Keff) - pi |D|; above D_c = 4 sqrt(A Keff)/pi the uniform state breaks into
-  stripes. The pictures texture_3d.png and texture_2d.png show the final state. One cell thick and a local
+  stripes. The pictures texture_3d.png and texture_2d.png show the final state.
+  Spin waves: mode=dynamics with excite=stripe or dot, pulse=sine at f_rf (summary: wavelength_nm and
+  wavelength_theory_nm) or pulse=sinc up to f_rf (dispersion.png, dispersion_mismatch_pct); set absorb to about
+  two wavelengths. For a film along +z: f(k) = gamma0/2pi (H + 2Keff/(mu0 Ms) + 2A k^2/(mu0 Ms)), no waves below
+  the gap spin_wave_gap_GHz. One cell thick and a local
   demagnetising field: no stray-field coupling between distant parts of the film.
 
 ## Rules

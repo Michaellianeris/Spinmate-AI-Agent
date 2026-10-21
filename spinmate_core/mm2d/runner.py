@@ -15,6 +15,127 @@ def _progress(step, total, t0):
                                                  "elapsed": round(time.time() - t0, 2)}))
 
 
+def excitation_mask(film, vals):
+    """1 where B_pulse acts: the whole film, a stripe across y, or a dot."""
+    X, Y = np.meshgrid(film.x, film.y)
+    w, x0 = vals["excite_width"], vals["excite_x"]
+    if vals["excite"] == "stripe":
+        m = np.abs(X - x0) <= w / 2
+    elif vals["excite"] == "dot":
+        m = np.hypot(X - x0, Y) <= w / 2
+    else:
+        m = np.ones_like(X, bool)
+    if not m.any():                                  # narrower than a cell: the nearest column or cell
+        m = np.zeros_like(X, bool)
+        i = int(np.argmin(np.abs(film.x - x0)))
+        m[:, i] = True if vals["excite"] == "stripe" else False
+        if vals["excite"] == "dot":
+            m[film.Ny // 2, i] = True
+    return m[None].astype(float)
+
+
+def damping(film, vals):
+    """Gilbert damping, rising to 1 over `absorb` at the x edges (and y edges for a dot)."""
+    a, w = vals["alpha"], vals["absorb"]
+    if w <= 0:
+        return a
+    X, Y = np.meshgrid(film.x, film.y)
+    hx, hy = film.Nx * film.dx / 2, film.Ny * film.dx / 2
+    ramp = np.clip((np.abs(X) - (hx - w)) / w, 0, 1)
+    if vals["excite"] == "dot":
+        ramp = np.maximum(ramp, np.clip((np.abs(Y) - (hy - w)) / w, 0, 1))
+    return a + (1 - a) * ramp ** 2
+
+
+def theory_f(film, vals, k):
+    """Spin waves of a film magnetised along +z (local demag): f = gamma0/2pi (H + H_K,eff + 2A/(mu0 Ms) k^2),
+    with the k^2 of the 5-point Laplacian."""
+    Keff = film.Ku - 0.5 * S.MU0 * film.Ms ** 2
+    H = vals["B_ext"][2] / S.MU0
+    k2 = (2 / film.dx * np.sin(np.asarray(k) * film.dx / 2)) ** 2
+    return S.GAMMA0 / (2 * np.pi) * (H + 2 * Keff / (S.MU0 * film.Ms) + 2 * film.A / (S.MU0 * film.Ms) * k2)
+
+
+def spin_wave_summary(film, vals, t, wave, mx_map):
+    out = {"spin_wave_gap_GHz": round(float(theory_f(film, vals, 0)) / 1e9, 3)}
+    x = film.x
+    keep = np.abs(x - vals["excite_x"]) > vals["excite_width"] / 2 + 2 * film.dx
+    if vals["absorb"] > 0:
+        keep &= np.abs(x) < film.Nx * film.dx / 2 - vals["absorb"]
+    if vals["pulse"] == "sine" and keep.sum() > 8:
+        row = wave[-1][keep] - wave[-1][keep].mean()
+        n = 8 * len(row)
+        spec = np.abs(np.fft.rfft(row * np.hanning(len(row)), n))
+        kk = 2 * np.pi * np.fft.rfftfreq(n, film.dx)
+        k_sim = float(kk[1 + spec[1:].argmax()])
+        ks = np.linspace(0, np.pi / film.dx, 20000)
+        k_th = float(ks[np.argmin(np.abs(theory_f(film, vals, ks) - vals["f_rf"]))]) \
+            if vals["f_rf"] > theory_f(film, vals, 0) else None
+        out["wavelength_nm"] = round(2 * np.pi / k_sim * 1e9, 2)
+        if k_th:
+            out["wavelength_theory_nm"] = round(2 * np.pi / k_th * 1e9, 2)
+        else:
+            out["note"] = "f_rf is below the spin-wave gap: the waves do not propagate"
+    if vals["pulse"] == "sinc":
+        k, f, P = dispersion(film, vals, t, wave)
+        sel = (f > 1.05 * theory_f(film, vals, 0)) & (f < 0.9 * vals["f_rf"])
+        errs = []
+        for i in np.where(sel)[0][::4]:
+            j = int(np.argmax(P[i, k >= 0]))
+            kj = k[k >= 0][j]
+            if kj > 0:
+                errs.append(abs(float(theory_f(film, vals, kj)) - f[i]) / f[i])
+        if errs:
+            out["dispersion_mismatch_pct"] = round(100 * float(np.median(errs)), 2)
+    return out
+
+
+def dispersion(film, vals, t, wave):
+    """|FFT|^2 of mx(x, t) along the centre row: k (rad/m), f (Hz, >= 0), power [f, k]."""
+    W = wave - wave.mean(0)
+    W = W * np.hanning(len(t))[:, None] * np.hanning(W.shape[1])[None, :]
+    F = np.fft.fftshift(np.fft.fft2(W))
+    f = np.fft.fftshift(np.fft.fftfreq(len(t), vals["table_dt"]))
+    k = np.fft.fftshift(2 * np.pi * np.fft.fftfreq(W.shape[1], film.dx))
+    pos = f >= 0
+    return k, f[pos], np.abs(F[pos]) ** 2
+
+
+def _blur(a, sigma):
+    """Gaussian blur (periodic), sigma in cells."""
+    ky = np.fft.fftfreq(a.shape[0])[:, None]; kx = np.fft.fftfreq(a.shape[1])[None, :]
+    g = np.exp(-2 * (np.pi * sigma) ** 2 * (kx ** 2 + ky ** 2))
+    return np.real(np.fft.ifft2(np.fft.fft2(a) * g))
+
+
+def save_wave_arrows(render, film, vals, summary, m, m0, x_nm, y_nm, cap):
+    """Spin waves in the style of the textures: 3D arrows and a top view, the precession enlarged to be seen."""
+    lam = summary.get("wavelength_theory_nm") or summary.get("wavelength_nm") or 20 * film.dx * 1e9
+    dm = (m - m0)[:2]
+    amp = np.hypot(dm[0], dm[1])
+    env = np.sqrt(_blur(amp ** 2, lam / 2 / (film.dx * 1e9)))       # local amplitude of the wave
+    env = np.maximum(env, 0.04 * env.max())                          # no wave: stays near the ground state
+    tilt = 0.9 * dm / env                                            # every crest tilted the same, colour = phase
+    vis = np.stack([m0[0] + tilt[0], m0[1] + tilt[1], m0[2]])
+    vis = vis / np.linalg.norm(vis, axis=0)
+    cell = film.dx * 1e9
+    absorb = vals["absorb"] * 1e9
+    x_lo, x_hi = x_nm[0] + absorb, x_nm[-1] - absorb
+    if vals["excite"] == "dot":
+        cx, half_x = vals["excite_x"] * 1e9, min(2 * lam, (x_hi - x_lo) / 2)
+        half_y = min(2 * lam, y_nm[-1] - absorb)
+    else:                                            # a window beside the antenna, towards the larger side
+        a = vals["excite_x"] * 1e9
+        width = min(4 * lam, max(x_hi - a, a - x_lo) - 2 * cell)
+        cx = a + width / 2 + 2 * cell if x_hi - a >= a - x_lo else a - width / 2 - 2 * cell
+        half_x, half_y = width / 2, min(1.5 * lam, y_nm[-1])
+    sx, sy = np.abs(x_nm - cx) <= half_x, np.abs(y_nm) <= half_y
+    mc = vis[:, sy][:, :, sx]
+    step = max(1, int(round(lam / cell / 7)))
+    render.save_views(mc, x_nm[sx], y_nm[sy], cap + " · precession enlarged to show the phase",
+                      prefix="spinwave", step=step)
+
+
 def main():
     t0 = time.time()
     vals = parse(Path("parameters.txt").read_text())
@@ -39,32 +160,48 @@ def main():
         m, it, torque = S.minimise(film, m, tol=vals["tol"], max_iter=vals["max_iter"], callback=cb)
         summary.update(relax_iterations=it, relax_torque_A_per_m=round(torque, 4),
                        relaxed=bool(torque < vals["tol"]))
+    wave = None
     if vals["mode"] == "dynamics":
         rows, erows = [], []
         n_out = int(round(vals["t"] / vals["table_dt"]))
         start = summary.get("relax_iterations", 0)
-        pulse = np.asarray(vals["B_pulse"], float).reshape(3, 1, 1) / S.MU0
+        mask = excitation_mask(film, vals)
+        pulse = np.asarray(vals["B_pulse"], float).reshape(3, 1, 1) / S.MU0 * mask
+        alpha = damping(film, vals)
         base = film.H_ext.copy()
+        shape, f_rf, t_p = vals["pulse"], vals["f_rf"], vals["t_pulse"]
+        h_max = 1 / (24 * f_rf) if shape != "step" else np.inf      # the field changes within a period
+
+        def amp(t):
+            if t >= t_p:
+                return 0.0
+            if shape == "sine":                    # switched on over three periods: no broadband transient
+                return np.sin(2 * np.pi * f_rf * t) * min(1.0, np.sin(np.pi / 2 * f_rf * t / 3) ** 2 if f_rf * t < 3 else 1.0)
+            if shape == "sinc":
+                return float(np.sinc(2 * f_rf * (t - t_p / 2)))
+            return 1.0
         t, dt, steps = 0.0, 0.1 / film.max_freq(), 0
+        row_j = film.Ny // 2
+        m0 = m.copy()
+        wave = [m[0, row_j].copy()]
         rows.append((0.0, *m.mean((1, 2)))); erows.append((0.0, film.energy(m, d)))
         for k in range(1, n_out + 1):
             t_target = k * vals["table_dt"]
             while t < t_target * (1 - 1e-12):
-                on = t < vals["t_pulse"]
-                film.H_ext = base + pulse if on else base
-                h = min(dt, t_target - t)
-                if on and t + h > vals["t_pulse"]:
-                    h = vals["t_pulse"] - t        # end the pulse exactly
-                m, used, dt = S.rk45_step(film, m, h, vals["alpha"], tol=vals["rk_tol"])
+                h = min(dt, t_target - t, h_max if t < t_p else np.inf)
+                if t < t_p < t + h:
+                    h = t_p - t                    # end the pulse exactly
+                film.H_ext = base + pulse * amp(t + h / 2)
+                m, used, dt = S.rk45_step(film, m, h, alpha, tol=vals["rk_tol"])
                 t += used; steps += 1
             film.H_ext = base
             rows.append((t, *m.mean((1, 2)))); erows.append((t, film.energy(m, d)))
+            wave.append(m[0, row_j].copy())
             _progress(start + k, start + n_out, t0)
         summary.update(dynamics_steps=steps, t_end_s=t, points=len(rows))
-        mz = np.array([r[3] for r in rows])
         tt = np.array([r[0] for r in rows])
-        sel = tt >= vals["t_pulse"]
-        if sel.sum() > 16:                          # main frequency of <mz> and <mx> after the pulse
+        sel = tt >= t_p
+        if sel.sum() > 16 and vals["excite"] == "uniform":   # main frequency of <mx> and <mz> after the pulse
             for comp, idx in (("mx", 1), ("mz", 3)):
                 sig = np.array([r[idx] for r in rows])[sel]
                 sig = sig - sig.mean()
@@ -72,6 +209,11 @@ def main():
                 f = np.fft.rfftfreq(len(sig), vals["table_dt"])
                 if spec[1:].max() > 1e-9:
                     summary[f"peak_frequency_{comp}_GHz"] = round(float(f[1 + spec[1:].argmax()]) / 1e9, 3)
+        if vals["excite"] != "uniform":
+            wave = np.array(wave)
+            np.savez_compressed("spinwave.npz", t=tt, x=film.x, y=film.y, mx_row=wave.astype(np.float32),
+                                mx_map=(m[0] - m0[0]).astype(np.float32), mask=mask[0] > 0)
+            summary.update(spin_wave_summary(film, vals, tt, wave, m[0] - m0[0]))
     _progress(1, 1, t0)
 
     rows = np.array(rows) if rows else np.array([[0.0, *m.mean((1, 2))]])
@@ -88,6 +230,8 @@ def main():
                    **{k: v for k, v in metrics.items()})
     summary["m1_final"] = summary["m2_final"] = summary["m_final"]
     summary["texture"] = name_texture(Q, metrics)
+    if vals["mode"] == "dynamics" and vals["excite"] != "uniform":
+        summary["texture"] = "spin_waves"
 
     import matplotlib
     matplotlib.use("Agg")
@@ -109,7 +253,29 @@ def main():
     dmi = f"D = {vals['D'] * 1e3:.3g} mJ/m² ({vals['dmi']})" if vals["D"] else "no DMI"
     caption = (f"{summary['texture'].replace('_', ' ')} · Q = {Q:+.2f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
                f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³, Ms = {vals['Msat'] / 1e3:.4g} kA/m · {vals['dx'] * 1e9:.3g} nm cells")
-    render.save_views(mc, xc, yc, caption, round_view=half is not None)
+    if wave is None or vals["excite"] == "uniform":          # a uniform film with waves has no texture to show
+        render.save_views(mc, xc, yc, caption, round_view=half is not None)
+    else:
+        wtxt = (f"λ = {summary['wavelength_nm']:.1f} nm (theory {summary['wavelength_theory_nm']:.1f} nm)"
+                if summary.get("wavelength_theory_nm") else "")
+        drive = {"sine": f"sine {vals['f_rf'] / 1e9:.3g} GHz", "sinc": f"sinc up to {vals['f_rf'] / 1e9:.3g} GHz",
+                 "step": "field step"}[vals["pulse"]]
+        cap = (f"spin waves from a {vals['excite']} antenna · {drive} · t = {summary['t_end_s'] * 1e12:.0f} ps"
+               + (f" · {wtxt}" if wtxt else "") + f" · gap {summary['spin_wave_gap_GHz']:.1f} GHz")
+        render.save_spinwave(m[0] - m0[0], x_nm, y_nm, excitation_mask(film, vals)[0] > 0, cap,
+                             absorb_nm=vals["absorb"] * 1e9)
+        save_wave_arrows(render, film, vals, summary, m, m0, x_nm, y_nm, cap)
+        mask = excitation_mask(film, vals)[0]
+        render.save_profile(x_nm, (m[0] - m0[0])[film.Ny // 2], x_nm[mask.any(0)][[0, -1]] if mask.any() else [],
+                            vals["absorb"] * 1e9, summary.get("wavelength_nm"))
+        if vals["pulse"] == "sinc":
+            k, f, P = dispersion(film, vals, np.array([r[0] for r in rows]), wave)
+            ks = np.linspace(k.min(), k.max(), 400)
+            render.save_dispersion(k, f, P, ks, theory_f(film, vals, ks), vals["f_rf"],
+                                   f"mx(x, t) along y = 0 · {vals['Nx']} × {vals['dx'] * 1e9:.3g} nm cells · "
+                                   f"line: γ₀/2π·(H + H_K,eff + 2A k²/μ₀Ms)"
+                                   + (f" · median mismatch {summary['dispersion_mismatch_pct']:.1f} %"
+                                      if "dispersion_mismatch_pct" in summary else ""))
     Path("summary.json").write_text(json.dumps(summary))
 
 

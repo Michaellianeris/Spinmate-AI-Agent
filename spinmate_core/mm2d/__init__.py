@@ -34,7 +34,16 @@ PARAMS = {
     "table_dt": (1e-12, "float", "s", "output interval (dynamics)"),
     "B_pulse": ((0.0, 0.0, 0.0), "vector", "T", "extra uniform field during the first t_pulse seconds"),
     "t_pulse": (0.0, "float", "s", "length of the field pulse"),
-    "rk_tol": (1e-5, "float", "", "error per step of the adaptive Runge-Kutta solver"),
+    "rk_tol": (1e-7, "float", "", "error per step of the adaptive Runge-Kutta solver"),
+    "excite": ("uniform", "choice", "", "where B_pulse acts: the whole film, a stripe antenna across y, or a dot",
+               ("uniform", "stripe", "dot")),
+    "excite_width": (4e-9, "float", "m", "width of the stripe or diameter of the dot"),
+    "excite_x": (0.0, "float", "m", "centre of the antenna along x (0 = middle of the film)"),
+    "pulse": ("step", "choice", "", "time shape of B_pulse: step, sine at f_rf, or sinc with cut-off f_rf "
+              "(broadband, gives the dispersion)", ("step", "sine", "sinc")),
+    "f_rf": (0.0, "float", "Hz", "frequency of the sine, or cut-off of the sinc"),
+    "absorb": (0.0, "float", "m", "absorbing edges: the damping rises to 1 over this width at the x edges "
+               "(and y edges for a dot), so spin waves do not come back"),
 }
 EXTRA = {"Ms": "Msat", "A": "Aex", "Ku1": "Ku", "Dind": "D", "Dbulk": "D", "d": "thickness"}   # mumax-like names
 
@@ -90,8 +99,15 @@ def check(vals):
             errors.append(f"{k} must be positive")
     if vals["mode"] == "dynamics" and (vals["t"] <= 0 or vals["table_dt"] <= 0):
         errors.append("t and table_dt must be positive")
+    if vals["pulse"] in ("sine", "sinc") and vals["f_rf"] <= 0:
+        errors.append(f"pulse={vals['pulse']} needs f_rf > 0")
     if errors:
         return errors, warnings
+    if vals["mode"] == "dynamics" and vals["pulse"] != "step" and vals["table_dt"] > 1 / (2.5 * vals["f_rf"]):
+        warnings.append(f"table_dt is too coarse for f_rf = {vals['f_rf'] / 1e9:.3g} GHz: use at most "
+                        f"{1 / (2.5 * vals['f_rf']):.2g} s")
+    if vals["excite"] != "uniform" and vals["absorb"] == 0 and vals["boundary"] == "periodic":
+        warnings.append("spin waves will wrap around the periodic film: set absorb, for example to a fifth of the film")
     Ms, A, Ku, D, dx = vals["Msat"], vals["Aex"], vals["Ku"], vals["D"], vals["dx"]
     l_ex = (2 * A / (MU0 * Ms ** 2)) ** 0.5
     Keff = Ku - 0.5 * MU0 * Ms ** 2
@@ -120,7 +136,7 @@ def estimate_s(vals):
     """Rough CPU time: about 0.2 µs per cell and relaxation iteration, 50 µs per cell and picosecond of dynamics."""
     cells = vals["Nx"] * vals["Ny"]
     relax = 0.2e-6 * cells * 3000 if (vals["mode"] == "relax" or vals["relax_first"]) else 0
-    dyn = 50e-6 * cells * vals["t"] / 1e-12 if vals["mode"] == "dynamics" else 0
+    dyn = 50e-6 * (1e-9 / vals["dx"]) ** 2 * cells * vals["t"] / 1e-12 if vals["mode"] == "dynamics" else 0
     return round(relax + dyn, 1)
 
 
@@ -130,7 +146,7 @@ class MM2DEngine:
     description = ("SpinMate's own finite-difference solver for a thin film one cell thick: exchange, perpendicular "
                    "anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. "
                    "Finds skyrmions, skyrmionium and domain walls (mode=relax) or runs LLG dynamics with a field "
-                   "pulse (mode=dynamics). Runs on any computer, no GPU needed.")
+                   "pulse, uniform or from an antenna for spin waves (mode=dynamics). Runs on any computer, no GPU needed.")
 
     example = "--mode=relax\n--texture=skyrmion\n--D=3.5e-3\n--Nx=128\n--Ny=128"
 
@@ -165,6 +181,11 @@ class MM2DEngine:
         return {"texture_3d.png": "tilted view of the final texture with 3D arrows",
                 "texture_2d.png": "top view of the final texture with nm axes",
                 "texture_3d_2d.png": "both views side by side",
+                "spinwave_3d_2d.png": "spin waves (excite = stripe or dot): 3D arrows and top view, colour = phase",
+                "spinwave_map.png": "spin waves: the change of mx as a tilted surface and as a map",
+                "spinwave_profile.png": "spin waves: the change of mx along y = 0",
+                "dispersion.png": "pulse = sinc: f(k) from the simulation with the analytic curve",
+                "spinwave.npz": "mx along the centre row in time, and the last mx map",
                 "m_final.npz": "final m (3, Ny, Nx) and the x, y cell centres in m",
                 "output1.dat": "relax: iteration and <m>; dynamics: time and <m>",
                 "energy.dat": "relax: iteration, energy (J), max torque (A/m); dynamics: time, energy",

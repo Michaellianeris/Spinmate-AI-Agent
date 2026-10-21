@@ -112,6 +112,14 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "theory": "θεωρία",
+  "Wavelength": "Μήκος κύματος",
+  "Spin-wave gap": "Χάσμα spin waves",
+  "Dispersion vs theory": "Διασπορά έναντι θεωρίας",
+  "dispersion": "διασπορά",
+  "Spin-wave dispersion": "Διασπορά spin waves",
+  "Change of mx": "Μεταβολή του mx",
+  "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size.": "Χρώμα: φάση της μετάπτωσης (κατεύθυνση στο επίπεδο)· η μετάπτωση είναι μεγεθυμένη. Πατήστε μια εικόνα για πλήρες μέγεθος.",
   "Tilted view and top view of the final texture": "Πλάγια όψη και κάτοψη της τελικής υφής",
   "iterations": "επαναλήψεις",
   "Texture": "Υφή",
@@ -729,6 +737,14 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "theory": "teoría",
+  "Wavelength": "Longitud de onda",
+  "Spin-wave gap": "Gap de ondas de espín",
+  "Dispersion vs theory": "Dispersión frente a teoría",
+  "dispersion": "dispersión",
+  "Spin-wave dispersion": "Dispersión de ondas de espín",
+  "Change of mx": "Cambio de mx",
+  "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size.": "Color: fase de la precesión (dirección en el plano); la precesión está ampliada. Pulse una imagen para verla a tamaño completo.",
   "Tilted view and top view of the final texture": "Vista inclinada y vista superior de la textura final",
   "iterations": "iteraciones",
   "Texture": "Textura",
@@ -1346,6 +1362,14 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "theory": "Theorie",
+  "Wavelength": "Wellenlänge",
+  "Spin-wave gap": "Spinwellen-Lücke",
+  "Dispersion vs theory": "Dispersion gegen Theorie",
+  "dispersion": "Dispersion",
+  "Spin-wave dispersion": "Spinwellen-Dispersion",
+  "Change of mx": "Änderung von mx",
+  "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size.": "Farbe: Phase der Präzession (Richtung in der Ebene); die Präzession ist vergrößert. Klicken Sie auf ein Bild für die volle Größe.",
   "Tilted view and top view of the final texture": "Schrägansicht und Draufsicht der Endtextur",
   "iterations": "Iterationen",
   "Texture": "Textur",
@@ -1963,6 +1987,14 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "theory": "teoria",
+  "Wavelength": "Lunghezza d'onda",
+  "Spin-wave gap": "Gap delle onde di spin",
+  "Dispersion vs theory": "Dispersione rispetto alla teoria",
+  "dispersion": "dispersione",
+  "Spin-wave dispersion": "Dispersione delle onde di spin",
+  "Change of mx": "Variazione di mx",
+  "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size.": "Colore: fase della precessione (direzione nel piano); la precessione è ingrandita. Fai clic su un'immagine per vederla a grandezza piena.",
   "Tilted view and top view of the final texture": "Vista inclinata e vista dall'alto della texture finale",
   "iterations": "iterazioni",
   "Texture": "Texture",
