@@ -361,7 +361,7 @@ spinmate-mcp (spinmate_mcp/): tools, resources, prompts, over stdio or HTTP (/mc
    v
 spinmate-core (spinmate_core/): tools, run queue, sweeps, catalog, figures, reports, validation
    v
-engine interface: macrospin (built in) | mumax3 or another engine (optional plug-ins)
+engine interface: macrospin (built in) | mm2d, mumax3 or another engine (optional plug-ins)
    |  python -m spinmate_core.runner, one process per run
    v
 run catalog (Postgres or SQLite): read-only SQL for query_runs
@@ -385,7 +385,7 @@ and the web app becomes one client among many.
 | Interface | FastAPI and one agent loop | MCP server: tools, resources, prompts, over stdio or HTTP |
 | Physics knowledge | in the app's system prompt | a physics subagent (skill and prompts) usable in any harness |
 | Models | Claude and OpenAI | Claude, OpenAI and Gemini |
-| Engine | the macrospin code, built in | an engine interface: macrospin built in, mumax3 or any engine as an optional plug-in |
+| Engine | the macrospin code, built in | an engine interface: macrospin built in, mm2d, mumax3 or any engine as an optional plug-in |
 | Validation | tests of the app | a physics validation suite: AFMR and Kittel frequencies, energy at α=0, \|m\|=1, damping, AFM/FM boundary, thermal field |
 | Package | one app | `spinmate-core` (no LLM), `spinmate-mcp`, the web app |
 
@@ -523,9 +523,44 @@ program and stays under the MIT License. If you publish results obtained with mu
 al., *The design and verification of MuMax3*, AIP Advances 4, 107133 (2014). The mumax3 name and logo belong
 to its authors. Details in `plugins/spinmate-mumax3/README.md`.
 
+### mm2d engine: SpinMate's own 2D micromagnetics (optional plug-in)
+
+`plugins/spinmate-mm2d` is a finite-difference solver written for SpinMate, in NumPy on the CPU, for a
+ferromagnetic film one cell thick. It finds skyrmions, skyrmionium and domain walls and runs LLG dynamics:
+
+```text
+--mode=relax
+--texture=skyrmion
+--Aex=15e-12
+--Ku=0.8e6
+--Msat=580e3
+--D=3.5e-3
+--Nx=128
+--Ny=128
+```
+
+<img src="docs/mm2d-skyrmion.png" alt="A relaxed Néel skyrmion from mm2d: tilted view of the film with 3D arrows coloured by direction, next to the top view with nm axes." width="100%">
+
+- **Physics.** Exchange, perpendicular anisotropy, interfacial (Néel) or bulk (Bloch) DMI, Zeeman and the local
+  thin-film demagnetising field; periodic or free edges.
+- **Modes.** `mode=relax` lowers the energy (steepest descent with Barzilai–Borwein steps) from a seed:
+  `skyrmion`, `skyrmionium`, `domain_wall`, `uniform` or `random`. `mode=dynamics` relaxes first and then solves
+  LLG with an adaptive Runge–Kutta (Dormand–Prince) solver, with an optional field pulse `B_pulse` for `t_pulse`.
+- **Results.** The run card shows the final texture as a tilted 3D view and a top view (colour: in-plane
+  direction; light = up, dark = down), with the topological charge Q, the radius or the rings and, in dynamics,
+  the main frequency. `m_final.npz` keeps the full state.
+- **Validated** in `tests/test_mm2d.py` against analytic results: wall energy 4√(A·Keff) − π|D| and width
+  √(A/Keff) for both DMI types, the Kittel frequency, energy conservation without damping, |m| = 1, and
+  Q = −1 for a skyrmion and 0 for skyrmionium.
+- **Limits.** One cell thick; the demagnetising field is local (−Ms·mz), so there is no long-range stray field.
+  A 128 × 128 relaxation takes a few seconds. Two sublattices and a GPU version are planned.
+
+The Docker image installs it; outside Docker, `pip install -e plugins/spinmate-mm2d`. Agents call
+`list_engines` and pass `engine="mm2d"`.
+
 Development happens on the `development` branch, one feature branch per step: the MCP server first, then
 `spinmate-core` and the engine interface, the physics validation suite, the physics subagent, the web app as
-an MCP client, a second engine (mumax3), Gemini as a third model provider and the 2.0 controls of the page
+an MCP client, a second engine (mumax3), SpinMate's own 2D micromagnetics (mm2d), Gemini as a third model provider and the 2.0 controls of the page
 (engine menu, validation badge, connect dialog, key check), then usage and cost per provider, the admin page,
 *Ask another god* and the sweep/threshold form. `main` keeps the stable 1.x release.
 
@@ -569,7 +604,7 @@ pytest -q
 app/               web server, agent loop (Claude, OpenAI, Gemini), model router, MCP client, prompts, guide
 spinmate_core/     the engine without an LLM: tools, run queue, runner, catalog, figures, reports, validation
 spinmate_mcp/      the MCP server and the physics guide (physics.md)
-plugins/           optional engines (spinmate-mumax3)
+plugins/           optional engines (spinmate-mm2d, spinmate-mumax3)
 macrospin/         the simulation code (four fixes in 2.0, see Physics validation)
 original_scripts/  original batch scripts (prepare, run_sim, avg_neel, neel_vector_generate)
 web/               the interface (index.html) and its translations (i18n.js)
