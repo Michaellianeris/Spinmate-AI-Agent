@@ -1,4 +1,4 @@
-"""Simulation engines. The macrospin solver is built in; other engines (mumax3 next) are plug-ins found
+"""Simulation engines. The macrospin solver is built in; other engines (mm2d, mumax3) are plug-ins found
 through the Python entry point group "spinmate.engines"."""
 from importlib.metadata import entry_points
 
@@ -46,7 +46,7 @@ def describe():
             e = get(n)
             ok, note = e.ready() if hasattr(e, "ready") else (True, "")
             out.append({"name": n, "title": e.title, "description": e.description, "ready": bool(ok), "note": note,
-                        "default": n == DEFAULT})
+                        "default": n == DEFAULT, "example": getattr(e, "example", "")})
         except Exception as err:   # a broken plug-in is reported, not fatal
             out.append({"name": n, "title": n, "description": "", "ready": False, "note": str(err), "default": False})
     return out

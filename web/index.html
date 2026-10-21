@@ -574,6 +574,13 @@ main{grid-template-columns:minmax(0,1fr)}
   main{height:auto}
   .starters{grid-template-columns:1fr}
 }
+.rc-texture{margin:4px 0 10px}
+.rc-texture img,.rc-mm2d img{width:100%;height:auto;display:block;border-radius:10px;background:#fff}
+.rc-texture figcaption{font-size:.82rem;color:var(--muted);margin-top:4px}
+.rc-mm2d{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.rc-mm2d table{width:100%;border-collapse:collapse;font-size:.88rem}
+.rc-mm2d td{padding:5px 4px;border-bottom:1px solid var(--grid)}.rc-mm2d td.mono{text-align:right}
+@media (max-width:640px){.rc-mm2d{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1710,7 +1717,7 @@ async function paintCard(id, c, r) {
   for (const k of ["csv", "zip", "analyse", "edit"]) show(k, true);
   el.querySelector("[data-r=analyse]").onclick = () => { $("#input").value = t("Analyse run {id}.", {id}); send(); };
   el.querySelector("[data-r=edit]").onclick = () => { openSetup("deep"); $("#params").value = r.parameters_text; $("#label").value = r.label || ""; $("#check").click(); };
-  show("cont", true); show("join", !!r.parent_run);
+  show("cont", !r.engine || r.engine === "macrospin"); show("join", !!r.parent_run);
   el.querySelector("[data-r=cont]").onclick = async () => {
     try { const o = await postJson(`/api/runs/${id}/continue`, {}); trackRun(o.run_id, `${id} continued`); refreshRuns(); }
     catch (e) { alert(e.message); }
@@ -1724,7 +1731,26 @@ async function paintCard(id, c, r) {
   files.hidden = false;
   setStep(el, "plot", "done", "Results below");
   const box = el.querySelector(".rc-view"); box.hidden = false;
+  if (r.summary.engine === "mm2d") { mm2dView(box, id, r); return; }   // a 2D texture, not two macrospins
   c.view = new RunView(box, r);
+}
+
+function mm2dView(box, id, r) {
+  if (box.querySelector(".rc-texture")) return;
+  const s = r.summary, f = name => `/api/runs/${id}/files/${name}`;
+  const num = (v, d) => v == null ? "–" : fmt(v, d);
+  const rows = [["Texture", esc((s.texture || "").replace(/_/g, " "))], ["Topological charge Q", num(s.topological_charge, 3)],
+    s.texture === "skyrmion" ? ["Radius (mz = 0)", num(s.radius_nm, 2) + " nm"] : null,
+    s.rings_nm && s.rings_nm.length ? ["Rings (mz = 0)", s.rings_nm.map(x => fmt(x, 2)).join(", ") + " nm"] : null,
+    ["Energy", `${num(s.energy_final_J * 1e18, 4)} aJ`], ["<m> final", `(${(s.m_final || []).map(x => fmt(x, 3)).join(", ")})`],
+    s.relax_iterations != null ? ["Relaxation", `${s.relax_iterations.toLocaleString()} ${t("iterations")}, max |m×H| ${num(s.relax_torque_A_per_m, 2)} A/m`] : null,
+    s.peak_frequency_mx_GHz != null ? ["Main frequency <mx>", num(s.peak_frequency_mx_GHz, 3) + " GHz"] : null,
+    ["Grid", `${(s.grid || []).join(" × ")} · ${num(s.cell_nm, 3)} nm`]].filter(Boolean);
+  const pic = r.files.includes("texture_3d_2d.png") ? "texture_3d_2d.png" : "texture_3d.png";
+  box.innerHTML = `<figure class="rc-texture"><a href="${f(pic)}" target="_blank" rel="noopener"><img src="${f(pic)}" alt="${t("Tilted view and top view of the final texture")}" loading="lazy"></a>
+    <figcaption>${t("Colour: in-plane direction; light = up, dark = down. Click a picture to open it full size.")}</figcaption></figure>
+    <div class="rc-mm2d"><table>${rows.map(([k, v]) => `<tr><td>${esc(t(k))}</td><td class="mono">${v}</td></tr>`).join("")}</table>
+    <a href="${f("Two_Spin_Dynamics.png")}" target="_blank" rel="noopener"><img src="${f("Two_Spin_Dynamics.png")}" alt="${esc(t(s.mode === "dynamics" ? "<m> in time" : "<m> during the relaxation"))}" loading="lazy"></a></div>`;
 }
 
 // ---------------------------------------------------------------- setup dialog, fast / deep
@@ -1808,7 +1834,7 @@ function engineChanged() {
   $("#mode-fast").hidden = other; $("#examples").hidden = other;
   if (other) { $("#fast").hidden = true; $("#deep").hidden = false; $("#mode-deep").setAttribute("aria-pressed", "true"); $("#mode-fast").setAttribute("aria-pressed", "false"); }
   else setMode(localStorage.getItem("sublattice.mode") === "deep" ? "deep" : "fast");
-  $("#params").placeholder = other ? "--t=2e-9" : "--t=5e-9\n--SOT_DC_Amp=30e6";
+  $("#params").placeholder = other ? ((e && e.example) || "--t=2e-9") : "--t=5e-9\n--SOT_DC_Amp=30e6";
   showCheck(null);
 }
 $("#engine").onchange = engineChanged;
@@ -2644,6 +2670,16 @@ const changedText = ch => Object.entries(ch || {}).map(([k, v]) =>
 function runSummaryLine(r) {
   const s = r.summary || {};
   if (r.status !== "done") return esc(r.status || "");
+  if (s.engine === "mm2d") {        // 2D micromagnetics: the texture, its charge and size
+    const p = [`<b>${esc((s.texture || "texture").replace(/_/g, " "))}</b>`, `<span>Q = ${fmt(s.topological_charge, 2)}</span>`];
+    if (s.texture === "skyrmion" && s.radius_nm) p.push(`<span>R = ${fmt(s.radius_nm, 1)} nm</span>`);
+    if (s.texture === "skyrmionium" && s.rings_nm) p.push(`<span>rings ${s.rings_nm.map(x => fmt(x, 1)).join(" / ")} nm</span>`);
+    if (s.peak_frequency_mx_GHz != null) p.push(`<span>f = ${fmt(s.peak_frequency_mx_GHz, 2)} GHz</span>`);
+    if (s.relaxed === false) p.push(`<span>${t("not relaxed")}</span>`);
+    const chg = changedText(r.changed_from_defaults);
+    if (chg) p.push(`<span class="mono">${esc(chg)}</span>`);
+    return p.join(" · ");
+  }
   const parts = [s.order_final ? `<b>${s.order_initial} → ${s.order_final}</b>` : `<b>${esc(s.engine || "run")}</b>`];
   const sw = s.neel_z_switches ?? s.neel_z_sign_changes;
   if (sw != null) parts.push(`<span>${sw} switch${sw === 1 ? "" : "es"}</span>`);

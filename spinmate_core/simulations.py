@@ -24,7 +24,10 @@ MAX_PARALLEL = int(os.environ.get("MAX_PARALLEL") or max(1, (os.cpu_count() or 2
 MAX_SWEEP_RUNS = int(os.environ.get("MAX_SWEEP_RUNS", "400"))
 RESULT_FILES = ["Two_Spin_Dynamics.png", "output1.dat", "output2.dat", "neel_z.dat",
                 "parameters.txt", "summary.json", "simulation_parameters.log", "stderr.log",
-                "continuation.json", "chain.json"]
+                "continuation.json", "chain.json",
+                # engine plug-ins (mm2d, mumax3)
+                "texture_3d_2d.png", "texture_3d.png", "texture_2d.png", "m_final.npz", "energy.dat", "input.mx3",
+                "table.txt"]
 
 _lock = threading.Lock()
 _neel_cache = {}      # (run_id, discard) -> mean |n_z|; finished runs do not change

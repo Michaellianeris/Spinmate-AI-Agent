@@ -9,6 +9,16 @@ time-dependent drives, integrated with Heun steps.
 - macrospin (default): the two-sublattice model above. mumax3, when installed: finite-difference micromagnetics
   of one ferromagnet on a grid (GPU). Call list_engines to see what is installed and the parameters of each, and
   pass engine="mumax3" to validate_parameters and start_simulation. Sweeps and continue_run are macrospin only.
+- mm2d, when installed: SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick (CPU). Exchange
+  Aex, perpendicular anisotropy Ku, DMI D (dmi=interfacial gives Neel, dmi=bulk Bloch textures), Zeeman B_ext and
+  the local thin-film demagnetising field -Ms mz, so the effective anisotropy is Keff = Ku - mu0 Ms^2/2.
+  mode=relax lowers the energy from a seed (texture=skyrmion, skyrmionium, domain_wall, uniform, random) to the
+  nearest stable state; mode=dynamics then solves LLG in time, with an optional uniform pulse B_pulse for t_pulse.
+  The summary gives texture, topological_charge Q (skyrmion: |Q| = 1, skyrmionium: 0), radius_nm, rings_nm
+  (where mz = 0 along the centre line), energies and, in dynamics, peak_frequency_mx_GHz. Scales: wall width
+  sqrt(A/Keff), wall energy 4 sqrt(A Keff) - pi |D|; above D_c = 4 sqrt(A Keff)/pi the uniform state breaks into
+  stripes. The pictures texture_3d.png and texture_2d.png show the final state. One cell thick and a local
+  demagnetising field: no stray-field coupling between distant parts of the film.
 
 ## Rules
 - Report only numbers that come from a tool result or from this guide. If something was not computed, say so
