@@ -273,9 +273,9 @@ in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine=
 publish results obtained with it, cite Vansteenkiste et al., <i>The design and verification of MuMax3</i>, AIP Advances 4,
 107133 (2014). Outside Docker: <code>pip install -e plugins/spinmate-mumax3</code>.</div>
 
-<h3>2D micromagnetics: skyrmions with mm2d</h3>
+<h3>2D micromagnetics: skyrmions and spin waves with mm2d</h3>
 <p>Choose <b>mm2d</b> in the Engine menu of Run setup (Deep mode), or ask in the chat, for example
-“relax a Néel skyrmion with D = 3.5 mJ/m²”. <code>mode=relax</code> lowers the energy from a seed
+“relax a Néel skyrmion with D = 3.5 mJ/m²” or “send 80 GHz spin waves from a stripe antenna”. <code>mode=relax</code> lowers the energy from a seed
 (<code>texture=skyrmion</code>, <code>skyrmionium</code>, <code>domain_wall</code>, <code>uniform</code>, <code>random</code>) to the
 nearest stable state; <code>mode=dynamics</code> relaxes first and then solves LLG in time, with an optional field pulse
 <code>B_pulse</code> for <code>t_pulse</code>, and reports the main frequency.</p>
@@ -302,9 +302,37 @@ and ⟨m⟩ during the relaxation or in time. <code>m_final.npz</code> keeps the
 <tr><td>Kittel frequency</td><td>γ₀/2π·(H + 2Keff/μ₀Ms)</td><td>within 0.2 %</td></tr>
 <tr><td>Energy, α = 0</td><td>conserved</td><td>drift &lt; 1e-4</td></tr>
 <tr><td>Skyrmion / skyrmionium</td><td>Q = −1 / 0</td><td>−1.00 / 0.00</td></tr>
+<tr><td>Spin wave, 80 GHz</td><td>λ = 49.6 nm</td><td>49.3 nm</td></tr>
+<tr><td>Dispersion f(k)</td><td>analytic curve</td><td>within 1 %</td></tr>
 </table>
 </div>
 <figure><img src="../screenshots/mm2d-card.png"><figcaption>The run card of an mm2d skyrmion.</figcaption></figure>
+</div>
+<h3>Spin waves</h3>
+<p>With <code>excite=stripe</code> or <code>excite=dot</code> the field pulse acts on an antenna instead of the whole film.
+<code>pulse=sine</code> at <code>f_rf</code> sends a monochromatic wave: the card gives its wavelength next to the theory.
+<code>pulse=sinc</code> up to <code>f_rf</code> excites every wave below that frequency at once and draws the dispersion f(k)
+with the analytic curve f = γ₀/2π·(H + 2K<sub>eff</sub>/μ₀M<sub>s</sub> + 2A k²/μ₀M<sub>s</sub>). Set <code>absorb</code> to about two
+wavelengths so the waves do not come back from the edges. Below the gap (here 56.8 GHz) nothing propagates.</p>
+<pre>--mode=dynamics
+--texture=uniform
+--Nx=300
+--Ny=100
+--dx=2e-9
+--excite=stripe
+--excite_x=-150e-9
+--pulse=sine
+--f_rf=80e9
+--B_pulse=0.02,0,0
+--t=300e-12
+--t_pulse=300e-12
+--table_dt=2e-12
+--absorb=100e-9</pre>
+<figure><img src="../mm2d-spinwaves.png"><figcaption>Spin waves at 80 GHz from a stripe antenna, in the same views as a texture. Colour: phase of the precession; the precession is enlarged so it can be seen. λ = 49.3 nm (theory 49.6 nm).</figcaption></figure>
+<figure><img src="../mm2d-spinwaves-dot.png"><figcaption>Circular spin waves from a dot antenna.</figcaption></figure>
+<div class="side">
+<figure><img src="../screenshots/mm2d-spinwave-card.png"><figcaption>The run card of a spin-wave run: wavelength, gap and the profile along y = 0.</figcaption></figure>
+<figure><img src="../mm2d-dispersion.png"><figcaption>Dispersion from a sinc pulse up to 150 GHz; the dashed line is the analytic f(k).</figcaption></figure>
 </div>
 <div class="tip">Limits: the film is one cell thick and the demagnetising field is local (−Ms·m<sub>z</sub>), so there is no long-range
 stray field; no temperature yet. Two sublattices and a GPU version are planned.</div>

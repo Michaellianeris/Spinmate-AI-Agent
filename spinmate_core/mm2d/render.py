@@ -57,6 +57,7 @@ def _grid(m, x, y, step):
 
 def draw_3d(ax, m, x, y, step, round_view=False):
     """x, y in nm; m shape (3, Ny, Nx). round_view: a disc around a localised texture (skyrmion)."""
+    x, y = x - (x[0] + x[-1]) / 2, y - (y[0] + y[-1]) / 2       # no axes here: centre the film
     hx, hy = (x[-1] - x[0]) / 2 + (x[1] - x[0]) / 2, (y[-1] - y[0]) / 2 + (y[1] - y[0]) / 2
     s = np.sin(TILT)
     rgb = colour(*m)
@@ -90,8 +91,9 @@ def draw_3d(ax, m, x, y, step, round_view=False):
     order = np.argsort(depth)
     ax.add_collection(PolyCollection([polys[k] for k in order], facecolors=[cols[k] for k in order],
                                      edgecolors="none", zorder=2))
-    ax.set_xlim(-hx - 3, hx + 4)
-    ax.set_ylim(-hy * s - 5, hy * s + L + 2)
+    pad = max(3.0, 0.02 * hx)
+    ax.set_xlim(-hx - pad, hx + pad + 1)
+    ax.set_ylim(-hy * s - pad - 2, hy * s + L + pad)
     ax.set_aspect("equal"); ax.axis("off")
 
 
@@ -138,9 +140,9 @@ def step_for(n):
     return max(1, int(round(n / 15)))
 
 
-def save_views(m, x_nm, y_nm, caption, prefix="texture", round_view=False):
+def save_views(m, x_nm, y_nm, caption, prefix="texture", round_view=False, step=None):
     """Writes <prefix>_3d.png, <prefix>_2d.png and the combined <prefix>_3d_2d.png."""
-    step = step_for(max(len(x_nm), len(y_nm)))
+    step = step or step_for(max(len(x_nm), len(y_nm)))
     asp = (y_nm[-1] - y_nm[0]) / max(x_nm[-1] - x_nm[0], 1e-9)
     fig, ax = plt.subplots(figsize=(11, 7 * min(max(asp, 0.5), 1.4)))
     draw_3d(ax, m, x_nm, y_nm, step, round_view)
@@ -158,3 +160,84 @@ def save_views(m, x_nm, y_nm, caption, prefix="texture", round_view=False):
     _wheel(fig, [0.935, 0.16, 0.06, 0.13], (0.965, 0.13))
     fig.text(0.02, 0.04, caption, fontsize=13, color=INK)
     fig.savefig(f"{prefix}_3d_2d.png", dpi=120, bbox_inches="tight", pad_inches=0.25); plt.close(fig)
+
+
+# ---- spin waves: mx as a surface and a map, and the dispersion
+WAVE = matplotlib.colors.LinearSegmentedColormap.from_list(
+    "spinmate_wave", ["#2B3FC9", "#5A73FF", "#F7F5FB", "#FF5A42", "#C2261A"])
+
+
+def save_spinwave(dmx, x_nm, y_nm, antenna, caption, absorb_nm=0.0, prefix="spinwave_map"):
+    """dmx: change of mx from the ground state, shape (Ny, Nx)."""
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+    lim = float(np.percentile(np.abs(dmx), 99.5)) or 1e-12
+    norm = matplotlib.colors.Normalize(-lim, lim)
+    fig = plt.figure(figsize=(17, 7.2))
+    a3 = fig.add_axes([-0.04, 0.04, 0.6, 0.96], projection="3d")
+    st = max(1, min(int(round(max(dmx.shape) / 160)), min(dmx.shape) // 2))
+    X, Y = np.meshgrid(x_nm[::st], y_nm[::st])
+    Z = dmx[::st, ::st]
+    span = max(x_nm[-1] - x_nm[0], y_nm[-1] - y_nm[0])
+    zs = 0.05 * span / lim
+    ls = matplotlib.colors.LightSource(azdeg=225, altdeg=40)
+    rgb = ls.shade(Z * zs, cmap=WAVE, norm=norm, blend_mode="soft", vert_exag=1.0, dx=x_nm[st] - x_nm[0],
+                   dy=x_nm[st] - x_nm[0])
+    a3.plot_surface(X, Y, Z * zs, facecolors=rgb, rstride=1, cstride=1, linewidth=0, antialiased=False, shade=False)
+    if antenna.any():
+        cols = np.where(antenna.any(0))[0]; rows_ = np.where(antenna.any(1))[0]
+        xa, ya = x_nm[[cols[0], cols[-1]]], y_nm[[rows_[0], rows_[-1]]]
+        a3.bar3d(xa[0], ya[0], 0.08 * span, max(xa[1] - xa[0], 0.6), max(ya[1] - ya[0], 0.6), 0.02 * span,
+                 color="#C79BFF", alpha=0.85, shade=True)
+    a3.set_box_aspect((x_nm[-1] - x_nm[0], y_nm[-1] - y_nm[0], 0.2 * span), zoom=1.35)
+    a3.view_init(elev=36, azim=-60)
+    a3.set_axis_off()
+    a2 = fig.add_axes([0.6, 0.16, 0.33, 0.76])
+    dx = x_nm[1] - x_nm[0]
+    ext = [x_nm[0] - dx / 2, x_nm[-1] + dx / 2, y_nm[0] - dx / 2, y_nm[-1] + dx / 2]
+    a2.imshow(dmx, extent=ext, origin="lower", cmap=WAVE, norm=norm, interpolation="bicubic", aspect="equal")
+    if antenna.any():
+        a2.contour(x_nm, y_nm, antenna.astype(float), levels=[0.5], colors="#7A35A8", linewidths=1.6)
+    if absorb_nm > 0:
+        for x0, x1 in ((ext[0], ext[0] + absorb_nm), (ext[1] - absorb_nm, ext[1])):
+            a2.axvspan(x0, x1, color="#120D26", alpha=0.18, lw=0)
+    a2.set_xlabel("x (nm)", fontsize=17); a2.set_ylabel("y (nm)", fontsize=17); a2.tick_params(labelsize=14, length=5)
+    for sp in a2.spines.values():
+        sp.set_color("#B9B0CC")
+    cax = fig.add_axes([0.945, 0.2, 0.012, 0.6])
+    cb = fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=WAVE), cax=cax)
+    cb.set_label("Δmx", fontsize=14); cb.ax.tick_params(labelsize=11); cb.formatter.set_powerlimits((-2, 2))
+    fig.text(0.02, 0.03, caption, fontsize=13, color=INK)
+    fig.savefig(f"{prefix}.png", dpi=120, bbox_inches="tight", pad_inches=0.25); plt.close(fig)
+
+
+def save_dispersion(k, f, P, k_line, f_line, f_max, caption, name="dispersion.png"):
+    fig, ax = plt.subplots(figsize=(9, 6.2))
+    kk = k * 1e-6                                       # rad/µm
+    sel = f <= 1.1 * f_max
+    img = np.log10(P[sel] / P[sel].max() + 1e-6)
+    ax.pcolormesh(kk, f[sel] / 1e9, img, cmap="magma", shading="auto", vmin=-4.5, vmax=0)
+    ax.plot(k_line * 1e-6, f_line / 1e9, color="#5BD0FF", lw=1.6, ls="--", label="analytic")
+    inside = f_line <= 1.25 * f_max                      # beyond that the waves are not driven (and alias)
+    k_lim = float(np.abs(k_line[inside]).max() * 1e-6) if inside.any() else float(np.abs(kk).max())
+    ax.set_ylim(0, 1.1 * f_max / 1e9); ax.set_xlim(-k_lim, k_lim)
+    ax.set_xlabel("k (rad/µm)", fontsize=16); ax.set_ylabel("f (GHz)", fontsize=16); ax.tick_params(labelsize=13)
+    ax.legend(loc="upper center", fontsize=12, framealpha=0.85)
+    fig.text(0.01, -0.02, caption, fontsize=10.5, color=INK)
+    fig.savefig(name, dpi=130, bbox_inches="tight", pad_inches=0.25); plt.close(fig)
+
+
+def save_profile(x_nm, row, antenna_x, absorb_nm, lam_nm=None, name="spinwave_profile.png"):
+    """Δmx along y = 0 at the end of the run."""
+    fig, ax = plt.subplots(figsize=(8, 5.2))
+    ax.plot(x_nm, row, color="#B24BD0", lw=1.6)
+    ax.axhline(0, color="#B9B0CC", lw=0.8)
+    for xa in antenna_x:
+        ax.axvline(xa, color="#FF5A42", lw=1.2, ls="--")
+    if absorb_nm > 0:
+        ax.axvspan(x_nm[0], x_nm[0] + absorb_nm, color="#120D26", alpha=0.1, lw=0)
+        ax.axvspan(x_nm[-1] - absorb_nm, x_nm[-1], color="#120D26", alpha=0.1, lw=0)
+    ax.set_xlabel("x (nm)", fontsize=16); ax.set_ylabel("Δmx at y = 0", fontsize=16); ax.tick_params(labelsize=13)
+    ax.ticklabel_format(axis="y", style="sci", scilimits=(-2, 2))
+    if lam_nm:
+        ax.set_title(f"λ = {lam_nm:.1f} nm · dashed: antenna · shaded: absorbing edges", fontsize=12, color=INK)
+    fig.tight_layout(); fig.savefig(name, dpi=130); plt.close(fig)

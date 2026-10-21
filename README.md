@@ -519,9 +519,36 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 - **Results.** The run card shows the final texture as a tilted 3D view and a top view (colour: in-plane
   direction; light = up, dark = down), with the topological charge Q, the radius or the rings and, in dynamics,
   the main frequency. `m_final.npz` keeps the full state.
+- **Spin waves.** `excite=stripe` or `dot` puts the field pulse on an antenna; `pulse=sine` at `f_rf` gives
+  a monochromatic wave and its wavelength, `pulse=sinc` up to `f_rf` gives the whole dispersion f(k); `absorb`
+  makes the edges absorbing. The run card shows the wave with the same 3D arrows (colour = phase of the
+  precession) and the line profile or the dispersion with the analytic curve.
+
+```text
+--mode=dynamics
+--texture=uniform
+--Nx=300
+--Ny=100
+--dx=2e-9
+--excite=stripe
+--excite_x=-150e-9
+--pulse=sine
+--f_rf=80e9
+--B_pulse=0.02,0,0
+--t_pulse=300e-12
+--t=300e-12
+--table_dt=2e-12
+--absorb=100e-9
+```
+
+<img src="docs/mm2d-spinwaves.png" alt="Spin waves at 80 GHz from a stripe antenna in mm2d: tilted view with 3D arrows coloured by the phase of the precession, next to the top view with nm axes." width="100%">
+<img src="docs/mm2d-spinwaves-dot.png" alt="Circular spin waves from a dot antenna in mm2d, in the same two views." width="100%">
+<img src="docs/mm2d-dispersion.png" alt="Spin-wave dispersion from mm2d with a sinc pulse: the simulated f(k) lies on the analytic curve." width="60%">
+
 - **Validated** in `tests/test_mm2d.py` against analytic results: wall energy 4√(A·Keff) − π|D| and width
   √(A/Keff) for both DMI types, the Kittel frequency, energy conservation without damping, |m| = 1, and
-  Q = −1 for a skyrmion and 0 for skyrmionium.
+  Q = −1 for a skyrmion and 0 for skyrmionium, and for spin waves the wavelength at 80 GHz (49.3 nm against
+  49.6 nm) and the dispersion f(k) (within 1 %).
 - **Limits.** One cell thick; the demagnetising field is local (−Ms·mz), so there is no long-range stray field.
   A 128 × 128 relaxation takes a few seconds. Two sublattices and a GPU version are planned.
 

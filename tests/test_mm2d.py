@@ -122,3 +122,35 @@ def test_page_shows_the_texture():
     for el in ('class="rc-texture"', 's.engine === "mm2d"', "function mm2dView", "texture_3d_2d.png", "e.example"):
         assert el in html
     assert "mm2d" in (ROOT / "spinmate_mcp" / "physics.md").read_text()
+
+
+def _run(tmp_path, monkeypatch, text):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "parameters.txt").write_text(text)
+    from spinmate_core.mm2d import runner
+    runner.main()
+    return json.loads((tmp_path / "summary.json").read_text())
+
+
+SW = "--mode=dynamics\n--texture=uniform\n--D=0\n--dx=2e-9\n--Ny=2\n--excite=stripe\n--excite_width=2e-9\n"
+
+
+def test_spin_wave_wavelength(tmp_path, monkeypatch):
+    s = _run(tmp_path, monkeypatch, SW + "--Nx=160\n--excite_x=-80e-9\n--pulse=sine\n--f_rf=80e9\n--B_pulse=0.02,0,0\n"
+             "--t_pulse=200e-12\n--t=200e-12\n--table_dt=2e-12\n--alpha=0.01\n--absorb=40e-9\n")
+    assert s["texture"] == "spin_waves" and s["wavelength_nm"] == pytest.approx(s["wavelength_theory_nm"], rel=0.03)
+    for name in ("spinwave_3d_2d.png", "spinwave_map.png", "spinwave.npz"):
+        assert (tmp_path / name).exists()
+
+
+def test_spin_wave_dispersion(tmp_path, monkeypatch):
+    s = _run(tmp_path, monkeypatch, SW + "--Nx=256\n--pulse=sinc\n--f_rf=150e9\n--B_pulse=0.05,0,0\n--t_pulse=40e-12\n"
+             "--t=300e-12\n--table_dt=2e-12\n--alpha=0.002\n--absorb=60e-9\n")
+    assert s["dispersion_mismatch_pct"] < 3 and (tmp_path / "dispersion.png").exists()
+
+
+def test_spin_wave_checks():
+    e = M.MM2DEngine()
+    assert not e.validate("--mode=dynamics\n--pulse=sine\n").ok                       # needs f_rf
+    v = e.validate("--mode=dynamics\n--excite=stripe\n--pulse=sine\n--f_rf=100e9\n--table_dt=1e-11\n")
+    assert v.ok and any("too coarse" in w for w in v.warnings) and any("absorb" in w for w in v.warnings)
