@@ -83,6 +83,29 @@ def motion_summary(film, vals, track):
             "hall_angle_deg": round(hall, 2) + 0.0, "direction_to_j_deg": round(direction, 2) + 0.0, "distance_nm": round(float(np.hypot(x[-1] - x[0], y[-1] - y[0])) * 1e9, 2)}
 
 
+def _unwrap(film, track):
+    t, x, y = track[:, 0], track[:, 1], track[:, 2]
+    ok = ~np.isnan(x)
+    t, x, y = t[ok], x[ok], y[ok]
+    Lx, Ly = film.Nx * film.dx, film.Ny * film.dx
+    return t, np.unwrap(2 * np.pi * x / Lx) * Lx / (2 * np.pi), np.unwrap(2 * np.pi * y / Ly) * Ly / (2 * np.pi)
+
+
+def diffusion_summary(film, track):
+    """Brownian motion of the texture centre: D from the mean squared displacement, <r²> = 4 D tau."""
+    t, x, y = _unwrap(film, track)
+    np.savetxt("track.dat", np.column_stack([t, x, y]), fmt="%.8E", header="t (s), x (m), y (m) of the texture centre")
+    lags = range(1, max(2, len(t) // 10))
+    taus, msd = [], []
+    for L in lags:
+        dx, dy = x[L:] - x[:-L], y[L:] - y[:-L]
+        taus.append(t[L] - t[0]); msd.append(float(np.mean(dx ** 2 + dy ** 2)))
+    taus, msd = np.array(taus), np.array(msd)
+    D = float(np.sum(taus * msd) / np.sum(taus ** 2)) / 4                # line through the origin
+    return {"diffusion_m2ps": D, "rms_displacement_nm": round(float(np.sqrt(np.mean((x - x[0]) ** 2 + (y - y[0]) ** 2))) * 1e9, 3),
+            "distance_nm": round(float(np.hypot(x[-1] - x[0], y[-1] - y[0])) * 1e9, 2)}
+
+
 def damping(film, vals):
     """Gilbert damping, rising to 1 over `absorb` at the x edges (and y edges for a dot)."""
     a, w = vals["alpha"], vals["absorb"]
@@ -237,7 +260,17 @@ def main():
         if current:
             summary.update(current)
             summary["thiele_velocity_mps"] = [round(float(v), 3) + 0.0 for v in S.thiele_velocity(film, m, vals["alpha"])]
+        T = vals["Temp"]
+        localised = vals["texture"] in ("skyrmion", "skyrmionium") and vals["excite"] == "uniform"
+        follow = bool(current) or (T > 0 and localised)       # track the centre: drift or Brownian motion
+        if T > 0:
+            dt_th = vals["thermal_dt"] or 0.15 / film.max_freq()
+            rng = np.random.default_rng(vals["seed"] + 1)
+            summary.update(temperature_K=T, thermal_dt_s=dt_th)
+            if localised and not current:
+                summary["diffusion_thiele_m2ps"] = S.KB * T * S.diffusion_thiele(film, view(m), vals["alpha"], d)
         track = [(0.0, *(S.centre(film, view(m)) or (np.nan, np.nan)))]
+        mz_sum, mz_n = 0.0, 0
         base = film.H_ext.copy()
         shape, f_rf, t_p = vals["pulse"], vals["f_rf"], vals["t_pulse"]
         h_max = 1 / (24 * f_rf) if shape != "step" else np.inf      # the field changes within a period
@@ -261,21 +294,36 @@ def main():
                 h = min(dt, t_target - t, h_max if t < t_p else np.inf)
                 if t < t_p < t + h:
                     h = t_p - t                    # end the pulse exactly
-                film.H_ext = base + pulse * amp(t + h / 2)
-                m, used, dt = S.rk45_step(film, m, h, alpha, tol=vals["rk_tol"])
+                if T > 0:                          # stochastic LLG: fixed Heun steps (Stratonovich)
+                    h = min(dt_th, t_target - t, h_max if t < t_p else np.inf)
+                    if t < t_p < t + h:
+                        h = t_p - t
+                    noise = S.thermal_sigma(film, alpha, T, h, d) * rng.normal(size=m.shape)
+                    film.H_ext = base + pulse * amp(t + h / 2) + noise
+                    m = S.heun(film, m, h, alpha)
+                    used = h
+                else:
+                    film.H_ext = base + pulse * amp(t + h / 2)
+                    m, used, dt = S.rk45_step(film, m, h, alpha, tol=vals["rk_tol"])
                 t += used; steps += 1
             film.H_ext = base
             rows.append((t, *avg(m))); rows2.append((t, *avg2(m))); erows.append((t, film.energy(m, d)))
             wave.append(view(m)[0, row_j].copy())
-            if current:
+            if follow:
                 track.append((t, *(S.centre(film, view(m)) or (np.nan, np.nan))))
+            if T > 0 and k > n_out // 5:
+                mz_sum += float(avg(m)[2]); mz_n += 1
             _progress(start + k, start + n_out, t0)
         summary.update(dynamics_steps=steps, t_end_s=t, points=len(rows))
         if current and len(track) > 4:
             summary.update(motion_summary(film, vals, np.array(track)))
+        elif follow and len(track) > 20:
+            summary.update(diffusion_summary(film, np.array(track)))
+        if T > 0 and mz_n:
+            summary["mean_mz_thermal"] = round(mz_sum / mz_n, 5)
         tt = np.array([r[0] for r in rows])
         sel = tt >= t_p
-        if sel.sum() > 16 and vals["excite"] == "uniform" and not current:   # main frequency after the pulse
+        if sel.sum() > 16 and vals["excite"] == "uniform" and not current and (T == 0 or any(vals["B_pulse"])):
             for comp, idx in (("mx", 1), ("mz", 3)):
                 sig = np.array([r[idx] for r in rows])[sel]
                 sig = sig - sig.mean()
@@ -346,11 +394,13 @@ def main():
 
     caption = (f"{kind} · Q = {Q:+.2f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
                f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³, Ms = {vals['Msat'] / 1e3:.4g} kA/m · {vals['dx'] * 1e9:.3g} nm cells")
+    if vals["Temp"] > 0 and vals["mode"] == "dynamics":
+        caption += f" · T = {vals['Temp']:.0f} K"
     if afm:
         q1, q2 = summary["sublattice_charges"]
         caption = (f"{'synthetic AFM' if vals['lattice'] == 'saf' else 'AFM'} {kind} · Q1 = {q1:+.0f}, Q2 = {q2:+.0f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
                    f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³ · arrows: m1 red, m2 blue; film: Néel vector n")
-    if "velocity_mps" in summary:
+    if "velocity_mps" in summary or "diffusion_m2ps" in summary:
         tr = np.loadtxt("track.dat")
         mid = ((tr[0, 1] + tr[-1, 1]) / 2, (tr[0, 2] + tr[-1, 2]) / 2)    # the path in the middle of the picture
         tr[:, 1] -= mid[0]; tr[:, 2] -= mid[1]

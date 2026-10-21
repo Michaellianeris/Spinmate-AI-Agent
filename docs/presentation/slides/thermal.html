@@ -1,0 +1,14 @@
+<section id="thermal" data-transition="fade" style="background:radial-gradient(ellipse at 88% 92%, #1E2A6A 0%, #120D26 60%);color:#F4EEFF;font-family:'Inter', Arial, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<h2 style="font-size:64px;font-weight:700;line-height:1.1;color:#FFFFFF">Skyrmions at 300 K <span style="color:#9FB0FF;font-weight:600">· stochastic LLG</span></h2>
+<div style="display:flex;gap:32px;align-items:start">
+<img src="../mm2d-thermal-skyrmion.png" alt="A Néel skyrmion at 300 K with thermal fluctuations" style="width:980px;height:420px;object-fit:contain;border-radius:16px;background:#FFFFFF">
+<img src="../mm2d-thermal-track.png" alt="Brownian path of the skyrmion over 1 ns" style="width:480px;height:420px;object-fit:contain;border-radius:16px;background:#FFFFFF">
+</div>
+<div style="display:flex;gap:56px;align-items:center">
+<div><p style="font-size:52px;font-weight:800;color:#9FB0FF">Boltzmann</p><p style="font-size:21px;color:#BDB2DA">⟨m<sub>z</sub>⟩ of free spins exact for α = 0.1 and 0.5</p></div>
+<div><p style="font-size:52px;font-weight:800;color:#9FB0FF">50 nm²/ns</p><p style="font-size:21px;color:#BDB2DA">skyrmion diffusion, Thiele 41 (one trajectory)</p></div>
+<p style="flex:1;font-size:22px;line-height:1.4;color:#CFC4EA">Brown's thermal field with fixed Heun steps; works with currents, pulses and both lattices.</p>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between"><p style="font-size:24px;color:#9A8CC2">engine="mm2d" · mode=dynamics · Temp · thermal_dt</p><p style="font-size:24px;color:#9A8CC2">18</p></div>
+<aside>Temperature enters through Brown's stochastic field, integrated with fixed Heun steps. Free spins reach the Boltzmann average of m_z for any damping, which validates the noise amplitude. A skyrmion at room temperature wobbles and wanders: over one nanosecond its diffusion constant is about fifty square nanometres per nanosecond, against forty-one from the stochastic Thiele equation, within the statistical error of one trajectory.</aside>
+</section>

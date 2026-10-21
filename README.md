@@ -105,7 +105,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
 | 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. Click the counter for **usage and cost** per day and per provider (Claude, OpenAI, Gemini). |
-| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, spin waves and FeRh heating; click one to ask it. |
+| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, a skyrmion at 300 K, spin waves and FeRh heating; click one to ask it. |
 | 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file
@@ -557,6 +557,30 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 
 <img src="docs/screenshots/mm2d-saf-chat.png" alt="In the chat: a question asks whether a synthetic-AFM skyrmion shows a skyrmion Hall effect; the answer gives 131 m/s, Hall angle 0, Thiele within 1 percent" width="70%">
 
+- **Temperature.** `Temp` (K) in `mode=dynamics` adds the stochastic thermal field (Brown) and switches to fixed
+  Heun steps. Independent spins reach the Boltzmann average of m_z; a skyrmion at 300 K wobbles and wanders, and the
+  card gives its diffusion constant from the mean squared displacement next to the stochastic Thiele value.
+
+```text
+--mode=dynamics
+--texture=skyrmion
+--Nx=64
+--Ny=64
+--alpha=0.3
+--Temp=300
+--t=1e-9
+```
+
+<table>
+<tr>
+<td width="60%"><img src="docs/mm2d-thermal-skyrmion.png" alt="A Néel skyrmion at 300 K: the 3D arrows and the top view show thermal fluctuations around the texture"></td>
+<td width="40%"><img src="docs/mm2d-thermal-track.png" alt="The Brownian path of the skyrmion centre over 1 ns at 300 K: D = 49.7 nm²/ns, Thiele 40.8 nm²/ns"></td>
+</tr>
+<tr><td align="center"><i>A skyrmion at 300 K</i></td><td align="center"><i>Its Brownian path over 1 ns</i></td></tr>
+</table>
+
+<img src="docs/screenshots/mm2d-thermal-chat.png" alt="In the chat: a question asks how far a skyrmion wanders at 300 K; the answer gives the diffusion constant against the Thiele equation" width="70%">
+
 - **Spin waves.** `excite=stripe` or `dot` puts the field pulse on an antenna; `pulse=sine` at `f_rf` gives
   a monochromatic wave and its wavelength, `pulse=sinc` up to `f_rf` gives the whole dispersion f(k); `absorb`
   makes the edges absorbing. The run card shows the wave with the same 3D arrows (colour = phase of the
@@ -588,7 +612,8 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
   Q = −1 for a skyrmion and 0 for skyrmionium, and for spin waves the wavelength at 80 GHz (49.3 nm against
   49.6 nm) the dispersion f(k) (within 1 %), and for currents the Thiele equation: v = u for STT with β = α (within
   1 %), the velocity under STT with β ≠ α and under SOT, and for antiferromagnets the static profile against a
-  ferromagnet without demag and the absence of a skyrmion Hall effect.
+  ferromagnet without demag and the absence of a skyrmion Hall effect, and the Boltzmann average of m_z at 300 K
+  for two dampings.
 - **Limits.** One cell thick; the demagnetising field is local (−Ms·mz), so there is no long-range stray field.
   A 128 × 128 relaxation takes a few seconds. Two sublattices and a GPU version are planned.
 

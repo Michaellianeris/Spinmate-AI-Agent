@@ -274,10 +274,16 @@ def save_track(m, x_nm, y_nm, track, summary, vals, name="skyrmion_track.png"):
                     arrowprops=dict(arrowstyle="-|>", color="#FF5A42", lw=2.5, mutation_scale=22))
         ax.text(x0, y0 - 0.06 * Ly, "j", color="#FF5A42", fontsize=16, fontweight="bold")
     ax.set_xlabel("x (nm)", fontsize=16); ax.set_ylabel("y (nm)", fontsize=16); ax.tick_params(labelsize=13)
-    v = summary["velocity_mps"]
-    th = summary.get("thiele_velocity_mps")
-    ax.set_title(f"v = ({v[0]:.1f}, {v[1]:.1f}) m/s · Hall angle {summary['hall_angle_deg']:.1f}°"
-                 + (f" · Thiele ({th[0]:.1f}, {th[1]:.1f}) m/s" if th else ""), fontsize=12, color=INK)
+    if "velocity_mps" in summary:
+        v = summary["velocity_mps"]
+        th = summary.get("thiele_velocity_mps")
+        title = (f"v = ({v[0]:.1f}, {v[1]:.1f}) m/s · Hall angle {summary['hall_angle_deg']:.1f}°"
+                 + (f" · Thiele ({th[0]:.1f}, {th[1]:.1f}) m/s" if th else ""))
+    else:                                           # Brownian motion at temperature
+        D, Dt = summary["diffusion_m2ps"], summary.get("diffusion_thiele_m2ps")
+        title = (f"T = {summary.get('temperature_K', 0):.0f} K · D = {D * 1e9:.3g} nm²/ns"
+                 + (f" · Thiele {Dt * 1e9:.3g} nm²/ns" if Dt else ""))
+    ax.set_title(title, fontsize=12, color=INK)
     for sp in ax.spines.values():
         sp.set_color("#B9B0CC")
     fig.tight_layout(); fig.savefig(name, dpi=130); plt.close(fig)

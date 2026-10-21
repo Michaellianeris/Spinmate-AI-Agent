@@ -112,6 +112,11 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Diffusion constant": "Σταθερά διάχυσης",
+  "RMS displacement": "Μέση τετραγωνική μετατόπιση",
+  "Path of the skyrmion": "Διαδρομή του skyrmion",
+  "Skyrmion at 300 K": "Skyrmion στους 300 K",
+  "Run a Néel skyrmion with mm2d on a 64 × 64 nm film at 300 K for 1 ns, damping 0.3, no current. How far does it wander, and does its diffusion match the Thiele equation?": "Τρέξε ένα skyrmion Néel με το mm2d σε φιλμ 64 × 64 nm στους 300 K για 1 ns, απόσβεση 0.3, χωρίς ρεύμα. Πόσο μετακινείται, και συμφωνεί η διάχυσή του με την εξίσωση Thiele;",
   "Lattice": "Πλέγμα",
   "antiferromagnet (two sublattices)": "αντισιδηρομαγνήτης (δύο υποπλέγματα)",
   "synthetic antiferromagnet (two layers)": "συνθετικός αντισιδηρομαγνήτης (δύο στρώματα)",
@@ -125,7 +130,6 @@ const I18N = {
   "STT drift velocity u": "Ταχύτητα ολίσθησης STT u",
   "SOT field H_DL": "Πεδίο SOT H_DL",
   "Hall angle": "γωνία Hall",
-  "Path of the skyrmion under the current": "Διαδρομή του skyrmion υπό ρεύμα",
   "Skyrmion motion": "Κίνηση skyrmion",
   "Push a Néel skyrmion with mm2d by spin-orbit torque: current 1e12 A/m² along x, spin Hall angle 0.1, damping 0.1, 400 ps. How fast does it move and what is its skyrmion Hall angle?": "Σπρώξε ένα skyrmion Néel με το mm2d με spin-orbit torque: ρεύμα 1e12 A/m² κατά x, spin Hall angle 0.1, απόσβεση 0.1, 400 ps. Πόσο γρήγορα κινείται και ποια είναι η γωνία Hall του;",
   "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D and 3D micromagnetic solvers, and explains the result from the real dynamics.": "Περιγράψτε τις συνθήκες με λόγια ή επισυνάψτε ένα αρχείο παραμέτρων. Ο πράκτορας τις ελέγχει με τον parser του ίδιου του solver, τρέχει το μοντέλο macrospin δύο υποπλεγμάτων ή τους 2D και 3D μικρομαγνητικούς solvers και εξηγεί το αποτέλεσμα από την πραγματική δυναμική.",
@@ -765,6 +769,11 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Diffusion constant": "Constante de difusión",
+  "RMS displacement": "Desplazamiento cuadrático medio",
+  "Path of the skyrmion": "Trayectoria del skyrmion",
+  "Skyrmion at 300 K": "Skyrmion a 300 K",
+  "Run a Néel skyrmion with mm2d on a 64 × 64 nm film at 300 K for 1 ns, damping 0.3, no current. How far does it wander, and does its diffusion match the Thiele equation?": "Ejecuta un skyrmion de Néel con mm2d en una película de 64 × 64 nm a 300 K durante 1 ns, amortiguamiento 0.3, sin corriente. ¿Cuánto se desplaza y su difusión concuerda con la ecuación de Thiele?",
   "Lattice": "Red",
   "antiferromagnet (two sublattices)": "antiferroimán (dos subredes)",
   "synthetic antiferromagnet (two layers)": "antiferroimán sintético (dos capas)",
@@ -778,7 +787,6 @@ const I18N = {
   "STT drift velocity u": "Velocidad de deriva STT u",
   "SOT field H_DL": "Campo SOT H_DL",
   "Hall angle": "ángulo Hall",
-  "Path of the skyrmion under the current": "Trayectoria del skyrmion bajo la corriente",
   "Skyrmion motion": "Movimiento de un skyrmion",
   "Push a Néel skyrmion with mm2d by spin-orbit torque: current 1e12 A/m² along x, spin Hall angle 0.1, damping 0.1, 400 ps. How fast does it move and what is its skyrmion Hall angle?": "Empuja un skyrmion de Néel con mm2d mediante torque espín-órbita: corriente 1e12 A/m² a lo largo de x, ángulo Hall de espín 0.1, amortiguamiento 0.1, 400 ps. ¿A qué velocidad se mueve y cuál es su ángulo Hall?",
   "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D and 3D micromagnetic solvers, and explains the result from the real dynamics.": "Describe las condiciones con palabras o adjunta un archivo de parámetros. El agente las comprueba con el propio analizador del solver, ejecuta el modelo macrospin de dos subredes o los solvers micromagnéticos 2D y 3D, y explica el resultado a partir de la dinámica real.",
@@ -1418,6 +1426,11 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Diffusion constant": "Diffusionskonstante",
+  "RMS displacement": "Mittlere Verschiebung",
+  "Path of the skyrmion": "Bahn des Skyrmions",
+  "Skyrmion at 300 K": "Skyrmion bei 300 K",
+  "Run a Néel skyrmion with mm2d on a 64 × 64 nm film at 300 K for 1 ns, damping 0.3, no current. How far does it wander, and does its diffusion match the Thiele equation?": "Simuliere ein Néel-Skyrmion mit mm2d in einem 64 × 64 nm Film bei 300 K für 1 ns, Dämpfung 0.3, ohne Strom. Wie weit wandert es, und passt seine Diffusion zur Thiele-Gleichung?",
   "Lattice": "Gitter",
   "antiferromagnet (two sublattices)": "Antiferromagnet (zwei Untergitter)",
   "synthetic antiferromagnet (two layers)": "synthetischer Antiferromagnet (zwei Schichten)",
@@ -1431,7 +1444,6 @@ const I18N = {
   "STT drift velocity u": "STT-Driftgeschwindigkeit u",
   "SOT field H_DL": "SOT-Feld H_DL",
   "Hall angle": "Hall-Winkel",
-  "Path of the skyrmion under the current": "Bahn des Skyrmions unter Strom",
   "Skyrmion motion": "Skyrmion-Bewegung",
   "Push a Néel skyrmion with mm2d by spin-orbit torque: current 1e12 A/m² along x, spin Hall angle 0.1, damping 0.1, 400 ps. How fast does it move and what is its skyrmion Hall angle?": "Treibe ein Néel-Skyrmion mit mm2d per Spin-Bahn-Drehmoment an: Strom 1e12 A/m² entlang x, Spin-Hall-Winkel 0.1, Dämpfung 0.1, 400 ps. Wie schnell bewegt es sich und wie groß ist sein Skyrmion-Hall-Winkel?",
   "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D and 3D micromagnetic solvers, and explains the result from the real dynamics.": "Beschreiben Sie die Bedingungen in Worten oder hängen Sie eine Parameterdatei an. Der Agent prüft sie mit dem Parser des Solvers, führt das Makrospin-Modell mit zwei Untergittern oder die 2D- und 3D-Mikromagnetik-Solver aus und erklärt das Ergebnis aus der echten Dynamik.",
@@ -2071,6 +2083,11 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Diffusion constant": "Costante di diffusione",
+  "RMS displacement": "Spostamento quadratico medio",
+  "Path of the skyrmion": "Traiettoria dello skyrmion",
+  "Skyrmion at 300 K": "Skyrmion a 300 K",
+  "Run a Néel skyrmion with mm2d on a 64 × 64 nm film at 300 K for 1 ns, damping 0.3, no current. How far does it wander, and does its diffusion match the Thiele equation?": "Simula uno skyrmion di Néel con mm2d in un film di 64 × 64 nm a 300 K per 1 ns, smorzamento 0.3, senza corrente. Quanto si sposta e la sua diffusione concorda con l'equazione di Thiele?",
   "Lattice": "Reticolo",
   "antiferromagnet (two sublattices)": "antiferromagnete (due sottoreticoli)",
   "synthetic antiferromagnet (two layers)": "antiferromagnete sintetico (due strati)",
@@ -2084,7 +2101,6 @@ const I18N = {
   "STT drift velocity u": "Velocità di deriva STT u",
   "SOT field H_DL": "Campo SOT H_DL",
   "Hall angle": "angolo di Hall",
-  "Path of the skyrmion under the current": "Traiettoria dello skyrmion sotto corrente",
   "Skyrmion motion": "Moto di uno skyrmion",
   "Push a Néel skyrmion with mm2d by spin-orbit torque: current 1e12 A/m² along x, spin Hall angle 0.1, damping 0.1, 400 ps. How fast does it move and what is its skyrmion Hall angle?": "Spingi uno skyrmion di Néel con mm2d tramite coppia spin-orbita: corrente 1e12 A/m² lungo x, angolo di spin Hall 0.1, smorzamento 0.1, 400 ps. Quanto veloce si muove e qual è il suo angolo di Hall?",
   "Describe the conditions in words or attach a parameter file. The agent checks them with the solver's own parser, runs the two-sublattice macrospin model or the 2D and 3D micromagnetic solvers, and explains the result from the real dynamics.": "Descrivi le condizioni a parole o allega un file di parametri. L'agente le controlla con il parser del solver, esegue il modello macrospin a due sottoreticoli o i solver micromagnetici 2D e 3D e spiega il risultato dalla dinamica reale.",
