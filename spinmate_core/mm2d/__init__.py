@@ -29,6 +29,9 @@ PARAMS = {
     "demag": ("local", "choice", "", "local = thin-film field -Ms mz, exact for a film a few nm thick; full = the "
               "long-range demagnetising field by FFT (Newell tensor), for thicker films, bubbles and stripe domains",
               ("local", "full")),
+    "mask": ("", "mask", "", "shape of the film: disk, strip, racetrack, or the name of an uploaded PNG (dark, opaque "
+             "pixels = film; stretched to Nx x Ny); empty = the whole grid. The outline is a free edge with the "
+             "DMI boundary condition", None),
     "boundary": ("periodic", "choice", "", "periodic film or free edges", ("periodic", "free")),
     "B_ext": ((0.0, 0.0, 0.0), "vector", "T", "applied field"),
     "R0": (12e-9, "float", "m", "radius of the seed skyrmion (skyrmionium: inner ring)"),
@@ -96,6 +99,10 @@ def parse(text):
                 if not re.fullmatch(r"r\d{4,}", value):
                     raise ValueError
                 vals[name] = value
+            elif kind == "mask":
+                if not re.fullmatch(r"[A-Za-z0-9._-]{1,80}", value):
+                    raise ValueError
+                vals[name] = value
             elif kind == "choice":
                 if value not in PARAMS[name][4]:
                     raise ValueError
@@ -139,6 +146,9 @@ def check(vals):
     if vals["mode"] == "dynamics" and vals["pulse"] != "step" and vals["table_dt"] > 1 / (2.5 * vals["f_rf"]):
         warnings.append(f"table_dt is too coarse for f_rf = {vals['f_rf'] / 1e9:.3g} GHz: use at most "
                         f"{1 / (2.5 * vals['f_rf']):.2g} s")
+    if vals["mask"]:
+        err, warn = mask_problems(vals)
+        errors += err; warnings += warn
     if vals["start_from"]:
         err = start_problem(vals)
         if err:
@@ -185,6 +195,37 @@ def check(vals):
     cells = vals["Nx"] * vals["Ny"]
     if cells > 512 * 512:
         warnings.append(f"{cells:,} cells on the CPU: this run will be slow")
+    return errors, warnings
+
+
+def mask_folder():
+    from ..simulations import MASKS
+    return MASKS
+
+
+def mask_problems(vals):
+    """Errors and warnings about the mask: missing file, aspect ratio, seed outside the film."""
+    from . import geometry
+    name, Nx, Ny = vals["mask"], vals["Nx"], vals["Ny"]
+    errors, warnings = [], []
+    if name not in geometry.BUILT_IN:
+        path = mask_folder() / name
+        if not name.lower().endswith(".png") or not path.exists():
+            return [f"mask={name}: no uploaded PNG with that name (or use disk, strip, racetrack)"], []
+        w, h = geometry.png_size(path)
+        if abs((w / h) / (Nx / Ny) - 1) > 0.05:
+            warnings.append(f"mask {name} is {w} x {h} pixels but the grid is {Nx} x {Ny} cells: the shape is "
+                            f"stretched; use Nx:Ny = {w}:{h}")
+    try:
+        shape = geometry.load(name, Nx, Ny, mask_folder())
+    except Exception as e:                            # a broken picture
+        return [f"mask={name}: {e}"], []
+    if shape.sum() < 16:
+        errors.append(f"mask={name} leaves {int(shape.sum())} cells of film: draw the film dark on a white background")
+    elif vals["texture"] in ("skyrmion", "skyrmionium") and not shape[Ny // 2, Nx // 2]:
+        warnings.append("the seed sits in the middle of the grid, which is outside the shape of the mask")
+    if vals["boundary"] == "periodic" and (shape[0].any() or shape[-1].any() or shape[:, 0].any() or shape[:, -1].any()):
+        warnings.append("the shape touches the edge of the grid and boundary=periodic joins it to the other side")
     return errors, warnings
 
 

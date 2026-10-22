@@ -399,6 +399,33 @@ twice the exchange length and still uses the local field.</p>
 <tr><td>Skyrmion radius, 1 nm / 2 nm film</td><td>larger than with local demag (14.5 nm)</td><td>17.2 nm / 24 nm</td></tr>
 <tr><td>Bubble, 10 nm film, 0 / 20 / 50 mT</td><td>shrinks with field</td><td>93 / 79 / 47 nm</td></tr>
 </table>
+<h3>Shapes: disks, strips, racetracks and your own PNG</h3>
+<p><code>mask=disk</code>, <code>strip</code> or <code>racetrack</code> cuts the film to that shape. For any other shape draw it dark on a
+white (or transparent) background, save it as PNG and drop it on the chat with the paperclip: the message says
+<i>Attached geometry mask</i>, and the agent runs with <code>mask=&lt;name&gt;.png</code>. The picture is stretched to N<sub>x</sub> × N<sub>y</sub>
+cells, so keep the same aspect ratio (Check warns otherwise). Use <code>boundary=free</code>. Ready-made PNGs to edit are in
+<code>examples/masks</code>.</p>
+<p>The outline is a free edge with the DMI boundary condition, 2A ∂m/∂n = −D (m<sub>z</sub>n − (n·m) ẑ) for interfacial DMI
+(2A ∂m/∂n = D n × m for bulk DMI): the magnetisation tilts at the edge, sin θ = Dδ/2A, and the tilted edge repels
+skyrmions. The same condition now holds at the free edges of the grid.</p>
+<pre>--mode=dynamics
+--texture=skyrmion
+--mask=racetrack
+--boundary=free
+--dx=1.5e-9
+--Nx=160
+--Ny=64
+--alpha=0.1
+--j=4e11,0,0
+--theta_SH=0.1
+--t=1e-9</pre>
+<figure><img src="../mm2d-racetrack.png"><figcaption>A skyrmion pushed by SOT, 1.5e11 A/m², in a 48 nm racetrack: the tilted edges push back against the skyrmion Hall effect, and the skyrmion runs at 68 m/s along the track, against 14.5 m/s (Thiele) in an open film.</figcaption></figure>
+<table>
+<tr><th>Edge check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Tilt at a free edge, interfacial and bulk DMI</td><td>sin θ = Dδ/2A = 0.589</td><td>0.5887 (within 1 %)</td></tr>
+<tr><td>Kind of tilt</td><td>Néel (interfacial), Bloch (bulk)</td><td>as expected</td></tr>
+<tr><td>PNG → mask</td><td>same as the built-in shape</td><td>identical, top row = +y</td></tr>
+</table>
 <h3>Sweeps and phase diagrams</h3>
 <p>The sweep machinery of the macrospin runs mm2d and mm3d too. <code>start_sweep</code> with <code>engine=mm2d</code> (or the chat:
 <i>"sweep B from 0 to 0.6 T for a skyrmion"</i>) runs one relaxation per value of any number (<code>D</code>, <code>Ku</code>,

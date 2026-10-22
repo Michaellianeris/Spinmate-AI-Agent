@@ -387,6 +387,31 @@ async def upload(file: UploadFile = File(...)):
     return {"name": name, "text": text, "check": P.validate(text, S.sec_per_step())}
 
 
+@app.post("/api/masks")
+async def upload_mask(file: UploadFile = File(...)):
+    """A PNG whose dark pixels are the film: the shape of an mm2d run (mask=<name>)."""
+    name, err = S.save_mask(file.filename or "mask.png", await file.read())
+    if err:
+        raise HTTPException(400, err)
+    from spinmate_core.mm2d import geometry
+    import numpy as np
+    shape = geometry.load(name, 256, 256, S.MASKS)
+    return {"name": name, "film_fraction": round(float(np.mean(shape)), 3), "size": geometry.png_size(S.MASKS / name)}
+
+
+@app.get("/api/masks")
+def masks():
+    return S.list_masks()
+
+
+@app.get("/api/masks/{name}")
+def mask_file(name: str):
+    path = S.MASKS / name
+    if not re.fullmatch(r"[A-Za-z0-9._-]+\.png", name) or not path.exists():
+        raise HTTPException(404, "no such mask")
+    return FileResponse(path)
+
+
 @app.post("/api/files/save")
 def save(body: SaveIn):
     return {"name": S.save_input(body.name, body.parameters_text)}

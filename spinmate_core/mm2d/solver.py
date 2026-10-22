@@ -24,9 +24,58 @@ class Film:
             self._demag = Demag(self.Nx, self.Ny, self.dx, self.thickness, periodic=(boundary == "periodic"))
         self.x = (np.arange(self.Nx) - self.Nx / 2 + 0.5) * self.dx
         self.y = (np.arange(self.Ny) - self.Ny / 2 + 0.5) * self.dx
+        self.mask = None                             # (Ny, Nx) bool: the shape of the film; outside cells never turn
+        self._setup_edges()
 
-    # ---- derivatives (periodic, or zero normal derivative at free edges)
+    def set_mask(self, mask):
+        """Cut the film to a shape: cells where mask is False are empty (free edges along the outline)."""
+        mask = np.asarray(mask, bool)
+        self.mask = None if mask.all() else mask
+        if self.mask is not None:
+            self._inside = {(s, a): self._shift_raw(self.mask, s, a) for s in (1, -1) for a in (-1, -2)}
+        self._setup_edges()
+
+    def _setup_edges(self):
+        """Cells whose neighbour in each direction is missing: beyond a free edge of the grid or outside the mask."""
+        self._missing = {}
+        for s in (1, -1):
+            for a in (-1, -2):
+                miss = np.zeros((self.Ny, self.Nx), bool)
+                if self.boundary != "periodic":
+                    idx = [slice(None), slice(None)]
+                    idx[a] = -1 if s == 1 else 0
+                    miss[tuple(idx)] = True
+                if self.mask is not None:
+                    miss |= ~self._shift_raw(self.mask, s, a)
+                self._missing[(s, a)] = miss if miss.any() else None
+
+    def _dmdn(self, m, n):
+        """Normal derivative of m at a free edge with outward normal n (in the plane): exchange and DMI balance,
+        2A dm/dn = -D (m_z n - (n.m) z) for interfacial DMI, 2A dm/dn = D n x m for bulk DMI (0 without DMI)."""
+        k = self.D / (2 * self.A)
+        nx, ny = n
+        if self.dmi == "interfacial":
+            return np.stack([-k * m[2] * nx, -k * m[2] * ny, k * (nx * m[0] + ny * m[1])])
+        return np.stack([k * ny * m[2], -k * nx * m[2], k * (nx * m[1] - ny * m[0])])
+
+    def _neighbour(self, m, step, axis):
+        """m of the neighbouring cell; at a free edge a ghost cell m + dx dm/dn (the boundary condition)."""
+        g = self._shift_raw(m, step, axis)
+        miss = self._missing[(step, axis)]
+        if miss is None:
+            return g
+        n = (step, 0) if axis == -1 else (0, step)
+        ghost = m + self.dx * self._dmdn(m, n) if self.D else m
+        return np.where(miss, ghost, g)
+
+    # ---- derivatives (periodic, or zero normal derivative at free edges and along the outline of a mask)
     def _shift(self, f, step, axis):
+        g = self._shift_raw(f, step, axis)
+        if self.mask is not None:
+            g = np.where(self._inside[(step, axis)], g, f)      # no neighbour outside the shape
+        return g
+
+    def _shift_raw(self, f, step, axis):
         if self.boundary == "periodic":
             return np.roll(f, -step, axis)
         pad = [(0, 0)] * f.ndim
@@ -50,31 +99,38 @@ class Film:
     def h_internal(self, m):
         """Exchange + anisotropy + DMI + demag (all linear in m), A/m."""
         mx, my, mz = m
-        h = 2 * self.A / (MU0 * self.Ms) * self.lap(m)
+        nb = {(s, a): self._neighbour(m, s, a) for s in (1, -1) for a in (-1, -2)}
+        lap = (nb[(1, -1)] + nb[(-1, -1)] + nb[(1, -2)] + nb[(-1, -2)] - 4 * m) / self.dx ** 2
+        dX = (nb[(1, -1)] - nb[(-1, -1)]) / (2 * self.dx)          # d/dx and d/dy of every component
+        dY = (nb[(1, -2)] - nb[(-1, -2)]) / (2 * self.dx)
+        h = 2 * self.A / (MU0 * self.Ms) * lap
         h[2] += 2 * self.Ku / (MU0 * self.Ms) * mz
         if self.demag == "local":
             h[2] -= self.Ms * mz
         elif self._demag is not None:
-            h += self._demag.field(self.Ms * m)
+            h += self._demag.field(self.Ms * (m if self.mask is None else m * self.mask))
         if self.D:
             c = 2 * self.D / (MU0 * self.Ms)
             if self.dmi == "interfacial":         # E = D [mz div m - (m.grad) mz]
-                h[0] += c * self.ddx(mz)
-                h[1] += c * self.ddy(mz)
-                h[2] -= c * (self.ddx(mx) + self.ddy(my))
+                h[0] += c * dX[2]
+                h[1] += c * dY[2]
+                h[2] -= c * (dX[0] + dY[1])
             else:                                  # bulk: E = D m.(curl m)
-                h[0] -= c * self.ddy(mz)
-                h[1] += c * self.ddx(mz)
-                h[2] -= c * (self.ddx(my) - self.ddy(mx))
+                h[0] -= c * dY[2]
+                h[1] += c * dX[2]
+                h[2] -= c * (dX[1] - dY[0])
         return h
 
     def h_eff(self, m):
-        return self.h_internal(m) + self.H_ext
+        h = self.h_internal(m) + self.H_ext
+        return h if self.mask is None else np.where(self.mask, h, m)     # outside: no torque
 
     def energy(self, m, thickness):
         """Total energy (J) of the film; quadratic terms counted with 1/2."""
         dv = self.dx * self.dx * thickness
         e = -MU0 * self.Ms * (0.5 * np.sum(m * self.h_internal(m), 0) + np.sum(m * self.H_ext, 0))
+        if self.mask is not None:
+            e = e * self.mask
         return float(e.sum() * dv)
 
     def torque(self, m):
@@ -190,7 +246,8 @@ def llg_rhs(film, m, alpha, precess=True):
         pre = -GAMMA0 / (1 + alpha ** 2)
         return pre * ((mxh if precess else 0) + alpha * damp)
     T = -GAMMA0 * mxh + extra                       # Gilbert form dm/dt = T + alpha m x dm/dt, solved for dm/dt
-    return (T + alpha * np.cross(m, T, axis=0)) / (1 + alpha ** 2)
+    out = (T + alpha * np.cross(m, T, axis=0)) / (1 + alpha ** 2)
+    return out if film.mask is None else out * film.mask           # the torques act on the film only
 
 
 def heun(film, m, dt, alpha, precess=True):
@@ -241,7 +298,10 @@ def topological_charge(m):
 
 def centre(film, m):
     """Centre (x, y) of a localised texture, as circular means on the periodic film (m)."""
-    w = np.abs(np.sign(np.median(m[2]) or 1.0) - m[2])
+    back = np.sign(np.median(m[2]) or 1.0)
+    w = np.abs(back - m[2])
+    if getattr(film, "mask", None) is not None:      # a shape: the tilted edges are not the texture
+        w = np.clip(-back * m[2], 0, None) * film.mask
     if w.sum() < 1e-12:
         return None
     out = []
@@ -263,6 +323,8 @@ def texture_metrics(film, m):
     out["radius_nm"] = float(np.sqrt(out["reversed_area_nm2"] / np.pi)) if rev.any() else 0.0
     out["crosses_film"] = bool(rev.any() and (rev.any(1).all() or rev.any(0).all()))   # stripes or walls
     w = np.abs(back - mz)                          # centre of the texture
+    if getattr(film, "mask", None) is not None:     # a shape: the tilted edges are not the texture
+        w = np.clip(-back * mz, 0, None) * film.mask
     if w.sum() > 1e-9:
         X, Y = np.meshgrid(film.x, film.y)
         cx, cy = float((w * X).sum() / w.sum()), float((w * Y).sum() / w.sum())

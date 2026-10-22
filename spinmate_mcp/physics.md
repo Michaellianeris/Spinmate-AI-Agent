@@ -92,6 +92,13 @@ time-dependent drives, integrated with Heun steps.
   animation.gif (and animation.mp4 when ffmpeg is installed); every mm3d run writes rotate.gif, the 3D view
   turning around z. animation=0 turns them off. Tell the user the animation is on the run card.
   The mm3d run card also opens with an interactive 3D view (drag to turn, scroll to zoom) from surface.json.
+- Shapes (mm2d): mask=disk, strip or racetrack, or mask=<name>.png for a PNG the user attached in the chat
+  (the message says "Attached geometry mask `name.png`"; dark pixels = film, stretched to Nx x Ny, so keep
+  Nx:Ny equal to the picture's aspect ratio). Use boundary=free. Edges carry the DMI boundary condition: the
+  magnetisation tilts there (sin theta = D delta / 2A) and repels skyrmions, so under SOT the edges cancel the
+  skyrmion Hall effect and a skyrmion runs along a racetrack, faster than the open-film Thiele speed (example:
+  68 m/s against 14.5 m/s at 1.5e11 A/m^2); thiele_velocity_mps is the open-film value. The summary adds mask and
+  film_area_nm2; mask.png is kept with the run.
 - Longer runs in segments: continue_run on the finished run (time and drive phases continue), then
   wait_for_run, then combine_runs with the last segment for one trajectory. Never restart from copied m1, m2.
 - Threshold search ("minimum current that switches", "A0 where AFM becomes FM"): a coarse sweep of 6-8 values

@@ -636,6 +636,22 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 <img src="docs/mm2d-spinwaves-dot.png" alt="Circular spin waves from a dot antenna in mm2d, in the same two views." width="100%">
 <img src="docs/mm2d-dispersion.png" alt="Spin-wave dispersion from mm2d with a sinc pulse: the simulated f(k) lies on the analytic curve." width="60%">
 
+- **Shapes from a picture.** `mask=disk`, `strip` or `racetrack` cuts the film to that shape; `mask=<name>.png`
+  uses a PNG you drop on the chat (or send to `POST /api/masks`): dark, opaque pixels are film, white or
+  transparent ones are empty, and the picture is stretched to Nx × Ny cells. The outline is a free edge with the
+  DMI boundary condition, 2A ∂m/∂n = −D (m_z n − (n·m) z) (interfacial), so the magnetisation tilts at the edge
+  (sin θ = Dδ/2A, checked to 1 %) and the edge repels skyrmions, as in a real racetrack. The same condition now
+  applies at the free edges of the grid. Examples to edit: `examples/masks/*.png`.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/mm2d-racetrack.png" alt="A Néel skyrmion pushed by spin-orbit torque along a racetrack: the edges keep it on the track and it runs at 68 m/s"></td>
+<td width="50%"><img src="docs/mm2d-racetrack.gif" alt="Animation: the skyrmion running along the racetrack"></td>
+</tr>
+<tr><td colspan="2" align="center"><i>SOT, 1.5e11 A/m², in a 48 nm racetrack: the tilted edges cancel the skyrmion Hall effect and the
+skyrmion runs at 68 m/s along the track, against 14.5 m/s (Thiele) in an open film</i></td></tr>
+</table>
+
 - **Sweeps and phase diagrams.** The same sweep machinery as the macrospin runs mm2d and mm3d: `start_sweep` with
   `engine=mm2d` sweeps any number (`D`, `Ku`, `thickness`, ...) or one component of a vector (`B_ext.z`), one run
   per value, and the card plots the skyrmion radius against it with each point coloured by its phase. With

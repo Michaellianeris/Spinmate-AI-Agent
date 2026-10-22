@@ -18,12 +18,19 @@ LIGHT = np.array([-0.45, -0.55, 0.7]) / np.linalg.norm([-0.45, -0.55, 0.7])
 SEG = 14
 
 
+EMPTY = np.array((1.0, 1.0, 1.0))                     # no film here (outside the shape of a mask)
+
+
 def colour(mx, my, mz):
     mx, my, mz = np.asarray(mx, float), np.asarray(my, float), np.asarray(mz, float)
+    empty = ~(np.isfinite(mx) & np.isfinite(my) & np.isfinite(mz))
+    if empty.any():
+        mx, my, mz = (np.where(empty, 0.0, c) for c in (mx, my, mz))
     hue = (np.arctan2(my, mx) / (2 * np.pi)) % 1
     base = hsv_to_rgb(np.stack([hue, np.ones_like(hue), np.ones_like(hue)], -1))
     w = (np.clip(np.abs(mz), 0, 1) ** 1.6)[..., None]
-    return base * (1 - w) + np.where(mz[..., None] > 0, UP, DOWN) * w
+    out = base * (1 - w) + np.where(mz[..., None] > 0, UP, DOWN) * w
+    return np.where(empty[..., None], EMPTY, out) if empty.any() else out
 
 
 def _project(p):
@@ -64,13 +71,16 @@ def draw_3d(ax, m, x, y, step, round_view=False, pair=None):
     hx, hy = (x[-1] - x[0]) / 2 + (x[1] - x[0]) / 2, (y[-1] - y[0]) / 2 + (y[1] - y[0]) / 2
     s = np.sin(TILT)
     rgb = colour(*m)
+    film = np.isfinite(m).all(0)                     # a mask: no film outside its shape
     RD = min(hx, hy) - 1.5
-    if round_view:
+    if not film.all():
+        rgb = np.dstack([rgb, film.astype(float)])
+    elif round_view:
         XX, YY = np.meshgrid(x, y)
         a = np.clip((RD + 1.5 - np.hypot(XX, YY)) / 1.5, 0, 1)
         rgb = np.dstack([rgb, a])
         ax.add_patch(Ellipse((0, -1.0), 2 * RD + 3, (2 * RD + 3) * s + 1.6, fc="#B6AECB", ec="none", zorder=0))
-    else:
+    if film.all() and not round_view:
         ax.add_patch(Polygon([(-hx + 1.5, -hy * s - 2.2), (hx + 1.5, -hy * s - 2.2), (hx + 1.5, hy * s - 2.2),
                               (-hx + 1.5, hy * s - 2.2)], fc="#B6AECB", ec="none", alpha=0.7, zorder=0))
     ax.imshow(rgb, extent=[-hx, hx, -hy, hy], origin="lower", interpolation="bicubic",
@@ -81,7 +91,7 @@ def draw_3d(ax, m, x, y, step, round_view=False, pair=None):
     half = LIGHT + VIEW; half /= np.linalg.norm(half)
     for i in rows:
         for j in cols_:
-            if round_view and np.hypot(x[j], y[i]) > RD - 1:
+            if round_view and np.hypot(x[j], y[i]) > RD - 1 or not film[i, j]:
                 continue
             if pair is not None:                  # two sublattices on a checkerboard: m1 red, m2 blue
                 k = ((i - rows.start) // step + (j - cols_.start) // step) % 2
@@ -114,7 +124,7 @@ def draw_2d(ax, m, x, y, step):
     for i in rows:
         for j in cols_:
             v = m[:, i, j]; ip = float(np.hypot(v[0], v[1]))
-            if ip < 0.35:
+            if not ip >= 0.35:                            # nearly out of plane (or no film): the colour says it
                 continue                                  # nearly out of plane: the colour says it
             ax.add_patch(FancyArrow(x[j] - v[0] * L / 2, y[i] - v[1] * L / 2, v[0] * L, v[1] * L,
                                     width=0.13 * step * dx * ip, head_width=0.4 * step * dx * ip,
@@ -178,18 +188,22 @@ WAVE = matplotlib.colors.LinearSegmentedColormap.from_list(
 def save_spinwave(dmx, x_nm, y_nm, antenna, caption, absorb_nm=0.0, prefix="spinwave_map"):
     """dmx: change of mx from the ground state, shape (Ny, Nx)."""
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
-    lim = float(np.percentile(np.abs(dmx), 99.5)) or 1e-12
+    lim = float(np.nanpercentile(np.abs(dmx), 99.5)) or 1e-12
     norm = matplotlib.colors.Normalize(-lim, lim)
     fig = plt.figure(figsize=(17, 7.2))
     a3 = fig.add_axes([-0.04, 0.04, 0.6, 0.96], projection="3d")
     st = max(1, min(int(round(max(dmx.shape) / 160)), min(dmx.shape) // 2))
     X, Y = np.meshgrid(x_nm[::st], y_nm[::st])
     Z = dmx[::st, ::st]
+    gap = ~np.isfinite(Z)                         # outside the shape of a mask
+    Z = np.where(gap, 0.0, Z)
     span = max(x_nm[-1] - x_nm[0], y_nm[-1] - y_nm[0])
     zs = 0.05 * span / lim
     ls = matplotlib.colors.LightSource(azdeg=225, altdeg=40)
     rgb = ls.shade(Z * zs, cmap=WAVE, norm=norm, blend_mode="soft", vert_exag=1.0, dx=x_nm[st] - x_nm[0],
                    dy=x_nm[st] - x_nm[0])
+    if gap.any():
+        rgb[gap] = (1.0, 1.0, 1.0, 0.0)
     a3.plot_surface(X, Y, Z * zs, facecolors=rgb, rstride=1, cstride=1, linewidth=0, antialiased=False, shade=False)
     if antenna.any():
         cols = np.where(antenna.any(0))[0]; rows_ = np.where(antenna.any(1))[0]
@@ -337,7 +351,7 @@ def save_animation(frames, times, x_nm, y_nm, kind, caption, track=None, antenna
     fig = plt.figure(figsize=(7.2, max(3.0, min(7.2, 6.2 * asp + 1.2))))
     ax = fig.add_axes([0.12, 0.16, 0.8, 0.72])
     if kind == "wave":
-        lim = float(np.percentile(np.abs(frames[-max(1, len(frames) // 4):]), 99.5)) or 1e-12
+        lim = float(np.nanpercentile(np.abs(frames[-max(1, len(frames) // 4):]), 99.5)) or 1e-12
         im = ax.imshow(frames[0], extent=ext, origin="lower", cmap=WAVE, vmin=-lim, vmax=lim,
                        interpolation="bicubic", aspect="equal")
         if antenna is not None and antenna.any():
@@ -355,7 +369,7 @@ def save_animation(frames, times, x_nm, y_nm, kind, caption, track=None, antenna
         st = max(1, int(round(max(len(x_nm), len(y_nm)) / 18)))
         X, Y = np.meshgrid(x_nm[::st], y_nm[::st])
         def inplane(g):                                # nearly out of plane: no arrow, the colour says it
-            hide = np.hypot(g[0], g[1]) < 0.35
+            hide = ~(np.hypot(g[0], g[1]) >= 0.35)
             return np.ma.masked_array(g[0], hide), np.ma.masked_array(g[1], hide)
         f0 = frames[0][:, ::st, ::st]
         quiv = ax.quiver(X, Y, *inplane(f0), color="#14111F", scale=1.6 / (st * dx), scale_units="xy",

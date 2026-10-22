@@ -223,6 +223,12 @@ def main():
                       dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"], demag=vals["demag"],
                       thickness=vals["thickness"])
     d = vals["thickness"]
+    if vals["mask"]:                                  # the shape of the film: built in or an uploaded PNG
+        from spinmate_core.mm2d import geometry, mask_folder
+        shape = geometry.load(vals["mask"], film.Nx, film.Ny, mask_folder())
+        film.set_mask(shape)
+        from PIL import Image
+        Image.fromarray(np.where(shape[::-1], 0, 255).astype(np.uint8)).save("mask.png")   # kept with the run
     m = S.initial(film, vals["texture"], R0=vals["R0"], m0=vals["m0"], seed=vals["seed"])
     if vals["noise"] > 0:                             # break the symmetry of the seed
         m = S._norm(m + vals["noise"] * np.random.default_rng(vals["seed"] + 7).normal(size=m.shape))
@@ -234,13 +240,19 @@ def main():
         if err:
             raise SystemExit(err)
         m = S._norm(np.load(start_file(vals["start_from"]))["m"].astype(float))
+    inside = film.mask if film.mask is not None else np.ones((film.Ny, film.Nx), bool)
+    if film.mask is not None:                         # empty cells: up, and they never turn
+        m = np.where(inside, m, np.array([0.0, 0.0, 1.0]).reshape((3,) + (1,) * (m.ndim - 1)))
     view = film.neel if afm else (lambda mm: mm)          # what the pictures and the texture metrics look at
-    avg = (lambda mm: mm[:, 0].mean((1, 2))) if afm else (lambda mm: mm.mean((1, 2)))
-    avg2 = (lambda mm: mm[:, 1].mean((1, 2))) if afm else avg
+    avg = (lambda mm: mm[:, 0][:, inside].mean(1)) if afm else (lambda mm: mm[:, inside].mean(1))
+    avg2 = (lambda mm: mm[:, 1][:, inside].mean(1)) if afm else avg
+    shown = (lambda mm: mm) if film.mask is None else (lambda mm: np.where(inside, mm, np.nan))   # pictures: no film outside
     rows2 = []
     summary = {"engine": "mm2d", "mode": vals["mode"], "texture_seed": vals["texture"],
                "grid": [vals["Nx"], vals["Ny"]], "cell_nm": vals["dx"] * 1e9,
                "thickness_nm": d * 1e9, "demag": vals["demag"], "energy_initial_J": film.energy(m, d)}
+    if film.mask is not None:
+        summary.update(mask=vals["mask"], film_area_nm2=round(float(inside.sum()) * (vals["dx"] * 1e9) ** 2, 1))
     if vals["start_from"]:
         summary["started_from"] = vals["start_from"]
         summary["texture_seed"] = f"final texture of {vals['start_from']}"
@@ -290,9 +302,9 @@ def main():
 
         def snap(t_now):
             if vals["excite"] != "uniform":
-                a_frames.append((view(m)[0] - view(m0)[0])[::a_sub, ::a_sub].astype(np.float32))
+                a_frames.append(shown(view(m)[0] - view(m0)[0])[::a_sub, ::a_sub].astype(np.float32))
             else:
-                a_frames.append(view(m)[:, ::a_sub, ::a_sub].astype(np.float32))
+                a_frames.append(shown(view(m))[:, ::a_sub, ::a_sub].astype(np.float32))
             a_times.append(t_now)
         mz_sum, mz_n = 0.0, 0
         base = film.H_ext.copy()
@@ -379,7 +391,7 @@ def main():
         summary["sublattice_charges"] = [round(S.topological_charge(m[:, k]), 4) + 0.0 for k in (0, 1)]
         summary["max_canting"] = round(float(np.abs(m[:, 0] + m[:, 1]).max() / 2), 6)
     shift = (0.0, 0.0)
-    if film.boundary == "periodic" and not (wave is not None and vals["excite"] != "uniform"):
+    if film.boundary == "periodic" and film.mask is None and not (wave is not None and vals["excite"] != "uniform"):
         c = S.centre(film, view(m))            # a texture that moved across the edge: show it whole, centred
         if c is not None and not S.texture_metrics(film, view(m)).get("crosses_film"):
             shift = (-c[0], -c[1])
@@ -411,12 +423,13 @@ def main():
 
     x_nm, y_nm = film.x * 1e9, film.y * 1e9
     half = None
-    if summary["texture"] in ("skyrmion", "skyrmionium", "antiskyrmion", "bubble") and metrics.get("rings_nm"):
+    if summary["texture"] in ("skyrmion", "skyrmionium", "antiskyrmion", "bubble") and metrics.get("rings_nm") \
+            and film.mask is None:                   # with a shape, show all of it
         half = 1.6 * max(metrics["rings_nm"]) + 6
-    mc, xc, yc = render.crop(m_view, x_nm, y_nm, metrics.get("centre_nm"), half)
+    mc, xc, yc = render.crop(shown(m_view), x_nm, y_nm, metrics.get("centre_nm"), half)
     pair = None
     if afm:                                       # the two sublattices, cropped like the Néel vector
-        pair = [render.crop(roll_to(film, m[:, k], *shift), x_nm, y_nm, metrics.get("centre_nm"), half)[0] for k in (0, 1)]
+        pair = [render.crop(shown(roll_to(film, m[:, k], *shift)), x_nm, y_nm, metrics.get("centre_nm"), half)[0] for k in (0, 1)]
     dmi = f"D = {vals['D'] * 1e3:.3g} mJ/m² ({vals['dmi']})" if vals["D"] else "no DMI"
     kind = summary["texture"].replace("_", " ")
     if summary["texture"] in ("skyrmion", "skyrmionium") and vals["D"]:
@@ -435,8 +448,10 @@ def main():
     if "velocity_mps" in summary or "diffusion_m2ps" in summary:
         tr = np.loadtxt("track.dat")
         mid = ((tr[0, 1] + tr[-1, 1]) / 2, (tr[0, 2] + tr[-1, 2]) / 2)    # the path in the middle of the picture
+        if film.mask is not None:
+            mid = (0.0, 0.0)                         # a shape stays where it is
         tr[:, 1] -= mid[0]; tr[:, 2] -= mid[1]
-        render.save_track(roll_to(film, view(m), -mid[0], -mid[1]), x_nm, y_nm, tr, summary, vals)
+        render.save_track(shown(roll_to(film, view(m), -mid[0], -mid[1])), x_nm, y_nm, tr, summary, vals)
     if wave is None or vals["excite"] == "uniform":          # a uniform film with waves has no texture to show
         render.save_views(mc, xc, yc, caption,
                           round_view=half is not None, pair=pair)
@@ -447,7 +462,7 @@ def main():
                  "step": "field step"}[vals["pulse"]]
         cap = (f"spin waves from a {vals['excite']} antenna · {drive} · t = {summary['t_end_s'] * 1e12:.0f} ps"
                + (f" · {wtxt}" if wtxt else "") + f" · gap {summary['spin_wave_gap_GHz']:.1f} GHz")
-        render.save_spinwave(m[0] - m0[0], x_nm, y_nm, excitation_mask(film, vals)[0] > 0, cap,
+        render.save_spinwave(shown(m[0] - m0[0]), x_nm, y_nm, excitation_mask(film, vals)[0] > 0, cap,
                              absorb_nm=vals["absorb"] * 1e9)
         save_wave_arrows(render, film, vals, summary, m, m0, x_nm, y_nm, cap)
         mask = excitation_mask(film, vals)[0]
