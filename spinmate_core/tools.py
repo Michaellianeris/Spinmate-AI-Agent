@@ -173,6 +173,28 @@ TOOLS += [
                          "required": ["run_ids"]},
     },
     {
+        "name": "compare_with_mumax3",
+        "description": "Cross-check an mm2d input with mumax3: runs the same parameters on both engines from the same "
+                       "starting state (mm2d's local thin-film demag becomes no demag with Ku1 = Ku - mu0 Ms^2/2 in "
+                       "mumax3, the same energy; demag=full keeps mumax3's demag; a mask becomes ImageShape). Needs "
+                       "mumax3 installed (list_engines shows it). Not for currents, temperature, antennas or "
+                       "two-sublattice films. Returns compare_id; then call get_comparison.",
+        "input_schema": {"type": "object",
+                         "properties": {"parameters_text": TEXT, "label": TEXT},
+                         "required": ["parameters_text"]},
+    },
+    {
+        "name": "get_comparison",
+        "description": "Wait (up to timeout_s, at most 120) for a cross-check with mumax3 and return the comparison: "
+                       "topological charge, radius, energy, the rms angle between the two final textures and, for "
+                       "dynamics, <m>(t); each with its tolerance and ok, and agree for all of them. The page shows "
+                       "the two textures side by side with the angle between them.",
+        "input_schema": {"type": "object",
+                         "properties": {"compare_id": TEXT, "timeout_s": {"type": "number"},
+                                        "include_plot": {"type": "boolean"}},
+                         "required": ["compare_id"]},
+    },
+    {
         "name": "make_figure",
         "description": "Make a publication-quality figure (matplotlib + SciencePlots) of 1-6 runs. The chat shows it with "
                        "PDF, SVG and PNG downloads. quantities: m1x m1y m1z m2x m2y m2z nx ny nz dot (m1.m2) mz (net); "
@@ -204,11 +226,14 @@ CONFIRM_RUNS = int(os.environ.get("CONFIRM_RUNS") or 40)
 
 def _needs_confirmation(name, args, approved):
     """Large requests wait for the user's Run button; the next message then carries the approval."""
-    if approved or name not in ("start_simulation", "start_sweep"):
+    if approved:
+        return None
+    if name not in ("start_simulation", "start_sweep", "compare_with_mumax3"):
         return None
     runs = len(args.get("values") or []) * (len(args.get("values2") or []) if args.get("parameter2") else 1) \
         if name == "start_sweep" else 1
-    wall = S.estimate(args.get("parameters_text") or "", runs, args.get("engine"))
+    engine = "mm2d" if name == "compare_with_mumax3" else args.get("engine")
+    wall = S.estimate(args.get("parameters_text") or "", runs, engine)
     if wall is None:
         return None
     if wall <= CONFIRM_MINUTES * 60 and runs <= CONFIRM_RUNS:
@@ -319,6 +344,16 @@ def call(name, args, approved=False):
         out = S.cancel(args["run_id"])
     elif name == "compare_runs":
         out = S.compare(args.get("run_ids") or [])
+    elif name == "compare_with_mumax3":
+        from . import compare
+        out = compare.start(args["parameters_text"], args.get("label", ""))
+    elif name == "get_comparison":
+        from . import compare
+        out = compare.result(args["compare_id"], float(args.get("timeout_s") or 60)) \
+            or {"error": f"no cross-check {args['compare_id']}"}
+        png = compare.plot_file(args["compare_id"]) if out.get("plot") else None
+        if args.get("include_plot") and png:
+            return [{"type": "text", "text": json.dumps(out, default=str)}, _image(png)], event_for(name, out)
     elif name == "make_figure":
         out = figures.save(args.get("run_ids") or [], args.get("quantities") or ["m1z", "m2z", "nz"],
                            args.get("t0_ns"), args.get("t1_ns"), args.get("style") or "science",
@@ -340,7 +375,8 @@ def event_for(name, out):
         return event
     if out.get("needs_confirmation"):
         return {"tool": name, **{k: out.get(k) for k in ("needs_confirmation", "runs", "estimated_wall_time_s", "error")}}
-    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error", "run_ids", "report", "html_url", "zip_url", "figure", "png_url"):
+    for key in ("run_id", "sweep_id", "runs", "saved", "ok", "error", "run_ids", "report", "html_url", "zip_url", "figure",
+                "png_url", "compare_id", "agree"):
         if key in out:
             event[key] = out[key]
     if name in ("get_run", "wait_for_run") and "id" in out:

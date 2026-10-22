@@ -985,6 +985,8 @@ const TOOL_UI = {
   compare_runs: {run: () => "Comparing runs", done: (a, r) => r.run_ids ? `Compared ${r.run_ids.join(", ")}` : "Compared runs"},
   make_report: {run: () => "Writing the report", done: (a, r) => r.report ? `Report ${r.report}` : "Wrote the report"},
   make_figure: {run: () => "Drawing the figure", done: (a, r) => r.figure ? `Figure ${r.figure}` : "Drew the figure"},
+  compare_with_mumax3: {run: () => "Starting the cross-check with mumax3", done: (a, r) => r.compare_id ? `Started ${r.compare_id}: ${(r.run_ids || []).join(" and ")}` : "Started the cross-check"},
+  get_comparison: {run: a => `Waiting for ${a.compare_id}`, done: (a, r) => r.agree === true ? `${a.compare_id}: mm2d and mumax3 agree` : r.agree === false ? `${a.compare_id}: mm2d and mumax3 differ` : `Looked at ${a.compare_id}`},
   query_runs: {run: () => "Querying the run catalog", done: (a, r) => r.columns ? `Queried the catalog: ${r.row_count}${r.truncated ? "+" : ""} rows` : "Queried the catalog"},
 };
 
@@ -1027,7 +1029,8 @@ function chipFor(name, input, result, running) {
   }
   let label = ui.done(input, result);
   if (result.needs_confirmation) { c.textContent = `Waiting for your OK: ${result.runs} run${result.runs > 1 ? "s" : ""}, about ${dur(result.estimated_wall_time_s)}`; return c; }
-  const own = name === "make_report" && result.report ? "rep:" + result.report : name === "make_figure" && result.figure ? "fig:" + result.figure : null;
+  const own = name === "make_report" && result.report ? "rep:" + result.report : name === "make_figure" && result.figure ? "fig:" + result.figure
+    : name === "get_comparison" && result.agree !== undefined ? "xc:" + input.compare_id : null;
   if (own) {
     c.textContent = label; c.classList.add("link"); c.tabIndex = 0;
     c.onclick = () => openRunCard(own); c.onkeydown = e => { if (e.key === "Enter") c.onclick(); };
@@ -1067,6 +1070,10 @@ function render() {
     if (name === "compare_runs" && res.ok && res.run_ids) { const cid = cmpId(res.run_ids); if (!cardEls.has(cid)) trackCompare(res.run_ids, true); }
     if (name === "make_figure" && res.figure && !cardEls.has("fig:" + res.figure)) trackFigure(res.figure, true);
     if (name === "make_report" && res.report && !cardEls.has("rep:" + res.report)) trackReport(res.report, true);
+    if (name === "get_comparison" && res.agree !== undefined && res.id) {
+      const xid = "xc:" + res.id; if (!cardEls.has(xid)) trackCrossCheck(res.id, true);
+      log.appendChild(cardEls.get(xid).el); placed.add(xid); return true;
+    }
     if (name === "make_figure" && res.figure) { const fid = "fig:" + res.figure; log.appendChild(cardEls.get(fid).el); placed.add(fid); return true; }
     if (name === "make_report" && res.report) { const rid = "rep:" + res.report; log.appendChild(cardEls.get(rid).el); placed.add(rid); return true; }
     const id = ["start_simulation", "continue_run", "combine_runs"].includes(name) ? res.run_id : name === "start_sweep" ? res.sweep_id
@@ -1192,6 +1199,8 @@ function onEvent(ev) {
     if (ev.event && ev.event.tool === "compare_runs" && ev.event.run_ids && ev.event.ok !== false) trackCompare(ev.event.run_ids, true);
     if (ev.event && ev.event.tool === "make_figure" && ev.event.figure) { foldOthers(null); trackFigure(ev.event.figure, true); }
     if (ev.event && ev.event.tool === "make_report" && ev.event.report) { foldOthers(null); trackReport(ev.event.report, true); }
+    if (ev.event && ev.event.tool === "compare_with_mumax3" && ev.event.run_ids) { refreshRuns(); ev.event.run_ids.forEach(r => trackRun(r)); }
+    if (ev.event && ev.event.tool === "get_comparison" && ev.event.compare_id && ev.event.agree !== undefined) { foldOthers(null); trackCrossCheck(ev.event.compare_id, true); }
     if (target && ["start_simulation", "start_sweep", "continue_run", "combine_runs"].includes(ev.event.tool)) {
       refreshRuns();
       if (ev.event.run_id) trackRun(ev.event.run_id); else trackSweep(ev.event.sweep_id);
@@ -3232,10 +3241,28 @@ function trackReport(name, quiet) {
   showCard(id, quiet);
 }
 
+function trackCrossCheck(cid, quiet) {
+  // mm2d and mumax3 on the same input: the two final textures, the angle between them and the checks
+  const id = "xc:" + cid;
+  if (cardEls.has(id)) { if (!quiet) openRunCard(id); return; }
+  const c = cardShell(id, "figcard", `Cross-check ${cid}`), el = c.el;
+  el.insertAdjacentHTML("beforeend", `<div class="figprev"><img alt="${esc(t("mm2d and mumax3: the final textures and the angle between them"))}" src="/api/compare/${cid}/plot"></div>
+    <table class="sweep-table" data-r="checks"></table>`);
+  api(`/api/compare/${cid}`).then(r => {
+    const text = `${r.mm2d_run} (mm2d) · ${r.mumax3_run} (mumax3) · ` + (r.agree ? t("agree") : r.agree === false ? t("differ") : t("not finished"));
+    el.querySelector("[data-r=lab]").textContent = text; el.querySelector("[data-r=sum]").textContent = text;
+    const f = v => v == null ? "–" : typeof v === "number" ? (Math.abs(v) < 1e-3 && v !== 0 ? v.toExponential(4) : String(+v.toPrecision(5))) : esc(String(v));
+    el.querySelector("[data-r=checks]").innerHTML = `<tr><th>${t("quantity")}</th><th>mm2d</th><th>mumax3</th><th>${t("difference")}</th><th>${t("tolerance")}</th><th></th></tr>` +
+      (r.checks || []).map(k => `<tr><td>${esc(k.quantity)}</td><td>${f(k.mm2d)}</td><td>${f(k.mumax3)}</td><td>${f(k.difference)}${k.unit === "relative" ? " (rel.)" : ""}</td><td>${f(k.tolerance)}</td><td>${k.ok ? "✓" : "✗"}</td></tr>`).join("");
+  }).catch(() => { el.querySelector("[data-r=sum]").textContent = t("This cross-check is no longer on the server."); });
+  showCard(id, quiet);
+}
+
 function restoreCard(id) {
   if (id.startsWith("cmp:")) trackCompare(id.slice(4).split(","), true);
   else if (id.startsWith("fig:")) trackFigure(id.slice(4), true);
   else if (id.startsWith("rep:")) trackReport(id.slice(4), true);
+  else if (id.startsWith("xc:")) trackCrossCheck(id.slice(3), true);
   else if (id.startsWith("s")) trackSweep(id);
   else trackRun(id);
 }

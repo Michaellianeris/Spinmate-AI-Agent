@@ -15,7 +15,7 @@ from spinmate_core import tools
 
 VERSION = "2.0.0-dev"
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
-GATED = ("start_simulation", "start_sweep")
+GATED = ("start_simulation", "start_sweep", "compare_with_mumax3")
 
 INSTRUCTIONS = """SpinMate runs the original two-sublattice macrospin solver (antiferromagnets, FeRh, exchange-coupled
 ferromagnets). Usual flow: validate_parameters -> start_simulation (or start_sweep) -> wait_for_run (or wait_for_sweep)

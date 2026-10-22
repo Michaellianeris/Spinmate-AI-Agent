@@ -399,6 +399,24 @@ async def upload_mask(file: UploadFile = File(...)):
     return {"name": name, "film_fraction": round(float(np.mean(shape)), 3), "size": geometry.png_size(S.MASKS / name)}
 
 
+@app.get("/api/compare/{cid}")
+def comparison(cid: str):
+    from spinmate_core import compare
+    out = compare.result(cid)
+    if not out:
+        raise HTTPException(404, "no such cross-check")
+    return out
+
+
+@app.get("/api/compare/{cid}/plot")
+def comparison_plot(cid: str):
+    from spinmate_core import compare
+    path = compare.plot_file(cid)
+    if not path:
+        raise HTTPException(404, "plot not ready")
+    return FileResponse(path)
+
+
 @app.get("/api/masks")
 def masks():
     return S.list_masks()
