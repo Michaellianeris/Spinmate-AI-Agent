@@ -511,8 +511,8 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 <img src="docs/mm2d-skyrmion.png" alt="A relaxed Néel skyrmion from mm2d: tilted view of the film with 3D arrows coloured by direction, next to the top view with nm axes." width="100%">
 <img src="docs/mm2d-skyrmionium.png" alt="Skyrmionium from mm2d, a skyrmion inside a skyrmion with Q = 0, in the same two views." width="100%">
 
-- **Physics.** Exchange, perpendicular anisotropy, interfacial (Néel) or bulk (Bloch) DMI, Zeeman and the local
-  thin-film demagnetising field; periodic or free edges.
+- **Physics.** Exchange, perpendicular anisotropy, interfacial (Néel) or bulk (Bloch) DMI, Zeeman and the
+  demagnetising field: local thin-film (fast, default) or long-range by FFT (`demag=full`); periodic or free edges.
 - **Modes.** `mode=relax` lowers the energy (steepest descent with Barzilai–Borwein steps) from a seed:
   `skyrmion`, `skyrmionium`, `domain_wall`, `uniform` or `random`. `mode=dynamics` relaxes first and then solves
   LLG with an adaptive Runge–Kutta (Dormand–Prince) solver, with an optional field pulse `B_pulse` for `t_pulse`.
@@ -583,6 +583,33 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 
 <img src="docs/screenshots/mm2d-thermal-chat.png" alt="In the chat: a question asks how far a skyrmion wanders at 300 K; the answer gives the diffusion constant against the Thiele equation" width="70%">
 
+- **Long-range demag.** `demag=full` computes the stray field of the whole film by FFT with the Newell tensor
+  (zero-padded for free edges, with images and the exact infinite-film term for a periodic film). It gives
+  quantitative sizes in thicker films, dipolar bubbles without DMI and stripe or maze domains from `texture=random`,
+  none of which the local field can produce. It costs about 2× (periodic) to 4× (free edges) per step.
+
+```text
+--texture=skyrmion
+--D=0
+--demag=full
+--thickness=10e-9
+--dx=2e-9
+--Msat=1e6
+--Ku=0.8e6
+--B_ext=0,0,0.05
+--R0=50e-9
+```
+
+<img src="docs/mm2d-bubble.png" alt="A dipolar bubble in a 10 nm film with full demag and no DMI: R = 47 nm at 50 mT, the wall turns Bloch" width="100%">
+<img src="docs/mm2d-maze.png" alt="Maze domains in a 20 nm film from a random start with full demag: up and down domains about 100 nm wide separated by Bloch walls" width="100%">
+
+| Check (`demag=full`) | Expected | Measured |
+|---|---|---|
+| Platelet, uniform M | Aharoni prism factor | within 1e-6 |
+| Néel − Bloch wall, 0.5 nm film | μ0Ms²d·ln2/π = 0.0466 mJ/m² | 0.0464 mJ/m² |
+| Skyrmion radius, 1 nm / 2 nm film | larger than local demag (14.5 nm) | 17.2 nm / 24 nm |
+| Bubble, 10 nm film, 0 / 20 / 50 mT | shrinks with field | R = 93 / 79 / 47 nm |
+
 - **Spin waves.** `excite=stripe` or `dot` puts the field pulse on an antenna; `pulse=sine` at `f_rf` gives
   a monochromatic wave and its wavelength, `pulse=sinc` up to `f_rf` gives the whole dispersion f(k); `absorb`
   makes the edges absorbing. The run card shows the wave with the same 3D arrows (colour = phase of the
@@ -615,9 +642,11 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
   49.6 nm) the dispersion f(k) (within 1 %), and for currents the Thiele equation: v = u for STT with β = α (within
   1 %), the velocity under STT with β ≠ α and under SOT, and for antiferromagnets the static profile against a
   ferromagnet without demag and the absence of a skyrmion Hall effect, and the Boltzmann average of m_z at 300 K
-  for two dampings.
-- **Limits.** One cell thick; the demagnetising field is local (−Ms·mz), so there is no long-range stray field.
-  A 128 × 128 relaxation takes a few seconds. Two sublattices and a GPU version are planned.
+  for two dampings, and with `demag=full` the Aharoni prism factor, the symmetry of the demag operator and the
+  stray-field energy of a Néel wall.
+- **Limits.** One cell through the thickness: m does not vary along z (use mm3d for that). The default demag is
+  local (−Ms·mz); `demag=full` adds the long-range stray field.
+  A 128 × 128 relaxation takes a few seconds. A GPU version is planned.
 
 Choose **mm2d** in the Engine menu of Run setup, or ask for a skyrmion in the chat. Agents call
 `list_engines` and pass `engine="mm2d"`.

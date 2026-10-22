@@ -292,3 +292,66 @@ def test_start_from_an_earlier_run(mm2d):
 def test_temperature_in_relax_mode_explains_0_K():
     w = M.MM2DEngine().validate("--Temp=25\n").warnings
     assert any("0 K" in x and "mode=dynamics" in x for x in w)
+
+
+# ---- long-range demagnetising field by FFT (demag=full) ----
+from spinmate_core.mm2d import demag as DM  # noqa: E402
+
+
+@pytest.mark.parametrize("N,d", [(8, 1e-9), (24, 3e-9), (64, 2e-9)])
+def test_platelet_demag_factor_matches_aharoni(N, d):
+    """A uniformly magnetised free platelet: the average field is -N_z Ms, N_z of the prism (Aharoni)."""
+    dx = 2e-9
+    dem = DM.Demag(N, N, dx, d, periodic=False)
+    M = np.zeros((3, N, N)); M[2] = 1.0
+    Nz = -dem.field(M)[2].mean()
+    assert Nz == pytest.approx(DM.prism_Nz(N * dx, N * dx, d), rel=1e-6)
+    M = np.zeros((3, N, N)); M[0] = 1.0
+    Nx_ = -dem.field(M)[0].mean()
+    assert Nx_ == pytest.approx(DM.prism_Nz(N * dx, d, N * dx), rel=1e-6)    # the prism turned on its side
+
+
+@pytest.mark.parametrize("periodic", [True, False])
+def test_demag_operator_is_symmetric(periodic):
+    """<a, N b> = <b, N a>: the field comes from an energy, so the minimiser and LLG conserve it."""
+    rng = np.random.default_rng(0)
+    dem = DM.Demag(20, 12, 1e-9, 2e-9, periodic=periodic)
+    a, b = rng.normal(size=(2, 3, 12, 20))
+    assert np.sum(a * dem.field(b)) == pytest.approx(np.sum(b * dem.field(a)), rel=1e-10)
+
+
+def test_periodic_film_is_an_infinite_film():
+    """A uniform infinite film: H = -Ms along z, nothing in the plane."""
+    dem = DM.Demag(16, 16, 1e-9, 3e-9, periodic=True)
+    for k, want in ((2, -1.0), (0, 0.0)):
+        M = np.zeros((3, 16, 16)); M[k] = 1.0
+        assert dem.field(M)[k] == pytest.approx(np.full((16, 16), want), abs=1e-12)
+
+
+def test_neel_wall_stray_field_energy():
+    """Volume charges of a Néel wall in a thin film cost mu0 Ms^2 d ln2 / pi per area more than a Bloch wall."""
+    def sig(D, dm):
+        f = F.Film(400, 4, 0.5e-9, MS, A, 1.0e6, D, demag=dm, thickness=0.5e-9)
+        m, _, _ = F.minimise(f, F.initial(f, "domain_wall"), tol=1.0, max_iter=200000)
+        return (f.energy(m, 0.5e-9) - f.energy(F.initial(f, "uniform"), 0.5e-9)) / (2 * f.Ny * f.dx * 0.5e-9)
+    extra = (sig(2.5e-3, "full") - sig(0.0, "full")) - (sig(2.5e-3, "local") - sig(0.0, "local"))
+    assert extra == pytest.approx(F.MU0 * MS ** 2 * 0.5e-9 * np.log(2) / np.pi, rel=0.02)
+
+
+def test_full_demag_grows_the_skyrmion():
+    """The stray field of the reversed core favours a larger skyrmion than the local approximation."""
+    R = {}
+    for dm in ("local", "full"):
+        f = F.Film(96, 96, 1e-9, MS, A, KU, 3.5e-3, demag=dm, thickness=1e-9)
+        m, _, tq = F.minimise(f, F.initial(f, "skyrmion"), tol=10, max_iter=20000)
+        assert tq < 10
+        R[dm] = F.texture_metrics(f, m)["rings_nm"][0]
+    assert R["full"] > R["local"] * 1.05
+
+
+def test_demag_checks():
+    v = M.parse("--lattice=afm\n--demag=full")
+    assert any("demag=full" in e for e in M.check(v)[0])
+    v = M.parse("--thickness=20e-9\n--D=0\n--texture=random")
+    assert any("demag=full" in w for w in M.check(v)[1])
+    assert M.estimate_s(M.parse("--demag=full")) > M.estimate_s(M.parse(""))

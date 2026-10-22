@@ -12,11 +12,16 @@ GAMMA0 = 2.211e5            # gamma * mu0, m/(A s)
 
 class Film:
     def __init__(self, Nx, Ny, dx, Ms, A, Ku, D=0.0, dmi="interfacial", demag="local", boundary="periodic",
-                 B=(0.0, 0.0, 0.0)):
+                 B=(0.0, 0.0, 0.0), thickness=None):
         self.Nx, self.Ny, self.dx = int(Nx), int(Ny), float(dx)
         self.Ms, self.A, self.Ku, self.D = float(Ms), float(A), float(Ku), float(D)
         self.dmi, self.demag, self.boundary = dmi, demag, boundary
         self.H_ext = np.asarray(B, float).reshape(3, 1, 1) / MU0
+        self.thickness = float(thickness or dx)
+        self._demag = None
+        if demag == "full":                          # long-range demagnetising field by FFT (Newell tensor)
+            from .demag import Demag
+            self._demag = Demag(self.Nx, self.Ny, self.dx, self.thickness, periodic=(boundary == "periodic"))
         self.x = (np.arange(self.Nx) - self.Nx / 2 + 0.5) * self.dx
         self.y = (np.arange(self.Ny) - self.Ny / 2 + 0.5) * self.dx
 
@@ -49,6 +54,8 @@ class Film:
         h[2] += 2 * self.Ku / (MU0 * self.Ms) * mz
         if self.demag == "local":
             h[2] -= self.Ms * mz
+        elif self._demag is not None:
+            h += self._demag.field(self.Ms * m)
         if self.D:
             c = 2 * self.D / (MU0 * self.Ms)
             if self.dmi == "interfacial":         # E = D [mz div m - (m.grad) mz]
