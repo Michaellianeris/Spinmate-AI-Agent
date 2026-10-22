@@ -28,7 +28,7 @@ RESULT_FILES = ["Two_Spin_Dynamics.png", "output1.dat", "output2.dat", "neel_z.d
                 # engine plug-ins (mm2d, mumax3)
                 "texture_3d_2d.png", "texture_3d.png", "texture_2d.png", "m_final.npz", "energy.dat", "input.mx3",
                 "spinwave_3d_2d.png", "spinwave_3d.png", "spinwave_2d.png", "spinwave_map.png", "spinwave_profile.png", "dispersion.png", "skyrmion_track.png", "track.dat",
-                "spinwave.npz", "animation.gif", "animation.mp4", "rotate.gif", "rotate.mp4",
+                "spinwave.npz", "animation.gif", "animation.mp4", "rotate.gif", "rotate.mp4", "surface.json",
                 "table.txt"]
 
 _lock = threading.Lock()

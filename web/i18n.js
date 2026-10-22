@@ -112,6 +112,8 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Interactive 3D view of the texture": "Διαδραστική τρισδιάστατη όψη της υφής",
+  "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Σύρετε για περιστροφή, κύλιση ή τσίμπημα για zoom, διπλό κλικ για επαναφορά. Επιφάνεια m_z = 0, χρωματισμένη κατά την κατεύθυνση στο επίπεδο· κουκκίδες: σημεία Bloch.",
   "phase diagram {p}": "διάγραμμα φάσεων {p}",
   "phase diagram": "διάγραμμα φάσεων",
   "Phase diagram": "Διάγραμμα φάσεων",
@@ -782,6 +784,8 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Interactive 3D view of the texture": "Vista 3D interactiva de la textura",
+  "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Arrastra para girar, rueda o pellizca para hacer zoom, doble clic para restablecer. Superficie m_z = 0, coloreada por la dirección en el plano; puntos: puntos de Bloch.",
   "phase diagram {p}": "diagrama de fases {p}",
   "phase diagram": "diagrama de fases",
   "Phase diagram": "Diagrama de fases",
@@ -1452,6 +1456,8 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Interactive 3D view of the texture": "Interaktive 3D-Ansicht der Textur",
+  "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Ziehen zum Drehen, Scrollen oder Zwei-Finger-Geste zum Zoomen, Doppelklick zum Zurücksetzen. Fläche m_z = 0, gefärbt nach der Richtung in der Ebene; Punkte: Bloch-Punkte.",
   "phase diagram {p}": "Phasendiagramm {p}",
   "phase diagram": "Phasendiagramm",
   "Phase diagram": "Phasendiagramm",
@@ -2122,6 +2128,8 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Interactive 3D view of the texture": "Vista 3D interattiva della tessitura",
+  "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Trascina per ruotare, scorri o pizzica per lo zoom, doppio clic per ripristinare. Superficie m_z = 0, colorata secondo la direzione nel piano; punti: punti di Bloch.",
   "phase diagram {p}": "diagramma di fase {p}",
   "phase diagram": "diagramma di fase",
   "Phase diagram": "Diagramma di fase",

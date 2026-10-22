@@ -98,6 +98,7 @@ time-dependent drives, integrated with Heun steps.
 - Animations: mm2d dynamics runs with spin waves (excite=stripe/dot) or a moving texture (current or Temp) write
   animation.gif (and animation.mp4 when ffmpeg is installed); every mm3d run writes rotate.gif, the 3D view
   turning around z. animation=0 turns them off. Tell the user the animation is on the run card.
+  The mm3d run card also opens with an interactive 3D view (drag to turn, scroll to zoom) from surface.json.
 - Longer runs in segments: continue_run on the finished run (time and drive phases continue), then
   wait_for_run, then combine_runs with the last segment for one trajectory. Never restart from copied m1, m2.
 - Threshold search ("minimum current that switches", "A0 where AFM becomes FM"): a coarse sweep of 6-8 values
