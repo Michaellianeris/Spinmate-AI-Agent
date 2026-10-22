@@ -225,6 +225,12 @@ def main():
     m = S.initial(film, vals["texture"], R0=vals["R0"], m0=vals["m0"], seed=vals["seed"])
     if afm:
         m = np.stack([m, -m], 1)                      # sublattice 2 antiparallel to sublattice 1
+    if vals["start_from"]:                          # the final texture of an earlier run
+        from spinmate_core.mm2d import start_file, start_problem
+        err = start_problem(vals)
+        if err:
+            raise SystemExit(err)
+        m = S._norm(np.load(start_file(vals["start_from"]))["m"].astype(float))
     view = film.neel if afm else (lambda mm: mm)          # what the pictures and the texture metrics look at
     avg = (lambda mm: mm[:, 0].mean((1, 2))) if afm else (lambda mm: mm.mean((1, 2)))
     avg2 = (lambda mm: mm[:, 1].mean((1, 2))) if afm else avg
@@ -232,6 +238,9 @@ def main():
     summary = {"engine": "mm2d", "mode": vals["mode"], "texture_seed": vals["texture"],
                "grid": [vals["Nx"], vals["Ny"]], "cell_nm": vals["dx"] * 1e9,
                "energy_initial_J": film.energy(m, d)}
+    if vals["start_from"]:
+        summary["started_from"] = vals["start_from"]
+        summary["texture_seed"] = f"final texture of {vals['start_from']}"
     rows = []                                  # (x, mx, my, mz) for output1.dat
     erows = []                                 # energy log
     relaxed = vals["mode"] == "relax" or vals["relax_first"]

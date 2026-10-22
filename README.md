@@ -558,7 +558,9 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 <img src="docs/screenshots/mm2d-saf-chat.png" alt="In the chat: a question asks whether a synthetic-AFM skyrmion shows a skyrmion Hall effect; the answer gives 131 m/s, Hall angle 0, Thiele within 1 percent" width="70%">
 
 - **Temperature.** `Temp` (K) in `mode=dynamics` adds the stochastic thermal field (Brown) and switches to fixed
-  Heun steps. Independent spins reach the Boltzmann average of m_z; a skyrmion at 300 K wobbles and wanders, and the
+  Heun steps. Relaxation (`mode=relax`) is an energy minimisation and stays at 0 K; a thermal run relaxes at 0 K
+  first and then evolves at T. `start_from=r0003` starts a run from the final texture of an earlier run, to heat,
+  push or excite a skyrmion that is already relaxed. Independent spins reach the Boltzmann average of m_z; a skyrmion at 300 K wobbles and wanders, and the
   card gives its diffusion constant from the mean squared displacement next to the stochastic Thiele value.
 
 ```text

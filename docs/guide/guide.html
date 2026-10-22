@@ -358,7 +358,10 @@ axis with no skyrmion Hall effect. The pictures show the Néel vector with the a
 <p><code>Temp</code> (K) in <code>mode=dynamics</code> adds the stochastic thermal field of Brown,
 ⟨H<sub>i</sub>(t)H<sub>j</sub>(t′)⟩ = 2αk<sub>B</sub>T/(μ₀M<sub>s</sub>γ₀V) δ<sub>ij</sub>δ(t − t′), and integrates with fixed Heun steps
 (<code>thermal_dt</code>, by default 0.15 of the fastest precession period). That is slower than at 0 K, so keep thermal
-runs to about 64 × 64 cells and 1 ns. For a skyrmion without current the card gives the diffusion constant from the mean
+runs to about 64 × 64 cells and 1 ns. Relaxation (<code>mode=relax</code>) is an energy minimisation and stays at 0 K,
+so <code>Temp</code> has no effect there and Check says so; a thermal run relaxes at 0 K first and then evolves at T.
+<code>start_from=r0003</code> starts a run from the final texture of an earlier run (same grid and lattice), for
+example to heat or push a skyrmion that is already relaxed; the card links back to that run. For a skyrmion without current the card gives the diffusion constant from the mean
 squared displacement, ⟨r²⟩ = 4Dτ, next to the stochastic Thiele value; one 1 ns trajectory has a statistical error of
 about 25 %.</p>
 <div class="side" style="grid-template-columns:1.5fr 1fr">

@@ -40,6 +40,10 @@ time-dependent drives, integrated with Heun steps.
   diffusion_m2ps from the mean squared displacement and diffusion_thiele_m2ps from the stochastic Thiele
   equation; one trajectory of 1 ns has a statistical error of roughly 25 %. mean_mz_thermal is the time average of
   <m_z> after the first fifth of the run.
+  Relaxation (mode=relax) is an energy minimisation and is always at 0 K; Temp has no effect there. When the user
+  asks for a temperature, use mode=dynamics with Temp (it relaxes at 0 K first, then evolves with the thermal field)
+  and say so. start_from=rXXXX starts a run from the final texture of an earlier mm2d run (same Nx, Ny and lattice):
+  use it to heat, push or excite a texture that is already relaxed instead of seeding a new one.
   Experimentally, room-temperature skyrmions with compensated moments are seen in synthetic antiferromagnets
   (e.g. Pt/Co/Ru multilayers) and ferrimagnets; in intrinsic antiferromagnets only special cases are known.
 - mm3d (built in): SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk (CPU): exchange, bulk or
