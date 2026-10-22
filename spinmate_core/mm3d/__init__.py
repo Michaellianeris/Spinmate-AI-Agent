@@ -33,6 +33,8 @@ PARAMS = {
     "B_ext": ((0.0, 0.0, 0.3), "vector", "T", "applied field"),
     "R0": (0.0, "float", "m", "radius of the seed torus or tube (0 = from the helical period)"),
     "seed": (0, "int", "", "random seed (texture=random)"),
+    "animation": (1, "int", "", "also write rotate.gif (and rotate.mp4 when ffmpeg is installed), the 3D view "
+                  "turning once around z; 0 = no animation"),
     "tol": (5.0, "float", "A/m", "relaxation stops when max |m x H| is below this"),
     "max_iter": (40000, "int", "", "most relaxation iterations"),
 }
@@ -133,7 +135,7 @@ def check(vals):
 
 def estimate_s(vals):
     """About 0.35 µs per cell and iteration, some 2,500 iterations."""
-    return round(0.35e-6 * vals["Nx"] * vals["Ny"] * vals["Nz"] * 2500, 1)
+    return round(0.35e-6 * vals["Nx"] * vals["Ny"] * vals["Nz"] * 2500 + (30 if vals["animation"] else 0), 1)
 
 
 class MM3DEngine:

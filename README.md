@@ -636,6 +636,35 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 <img src="docs/mm2d-spinwaves-dot.png" alt="Circular spin waves from a dot antenna in mm2d, in the same two views." width="100%">
 <img src="docs/mm2d-dispersion.png" alt="Spin-wave dispersion from mm2d with a sinc pulse: the simulated f(k) lies on the analytic curve." width="60%">
 
+- **Sweeps and phase diagrams.** The same sweep machinery as the macrospin runs mm2d and mm3d: `start_sweep` with
+  `engine=mm2d` sweeps any number (`D`, `Ku`, `thickness`, ...) or one component of a vector (`B_ext.z`), one run
+  per value, and the card plots the skyrmion radius against it with each point coloured by its phase. With
+  `parameter2` it draws a phase diagram, one run per pair: uniform, skyrmion, stripes and so on. In the chat:
+  *"Phase diagram of a skyrmion film, D from 2 to 5 mJ/m² against B from 0 to 0.4 T."* `noise=0.05` breaks the
+  symmetry of the seed so an unstable skyrmion can strip out. At B = 0 the stripes start where theory puts them,
+  at D_c = 4√(A·Keff)/π = 3.78 mJ/m² (the dashed line).
+
+<table>
+<tr>
+<td width="55%"><img src="docs/mm2d-phase-diagram.png" alt="Phase diagram of an mm2d film, D against B_z: uniform at small D, isolated skyrmions in the middle with their radius in each cell, stripes at large D and small field"></td>
+<td width="45%"><img src="docs/mm2d-radius-sweep.png" alt="Skyrmion radius against B_z from an mm2d sweep: the radius falls from 14 nm at 0 T to under 4 nm at 0.6 T"></td>
+</tr>
+<tr><td align="center"><i>Phase diagram, D × B<sub>z</sub> (35 runs)</i></td><td align="center"><i>Radius against B<sub>z</sub></i></td></tr>
+</table>
+
+- **Animations.** A dynamics run with spin waves or with a moving skyrmion also writes `animation.gif` (and
+  `animation.mp4` when ffmpeg is installed, as in the Docker image), and every mm3d run writes `rotate.gif`, the
+  3D view turning around z. They play on the run card with GIF and MP4 downloads; `animation=0` turns them off.
+
+<table>
+<tr>
+<td width="34%"><img src="docs/mm2d-motion.gif" alt="Animation: a Néel skyrmion pushed by spin-orbit torque, moving at 116 m/s and leaving a trail"></td>
+<td width="33%"><img src="docs/mm2d-spinwaves.gif" alt="Animation: spin waves at 80 GHz leaving a stripe antenna"></td>
+<td width="33%"><img src="docs/mm3d-hopfion-rotate.gif" alt="Animation: the hopfion torus turning around z"></td>
+</tr>
+<tr><td align="center"><i>Skyrmion under SOT</i></td><td align="center"><i>Spin waves, 80 GHz</i></td><td align="center"><i>Hopfion, turning</i></td></tr>
+</table>
+
 - **Validated** in `tests/test_mm2d.py` against analytic results: wall energy 4√(A·Keff) − π|D| and width
   √(A/Keff) for both DMI types, the Kittel frequency, energy conservation without damping, |m| = 1, and
   Q = −1 for a skyrmion and 0 for skyrmionium, and for spin waves the wavelength at 80 GHz (49.3 nm against

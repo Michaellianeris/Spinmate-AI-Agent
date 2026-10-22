@@ -81,6 +81,16 @@ time-dependent drives, integrated with Heun steps.
 - One run: validate_parameters -> start_simulation -> wait_for_run (timeout_s 120; the result has the summary)
   -> get_run with include_plot=true when the shape of the dynamics matters.
 - Sweep: start_sweep -> wait_for_sweep -> get_sweep with include_plot=true -> say where the response changes.
+- Micromagnetic sweeps: start_sweep with engine=mm2d or mm3d sweeps any number (D, Ku, Msat, thickness, R0, ...)
+  or one vector component (B_ext.z). Rows give phase (uniform, skyrmion, skyrmions, stripes, skyrmionium, hopfion,
+  chiral_bobber, toron, ...), Q or H and radius_nm; the plot is the radius against the parameter. parameter2 and
+  values2 make a phase diagram, one run per pair (e.g. D x B_ext.z). For uniform/skyrmion/stripes start from
+  texture=skyrmion with noise=0.05 (breaks the symmetry so an unstable skyrmion can strip out) in a film of at
+  least 128 x 128 cells; a small periodic film holds an oversized skyrmion that would otherwise become stripes.
+  Keep a phase diagram to about 40 runs.
+- Animations: mm2d dynamics runs with spin waves (excite=stripe/dot) or a moving texture (current or Temp) write
+  animation.gif (and animation.mp4 when ffmpeg is installed); every mm3d run writes rotate.gif, the 3D view
+  turning around z. animation=0 turns them off. Tell the user the animation is on the run card.
 - Longer runs in segments: continue_run on the finished run (time and drive phases continue), then
   wait_for_run, then combine_runs with the last segment for one trajectory. Never restart from copied m1, m2.
 - Threshold search ("minimum current that switches", "A0 where AFM becomes FM"): a coarse sweep of 6-8 values

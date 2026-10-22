@@ -224,6 +224,8 @@ def main():
                       thickness=vals["thickness"])
     d = vals["thickness"]
     m = S.initial(film, vals["texture"], R0=vals["R0"], m0=vals["m0"], seed=vals["seed"])
+    if vals["noise"] > 0:                             # break the symmetry of the seed
+        m = S._norm(m + vals["noise"] * np.random.default_rng(vals["seed"] + 7).normal(size=m.shape))
     if afm:
         m = np.stack([m, -m], 1)                      # sublattice 2 antiparallel to sublattice 1
     if vals["start_from"]:                          # the final texture of an earlier run
@@ -257,6 +259,7 @@ def main():
         summary.update(relax_iterations=it, relax_torque_A_per_m=round(torque, 4),
                        relaxed=bool(torque < vals["tol"]))
     wave = None
+    anim, a_frames = False, []
     if vals["mode"] == "dynamics":
         rows, rows2, erows = [], [], []
         n_out = int(round(vals["t"] / vals["table_dt"]))
@@ -280,6 +283,17 @@ def main():
             if localised and not current:
                 summary["diffusion_thiele_m2ps"] = S.KB * T * S.diffusion_thiele(film, view(m), vals["alpha"], d)
         track = [(0.0, *(S.centre(film, view(m)) or (np.nan, np.nan)))]
+        anim = vals["animation"] and (vals["excite"] != "uniform" or follow)
+        a_every = max(1, n_out // 60)
+        a_sub = max(1, int(np.ceil(max(film.Nx, film.Ny) / 240)))
+        a_frames, a_times = [], []
+
+        def snap(t_now):
+            if vals["excite"] != "uniform":
+                a_frames.append((view(m)[0] - view(m0)[0])[::a_sub, ::a_sub].astype(np.float32))
+            else:
+                a_frames.append(view(m)[:, ::a_sub, ::a_sub].astype(np.float32))
+            a_times.append(t_now)
         mz_sum, mz_n = 0.0, 0
         base = film.H_ext.copy()
         shape, f_rf, t_p = vals["pulse"], vals["f_rf"], vals["t_pulse"]
@@ -297,6 +311,8 @@ def main():
         row_j = film.Ny // 2
         m0 = m.copy()
         wave = [view(m)[0, row_j].copy()]
+        if anim:
+            snap(0.0)
         rows.append((0.0, *avg(m))); rows2.append((0.0, *avg2(m))); erows.append((0.0, film.energy(m, d)))
         for k in range(1, n_out + 1):
             t_target = k * vals["table_dt"]
@@ -321,6 +337,8 @@ def main():
             wave.append(view(m)[0, row_j].copy())
             if follow:
                 track.append((t, *(S.centre(film, view(m)) or (np.nan, np.nan))))
+            if anim and (k % a_every == 0 or k == n_out):
+                snap(t)
             if T > 0 and k > n_out // 5:
                 mz_sum += float(avg(m)[2]); mz_n += 1
             _progress(start + k, start + n_out, t0)
@@ -443,6 +461,18 @@ def main():
                                    f"line: γ₀/2π·(H + H_K,eff + 2A k²/μ₀Ms)"
                                    + (f" · median mismatch {summary['dispersion_mismatch_pct']:.1f} %"
                                       if "dispersion_mismatch_pct" in summary else ""))
+    if anim and len(a_frames) > 2:
+        xs, ys = x_nm[::a_sub], y_nm[::a_sub]
+        if vals["excite"] != "uniform":
+            acap = cap
+            kind_a, extra = "wave", dict(antenna=excitation_mask(film, vals)[0][::a_sub, ::a_sub] > 0,
+                                         absorb_nm=vals["absorb"] * 1e9)
+        else:
+            acap = caption + (f" · j = {np.linalg.norm(vals['j']):.3g} A/m²" if any(vals["j"]) else "")
+            kind_a, extra = "texture", dict(track=np.array(track))
+        files = render.save_animation(np.array(a_frames), np.array(a_times), xs, ys, kind_a, acap, **extra)
+        summary["animation_files"] = files
+        summary["animation_frames"] = len(a_frames)
     Path("summary.json").write_text(json.dumps(summary))
 
 

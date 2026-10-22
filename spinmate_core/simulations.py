@@ -28,7 +28,7 @@ RESULT_FILES = ["Two_Spin_Dynamics.png", "output1.dat", "output2.dat", "neel_z.d
                 # engine plug-ins (mm2d, mumax3)
                 "texture_3d_2d.png", "texture_3d.png", "texture_2d.png", "m_final.npz", "energy.dat", "input.mx3",
                 "spinwave_3d_2d.png", "spinwave_3d.png", "spinwave_2d.png", "spinwave_map.png", "spinwave_profile.png", "dispersion.png", "skyrmion_track.png", "track.dat",
-                "spinwave.npz",
+                "spinwave.npz", "animation.gif", "animation.mp4", "rotate.gif", "rotate.mp4",
                 "table.txt"]
 
 _lock = threading.Lock()
@@ -155,7 +155,7 @@ def _check(parameters_text, engine):
 
 
 def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent_run=None, t_offset=None,
-              engine=None):
+              engine=None, sweep_value2=None):
     check = _check(parameters_text, engine)
     if not check["ok"]:
         return {"ok": False, "error": check["error"]}
@@ -169,6 +169,7 @@ def start_run(parameters_text, label="", sweep_id=None, sweep_value=None, parent
         "steps": check["steps"], "estimated_runtime_s": check["estimated_runtime_s"],
         "changed_from_defaults": check["changed_from_defaults"], "warnings": check["warnings"],
         "sweep_id": sweep_id, "sweep_value": sweep_value,
+        **({"sweep_value2": sweep_value2} if sweep_value2 is not None else {}),
         "parent_run": parent_run, "t_offset_s": t_offset, "engine": engine or "macrospin",
     })
     catalog.sync_run(run_dir)
@@ -489,9 +490,9 @@ def compare(run_ids):
     return {"ok": True, "run_ids": [r["id"] for r in runs], "runs": runs, "differing_parameters": differ}
 
 
-def estimate(parameters_text, runs=1):
+def estimate(parameters_text, runs=1, engine=None):
     """Wall time of `runs` copies of this run on the queue, or None if the text is invalid."""
-    check = P.validate(parameters_text, sec_per_step())
+    check = _check(parameters_text, engine)
     if not check["ok"]:
         return None
     waves = -(-max(1, runs) // MAX_PARALLEL)
@@ -500,7 +501,83 @@ def estimate(parameters_text, runs=1):
 
 # ---------- sweeps
 
-def start_sweep(parameters_text, parameter, values, label=""):
+MICRO = ("mm2d", "mm3d")
+
+
+def _micro_override(engine, text, name, value):
+    """Parameter text of a micromagnetic engine with name = value; B_ext.z sets one component of a vector."""
+    import importlib
+    mod = importlib.import_module(f"spinmate_core.{engine}")
+    base, comp = (name.split(".") + [None])[:2]
+    kind = mod.PARAMS[base][1]
+    if comp:
+        vec = list(mod.parse(text)[base])
+        vec["xyz".index(comp)] = float(value)
+        line = f"--{base}={','.join(repr(float(c)) for c in vec)}"
+    else:
+        line = f"--{base}={int(value) if kind == 'int' else repr(float(value))}"
+    return (text or "").rstrip("\n") + "\n" + line + "\n"
+
+
+def micro_sweepable(engine):
+    """Parameters of mm2d / mm3d that can be swept: numbers, and the components of vectors (B_ext.z)."""
+    import importlib
+    mod = importlib.import_module(f"spinmate_core.{engine}")
+    out = []
+    for k, v in mod.PARAMS.items():
+        if v[1] in ("float", "int") and k not in ("max_iter", "seed", "relax_first", "animation"):
+            out.append(k)
+        elif v[1] == "vector":
+            out += [f"{k}.{c}" for c in "xyz"]
+    return out
+
+
+def _start_micro_sweep(engine, parameters_text, parameter, values, label, parameter2, values2):
+    ok = micro_sweepable(engine)
+    for name in filter(None, (parameter, parameter2)):
+        if name not in ok:
+            return {"ok": False, "error": f"'{name}' cannot be swept in {engine}; one of: {', '.join(ok)}"}
+    values = [float(v) for v in values]
+    values2 = [float(v) for v in values2] if parameter2 else [None]
+    if not values or not values2:
+        return {"ok": False, "error": "no values given"}
+    n = len(values) * len(values2)
+    if n > MAX_SWEEP_RUNS:
+        return {"ok": False, "error": f"{n} runs exceeds MAX_SWEEP_RUNS={MAX_SWEEP_RUNS}"}
+    texts, est = [], 0.0
+    for v2 in values2:                                # check every point before starting any run
+        for v in values:
+            text = _micro_override(engine, parameters_text, parameter, v)
+            if parameter2:
+                text = _micro_override(engine, text, parameter2, v2)
+            c = _check(text, engine)
+            if not c["ok"]:
+                where = f"{parameter}={v:g}" + (f", {parameter2}={v2:g}" if parameter2 else "")
+                return {"ok": False, "error": f"{where}: {c['error']}"}
+            texts.append((v, v2, text)); est += c["estimated_runtime_s"] or 0
+    sweep_id = _next_id(SWEEPS, "s")
+    run_ids = []
+    for v, v2, text in texts:
+        name = f"{label or sweep_id} {parameter}={v:g}" + (f" {parameter2}={v2:g}" if parameter2 else "")
+        r = start_run(text, label=name, sweep_id=sweep_id, sweep_value=v, engine=engine, sweep_value2=v2)
+        run_ids.append(r["run_id"])
+    _write(SWEEPS / sweep_id / "meta.json", {
+        "id": sweep_id, "label": label, "parameter": parameter, "values": [t[0] for t in texts],
+        "parameter2": parameter2, "values2": [t[1] for t in texts] if parameter2 else None,
+        "run_ids": run_ids, "created": time.time(), "engine": engine,
+    })
+    catalog.sync_sweep(SWEEPS / sweep_id)
+    return {"ok": True, "sweep_id": sweep_id, "runs": len(run_ids), "parallel": MAX_PARALLEL,
+            "estimated_wall_time_s": round(est / MAX_PARALLEL, 1)}
+
+
+def start_sweep(parameters_text, parameter, values, label="", engine=None, parameter2=None, values2=None):
+    if engine in MICRO:
+        return _start_micro_sweep(engine, parameters_text, parameter, values, label, parameter2, values2 or [])
+    if engine and engine != "macrospin":
+        return {"ok": False, "error": f"sweeps run on macrospin, mm2d and mm3d, not on {engine}"}
+    if parameter2:
+        return {"ok": False, "error": "a two-parameter sweep (phase diagram) is for mm2d and mm3d"}
     if parameter not in P.float_params():
         return {"ok": False, "error": f"'{parameter}' is not a scalar parameter that can be swept"}
     values = [float(v) for v in values]
@@ -535,6 +612,8 @@ def sweep_info(sweep_id, discard_fraction=0.0):
     m = _read(SWEEPS / sweep_id / "meta.json")
     if not m:
         return None
+    if m.get("engine") in MICRO:
+        return _micro_sweep_info(sweep_id, m)
     rows, counts = [], {}
     for rid, v in zip(m["run_ids"], m["values"]):
         r = run_info(rid) or {"status": "missing"}
@@ -557,6 +636,139 @@ def sweep_info(sweep_id, discard_fraction=0.0):
             _plot_key[sweep_id] = key
         info["plot"] = "sweep_neel_z.png"
     return info
+
+
+PHASE = {"skyrmion": "skyrmion", "bubble": "skyrmion", "antiskyrmion": "skyrmion", "domains": "stripes",
+         "skyrmionium": "skyrmionium", "uniform": "uniform", "unsettled": "unsettled"}
+PHASE_COLOURS = {"uniform": "#C9C2DA", "skyrmion": "#1F4FD1", "skyrmions": "#5B8CFF", "stripes": "#D1495B",
+                 "skyrmionium": "#8E44AD", "hopfion": "#1F4FD1", "hopfion2": "#5B8CFF", "skyrmion_tube": "#2A9D8F",
+                 "chiral_bobber": "#E9A23B", "toron": "#D1495B", "unsettled": "#888888", "failed": "#000000"}
+
+
+def phase_of(summary):
+    """The phase a micromagnetic run ended in, for sweeps and phase diagrams."""
+    t = (summary or {}).get("texture") or "unsettled"
+    if t.startswith("Q="):
+        return "skyrmions" if abs(int(t[2:])) > 1 else "skyrmion" if t[2:] in ("1", "-1") else "stripes"
+    return PHASE.get(t, t)
+
+
+def _micro_sweep_info(sweep_id, m):
+    rows, counts = [], {}
+    vals2 = m.get("values2") or [None] * len(m["run_ids"])
+    for rid, v, v2 in zip(m["run_ids"], m["values"], vals2):
+        r = run_info(rid) or {"status": "missing"}
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+        row = {"run_id": rid, "value": v, "status": r["status"]}
+        if v2 is not None:
+            row["value2"] = v2
+        if r["status"] == "done":
+            s = r.get("summary") or {}
+            row["phase"] = phase_of(s)
+            row["texture"] = s.get("texture")
+            for k in ("topological_charge", "hopf_index", "radius_nm", "rings_nm", "bloch_point_count",
+                      "energy_final_J", "relaxed", "speed_mps", "hall_angle_deg", "wavelength_nm"):
+                if s.get(k) is not None:
+                    row[k] = s[k]
+        elif r["status"] == "failed":
+            row["phase"] = "failed"
+        rows.append(row)
+    info = dict(m, status_counts=counts, rows=rows)
+    if counts.get("done") and not counts.get("running") and not counts.get("queued"):
+        key = ("micro", counts["done"])
+        if _plot_key.get(sweep_id) != key or not (SWEEPS / sweep_id / "sweep_plot.png").exists():
+            _micro_sweep_plot(sweep_id, m, rows)
+            _plot_key[sweep_id] = key
+        info["plot"] = "sweep_plot.png"
+    return info
+
+
+def _axis(engine, name, values):
+    """Axis label with the unit and an SI prefix chosen from the values, and the tick formatter."""
+    import importlib
+    import math
+    from matplotlib.ticker import FuncFormatter
+    mod = importlib.import_module(f"spinmate_core.{engine}")
+    unit = mod.PARAMS.get(name.split(".")[0], (0, 0, ""))[2]
+    unit = {"J/m^2": "J/m²", "J/m^3": "J/m³", "A/m^2": "A/m²"}.get(unit, unit)
+    big = max((abs(v) for v in values), default=0) or 1
+    e3 = int(math.floor(math.log10(big) / 3)) * 3
+    prefix = {-12: "p", -9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M", 9: "G"}.get(e3)
+    if prefix is None or not unit:
+        e3, prefix = 0, ""
+    scale = 10.0 ** e3
+    label = f"{name} ({prefix}{unit})" if unit else name
+    return label, FuncFormatter(lambda v, _: f"{v / scale:g}")
+
+
+def _critical_D(m):
+    """4 sqrt(A Keff) / pi of the first run of an mm2d sweep (local demag, ferromagnet), or None."""
+    try:
+        from .mm2d import parse
+        v = parse((RUNS / m["run_ids"][0] / "parameters.txt").read_text())
+        if v["lattice"] != "ferro" or v["demag"] != "local":
+            return None
+        keff = v["Ku"] - 0.5 * 4e-7 * 3.141592653589793 * v["Msat"] ** 2
+        return 4 * (v["Aex"] * keff) ** 0.5 / 3.141592653589793 if keff > 0 else None
+    except Exception:
+        return None
+
+
+def _micro_sweep_plot(sweep_id, m, rows):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+    engine, p1, p2 = m["engine"], m["parameter"], m.get("parameter2")
+    done = [r for r in rows if r.get("phase")]
+    phases = sorted({r["phase"] for r in done}, key=lambda k: list(PHASE_COLOURS).index(k) if k in PHASE_COLOURS else 99)
+    col = lambda ph: PHASE_COLOURS.get(ph, "#444444")
+    l1, f1 = _axis(engine, p1, [r["value"] for r in done])
+    if p2:                                            # phase diagram: one coloured cell per run
+        xs, ys = sorted({r["value"] for r in done}), sorted({r["value2"] for r in done})
+        fig, ax = plt.subplots(figsize=(6.4, 4.6), dpi=150)
+        import numpy as np
+        def edges(v):
+            v = np.asarray(v, float)
+            if len(v) == 1:
+                return np.array([v[0] - 0.5, v[0] + 0.5]) if v[0] == 0 else v[0] * np.array([0.95, 1.05])
+            mid = (v[1:] + v[:-1]) / 2
+            return np.concatenate([[v[0] - (mid[0] - v[0])], mid, [v[-1] + (v[-1] - mid[-1])]])
+        ex, ey = edges(xs), edges(ys)
+        for r in done:
+            i, j = xs.index(r["value"]), ys.index(r["value2"])
+            ax.add_patch(plt.Rectangle((ex[i], ey[j]), ex[i + 1] - ex[i], ey[j + 1] - ey[j], facecolor=col(r["phase"]),
+                                       edgecolor="white", lw=0.6))
+            if r.get("radius_nm") and r["phase"] == "skyrmion":
+                ax.text((ex[i] + ex[i + 1]) / 2, (ey[j] + ey[j + 1]) / 2, f"{r['radius_nm']:.0f}", ha="center",
+                        va="center", fontsize=6.5, color="white")
+        ax.set_xlim(ex[0], ex[-1]); ax.set_ylim(ey[0], ey[-1])
+        l2, f2 = _axis(engine, p2, [r["value2"] for r in done])
+        ax.xaxis.set_major_formatter(f1); ax.yaxis.set_major_formatter(f2)
+        ax.set_xlabel(l1); ax.set_ylabel(l2)
+        ax.set_title("phase diagram (numbers: skyrmion radius, nm)", fontsize=9)
+        dc = _critical_D(m) if engine == "mm2d" and p1 == "D" else None
+        if dc and ex[0] < dc < ex[-1]:                # the stripe instability of the uniform state at B = 0
+            ax.axvline(dc, color="#14111F", ls="--", lw=1.1)
+            ax.text(dc, ey[-1], " D_c", va="top", fontsize=8, color="#14111F")
+        ax.legend(handles=[Patch(color=col(ph), label=ph.replace("_", " ")) for ph in phases], fontsize=8,
+                  loc="upper left", bbox_to_anchor=(1.01, 1), frameon=False)
+    else:                                             # radius (or Q) against the parameter, coloured by phase
+        fig, ax = plt.subplots(figsize=(6.4, 3.6), dpi=150)
+        size = [(r["value"], r.get("radius_nm") or (max(r["rings_nm"]) if r.get("rings_nm") else 0.0), r["phase"])
+                for r in done]
+        size.sort()
+        ax.plot([p[0] for p in size], [p[1] for p in size], "-", color="#B9B0CC", lw=1, zorder=1)
+        for ph in phases:
+            pts = [p for p in size if p[2] == ph]
+            ax.scatter([p[0] for p in pts], [p[1] for p in pts], s=28, color=col(ph), label=ph.replace("_", " "), zorder=2)
+        ax.xaxis.set_major_formatter(f1)
+        ax.set_xlabel(l1); ax.set_ylabel("radius (nm)" if engine == "mm2d" else "outer ring (nm)")
+        ax.grid(True, lw=0.4, alpha=0.5)
+        ax.legend(fontsize=8, frameon=False, loc="upper left", bbox_to_anchor=(1.01, 1))
+    fig.tight_layout()
+    fig.savefig(SWEEPS / sweep_id / "sweep_plot.png")
+    plt.close(fig)
 
 
 def _neel_mean(run_id, discard_fraction):
@@ -649,7 +861,7 @@ def sweep_file(sweep_id, name):
     if not _valid(sweep_id, "s"):
         return None
     path = SWEEPS / sweep_id / name
-    return path if name == "sweep_neel_z.png" and path.exists() else None
+    return path if name in ("sweep_neel_z.png", "sweep_plot.png") and path.exists() else None
 
 
 def list_sweeps():
@@ -659,6 +871,7 @@ def list_sweeps():
         if m:
             done = sum((_meta(r) or {}).get("status") == "done" for r in m["run_ids"])
             out.append({"id": m["id"], "label": m["label"], "parameter": m["parameter"],
+                        "parameter2": m.get("parameter2"), "engine": m.get("engine") or "macrospin",
                         "runs": len(m["run_ids"]), "done": done, "created": m.get("created")})
     return out
 

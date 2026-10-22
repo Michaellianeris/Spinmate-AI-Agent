@@ -33,7 +33,9 @@ PARAMS = {
     "B_ext": ((0.0, 0.0, 0.0), "vector", "T", "applied field"),
     "R0": (12e-9, "float", "m", "radius of the seed skyrmion (skyrmionium: inner ring)"),
     "m0": ((0.0, 0.0, 1.0), "vector", "", "direction for texture=uniform"),
-    "seed": (0, "int", "", "random seed (texture=random)"),
+    "seed": (0, "int", "", "random seed (texture=random, noise)"),
+    "noise": (0.0, "float", "", "random tilt added to the seed (0-1): breaks its symmetry, so an unstable skyrmion "
+              "can elongate into stripes (useful in phase diagrams)"),
     "start_from": ("", "run", "", "start from the final texture of an earlier mm2d run (its id, e.g. r0003) instead of "
                    "a seed; the grid and the lattice must match"),
     "tol": (10.0, "float", "A/m", "relaxation stops when max |m x H| is below this"),
@@ -54,6 +56,8 @@ PARAMS = {
     "f_rf": (0.0, "float", "Hz", "frequency of the sine, or cut-off of the sinc"),
     "absorb": (0.0, "float", "m", "absorbing edges: the damping rises to 1 over this width at the x edges "
                "(and y edges for a dot), so spin waves do not come back"),
+    "animation": (1, "int", "", "dynamics: also write animation.gif (and animation.mp4 when ffmpeg is installed) of "
+                  "the spin waves or of the moving texture; 0 = no animation"),
     "Temp": (0.0, "float", "K", "temperature (dynamics): stochastic thermal field, fixed Heun steps"),
     "thermal_dt": (0.0, "float", "s", "time step with temperature (0 = 0.15 / the fastest precession)"),
     "j": ((0.0, 0.0, 0.0), "vector", "A/m^2", "current density in the plane (dynamics): drives spin torques"),
@@ -217,6 +221,9 @@ def estimate_s(vals):
     if vals["lattice"] != "ferro":                    # two sublattices and the faster exchange precession
         J = vals["J_afm"] if vals["lattice"] == "afm" else -vals["J_rkky"] / vals["thickness"]
         relax, dyn = 2 * relax, 2.5 * dyn * max(1.0, J / 2e7) ** 0.5
+    if vals["mode"] == "dynamics" and vals["animation"] and (vals["excite"] != "uniform" or any(vals["j"])
+                                                             or vals["Temp"] > 0):
+        dyn += 0.4 * 65                               # drawing about 65 frames
     return round(relax + dyn, 1)
 
 

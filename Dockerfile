@@ -5,9 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MPLBACKEND=Agg \
     WORKSPACE=/data
 
-# serif font for the plots (Times New Roman is not available on Linux)
+# serif font for the plots (Times New Roman is not available on Linux); ffmpeg for the MP4 animations
 RUN apt-get update \
- && apt-get install -y --no-install-recommends fonts-liberation fonts-dejavu-core \
+ && apt-get install -y --no-install-recommends fonts-liberation fonts-dejavu-core ffmpeg \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

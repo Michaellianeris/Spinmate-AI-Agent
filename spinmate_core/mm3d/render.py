@@ -89,6 +89,25 @@ def _points2d(ax, points, plane, y0, tol):
             ax.plot([u], [v], "o", ms=11, mfc=BP_COL.get(q, "#000000"), mec="white", mew=1.5, zorder=10)
 
 
+def save_rotation(m, x, y, z, caption, mask=None, points=(), n=36, name="rotate"):
+    """A turning 3D view: the m_z = 0 surface and the Bloch points, once around the z axis."""
+    from ..mm2d.render import write_movie
+    fig = plt.figure(figsize=(6.4, 5.6))
+    ax = fig.add_axes([0, 0.08, 1, 0.92], projection="3d")
+    _surface(ax, m, x, y, z, mask)
+    _outline(ax, x, y, z, mask)
+    _points3d(ax, points)
+    ax.set_xlim(x[0], x[-1]); ax.set_ylim(y[0], y[-1]); ax.set_zlim(z[0], z[-1])
+    ax.set_box_aspect((x[-1] - x[0], y[-1] - y[0], z[-1] - z[0]), zoom=0.95)
+    ax.set_axis_off()
+    fig.text(0.03, 0.03, caption, fontsize=7.5, color=INK, wrap=True)
+
+    def update(i):
+        ax.view_init(elev=26 + 8 * np.sin(2 * np.pi * i / n), azim=-58 + 360 * i / n)
+        return []
+    return write_movie(fig, update, n, name, fps=12, dpi=90)
+
+
 def save_views(m, x, y, z, caption, mask=None, prefix="texture", points=()):
     """m (3, Nz, Ny, Nx); x, y, z in nm. Writes <prefix>_3d.png, <prefix>_2d.png and <prefix>_3d_2d.png.
     points: Bloch points (x, y, z, charge) in nm, drawn as dots."""
