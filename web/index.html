@@ -1805,6 +1805,109 @@ function mm2dView(box, id, r) {
     <div class="rc-mm2d"><table>${rows.map(([k, v]) => `<tr><td>${esc(t(k))}</td><td class="mono">${v}</td></tr>`).join("")}</table>
     <a href="${f(side)}" target="_blank" rel="noopener"><img src="${f(side)}" alt="${esc(t(side === "skyrmion_track.png" ? "Path of the skyrmion" : side === "dispersion.png" ? "Spin-wave dispersion" : side === "spinwave_profile.png" ? "Change of mx" : s.mode === "dynamics" ? "<m> in time" : "<m> during the relaxation"))}" loading="lazy"></a></div>`;
   box.querySelectorAll("[data-open-run]").forEach(a => a.onclick = e => { e.preventDefault(); openRunCard(a.dataset.openRun); });
+  if (r.files.includes("surface.json")) {               // the interactive 3D view goes first
+    const fig = document.createElement("figure"); fig.className = "rc-texture rc-3d";
+    fig.innerHTML = `<canvas style="width:100%;aspect-ratio:1.6;display:block;border-radius:10px;background:#fff;touch-action:none;cursor:grab" aria-label="${esc(t("Interactive 3D view of the texture"))}"></canvas>
+      <figcaption>${t("Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.")}</figcaption>`;
+    box.prepend(fig);
+    fetch(f("surface.json")).then(x => x.json()).then(d => { if (!viewer3d(fig.querySelector("canvas"), d)) fig.remove(); }).catch(() => fig.remove());
+  }
+}
+
+// ---------------------------------------------------------------- interactive 3D view of an mm3d texture (WebGL, no library)
+function viewer3d(canvas, d) {
+  const gl = canvas.getContext("webgl", {antialias: true, preserveDrawingBuffer: true});
+  if (!gl) return false;
+  const big = gl.getExtension("OES_element_index_uint");
+  const box = d.box, c = box.map(b => (b[0] + b[1]) / 2), span = Math.max(...box.map(b => b[1] - b[0]));
+  const nv = d.verts.length / 3, P = new Float32Array(d.verts.length), N = new Float32Array(d.verts.length), C = new Float32Array(d.verts.length);
+  for (let i = 0; i < nv; i++) for (let k = 0; k < 3; k++) { P[3 * i + k] = d.verts[3 * i + k] - c[k]; C[3 * i + k] = d.colors[3 * i + k] / 255; }
+  for (let f = 0; f < d.faces.length; f += 3) {           // vertex normals from the faces around them
+    const [a, b, e] = [d.faces[f], d.faces[f + 1], d.faces[f + 2]].map(i => 3 * i);
+    const u = [0, 1, 2].map(k => P[b + k] - P[a + k]), v = [0, 1, 2].map(k => P[e + k] - P[a + k]);
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    for (const i of [a, b, e]) for (let k = 0; k < 3; k++) N[i + k] += n[k];
+  }
+  const tooMany = nv > 65535 && !big;
+  const I = (nv > 65535 ? Uint32Array : Uint16Array).from(tooMany ? [] : d.faces);
+  // outline of the film: a disk (two circles and four lines) or a box, and the Bloch points
+  const L = [], z0 = box[2][0] - c[2], z1 = box[2][1] - c[2];
+  if (d.disk) {
+    for (let k = 0; k < 96; k++) for (const z of [z0, z1]) {
+      const a = 2 * Math.PI * k / 96, b = 2 * Math.PI * (k + 1) / 96;
+      L.push(d.disk * Math.cos(a), d.disk * Math.sin(a), z, d.disk * Math.cos(b), d.disk * Math.sin(b), z);
+    }
+    for (const a of [0.25, 0.75, 1.25, 1.75]) L.push(d.disk * Math.cos(a * Math.PI), d.disk * Math.sin(a * Math.PI), z0, d.disk * Math.cos(a * Math.PI), d.disk * Math.sin(a * Math.PI), z1);
+  } else {
+    const X = box[0].map(v => v - c[0]), Y = box[1].map(v => v - c[1]), Z = [z0, z1];
+    for (const z of Z) for (const [p, q] of [[[0, 0], [1, 0]], [[1, 0], [1, 1]], [[1, 1], [0, 1]], [[0, 1], [0, 0]]]) L.push(X[p[0]], Y[p[1]], z, X[q[0]], Y[q[1]], z);
+    for (const a of X) for (const b of Y) L.push(a, b, z0, a, b, z1);
+  }
+  const PT = d.points.flatMap(p => [p[0] - c[0], p[1] - c[1], p[2] - c[2]]), PC = d.points.flatMap(p => p[3] > 0 ? [0.88, 0.19, 0.23] : [0.18, 0.36, 0.88]);
+  const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec3 p; attribute vec3 n; attribute vec3 col; uniform mat4 M; uniform mat3 R; uniform float ps; varying vec3 vc; varying vec3 vn;
+    void main(){ gl_Position = M * vec4(p, 1.0); vn = R * n; vc = col; gl_PointSize = ps; }`));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision mediump float; varying vec3 vc; varying vec3 vn; uniform float lit; uniform float dot_;
+    void main(){ if (dot_ > 0.5 && length(gl_PointCoord - 0.5) > 0.5) discard; vec3 l = normalize(vec3(-0.4, 0.5, 0.75)); float s = length(vn) > 0.0 ? abs(dot(normalize(vn), l)) : 1.0;
+      gl_FragColor = vec4(vc * mix(1.0, 0.42 + 0.58 * s, lit), 1.0); }`));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = (arr, target = gl.ARRAY_BUFFER) => { const b = gl.createBuffer(); gl.bindBuffer(target, b); gl.bufferData(target, arr, gl.STATIC_DRAW); return b; };
+  const bP = buf(P), bN = buf(N), bC = buf(C), bI = buf(I, gl.ELEMENT_ARRAY_BUFFER);
+  const bL = buf(new Float32Array(L)), bLC = buf(new Float32Array(L.length).fill(0.62)), bLN = buf(new Float32Array(L.length));
+  const bPT = buf(new Float32Array(PT)), bPC = buf(new Float32Array(PC)), bPN = buf(new Float32Array(PT.length));
+  const loc = {p: gl.getAttribLocation(prog, "p"), n: gl.getAttribLocation(prog, "n"), col: gl.getAttribLocation(prog, "col")};
+  const U = {M: gl.getUniformLocation(prog, "M"), R: gl.getUniformLocation(prog, "R"), ps: gl.getUniformLocation(prog, "ps"), lit: gl.getUniformLocation(prog, "lit"), dot: gl.getUniformLocation(prog, "dot_")};
+  const bind = (b, a) => { gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 3, gl.FLOAT, false, 0, 0); };
+  const view = {yaw: -0.9, pitch: 1.05, dist: 1.75};
+  const home = {...view};
+  function draw() {
+    const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+    if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST);
+    const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+    // rotation: about z by yaw, then tilt about x by pitch (z up -> towards the viewer)
+    const R = [cy, cp * sy, -sp * sy,  -sy, cp * cy, -sp * cy,  0, sp, cp];   // column-major mat3
+    const D = view.dist * span, f = 1 / Math.tan(0.35), a = canvas.width / canvas.height, n = D / 20, fr = D * 4;
+    const Pm = [f / a, 0, 0, 0, 0, f, 0, 0, 0, 0, (fr + n) / (n - fr), -1, 0, 0, 2 * fr * n / (n - fr), 0];
+    const V = [R[0], R[1], R[2], 0, R[3], R[4], R[5], 0, R[6], R[7], R[8], 0, 0, 0, -D, 1];
+    const M = new Float32Array(16);
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let t = 0; for (let k = 0; k < 4; k++) t += Pm[k * 4 + j] * V[i * 4 + k]; M[i * 4 + j] = t; }
+    gl.uniformMatrix4fv(U.M, false, M); gl.uniformMatrix3fv(U.R, false, new Float32Array(R));
+    gl.uniform1f(U.lit, 1); gl.uniform1f(U.ps, 1); gl.uniform1f(U.dot, 0);
+    if (I.length) { bind(bP, loc.p); bind(bN, loc.n); bind(bC, loc.col); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bI);
+      gl.drawElements(gl.TRIANGLES, I.length, nv > 65535 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, 0); }
+    gl.uniform1f(U.lit, 0);
+    bind(bL, loc.p); bind(bLN, loc.n); bind(bLC, loc.col); gl.drawArrays(gl.LINES, 0, L.length / 3);
+    if (PT.length) { gl.disable(gl.DEPTH_TEST); gl.uniform1f(U.ps, 12 * (window.devicePixelRatio || 1)); gl.uniform1f(U.dot, 1);
+      bind(bPT, loc.p); bind(bPN, loc.n); bind(bPC, loc.col); gl.drawArrays(gl.POINTS, 0, PT.length / 3); }
+  }
+  let drag = null, raf = 0;
+  const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); }); };
+  const pts = new Map();
+  canvas.addEventListener("pointerdown", e => { canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); drag = {x: e.clientX, y: e.clientY}; });
+  canvas.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    if (pts.size === 2) {                               // pinch: zoom
+      const [a, b] = [...pts.values()], before = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      const [a2, b2] = [...pts.values()], after = Math.hypot(a2[0] - b2[0], a2[1] - b2[1]);
+      if (before > 0) view.dist = Math.min(6, Math.max(0.6, view.dist * before / after));
+    } else {
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      view.yaw -= (e.clientX - drag.x) * 0.01; view.pitch = Math.min(Math.PI, Math.max(0, view.pitch - (e.clientY - drag.y) * 0.01));
+      drag = {x: e.clientX, y: e.clientY};
+    }
+    redraw();
+  });
+  const up = e => { pts.delete(e.pointerId); drag = pts.size ? {x: [...pts.values()][0][0], y: [...pts.values()][0][1]} : null; };
+  canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
+  canvas.addEventListener("wheel", e => { e.preventDefault(); view.dist = Math.min(6, Math.max(0.6, view.dist * Math.exp(e.deltaY * 0.001))); redraw(); }, {passive: false});
+  canvas.addEventListener("dblclick", () => { Object.assign(view, home); redraw(); });
+  new ResizeObserver(redraw).observe(canvas);
+  draw();
+  return true;
 }
 
 // ---------------------------------------------------------------- setup dialog, fast / deep

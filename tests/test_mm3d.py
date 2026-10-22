@@ -77,6 +77,9 @@ def test_run_and_report(monkeypatch):
     s = run["summary"]
     assert s["engine"] == "mm3d" and s["texture"] == "hopfion" and abs(s["hopf_index"]) > 0.7
     assert "texture_3d_2d.png" in run["files"] and "rotate.gif" in run["files"]       # and the turning 3D view
+    mesh = json.loads(S.run_file(out["run_id"], "surface.json").read_text())         # the interactive view
+    assert len(mesh["verts"]) % 3 == 0 and len(mesh["faces"]) > 300 and len(mesh["colors"]) == len(mesh["verts"])
+    assert max(mesh["faces"]) < len(mesh["verts"]) // 3 and mesh["disk"] == pytest.approx(18, rel=0.1)
     sk = json.loads(tools.call("start_simulation", {"parameters_text": "--Nx=48\n--Ny=48\n--R0=6e-9\n", "engine": "mm2d",
                                                     "label": "skyrmion"})[0])
     assert S.wait_for_run(sk["run_id"], 120)["status"] == "done"

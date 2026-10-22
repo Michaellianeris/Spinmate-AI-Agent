@@ -101,6 +101,8 @@ def main():
            + f" · B = {vals['B_ext'][2]:.3g} T")
     render.save_views(m, slab.x * 1e9, slab.y * 1e9, slab.z * 1e9, cap, slab.mask,
                       points=[(a * 1e9, b * 1e9, c * 1e9, q) for a, b, c, q in bps])
+    render.save_mesh(m, slab.x * 1e9, slab.y * 1e9, slab.z * 1e9, slab.mask,
+                     points=[(a * 1e9, b * 1e9, c * 1e9, q) for a, b, c, q in bps])
     if vals["animation"]:
         summary["animation_files"] = render.save_rotation(
             m, slab.x * 1e9, slab.y * 1e9, slab.z * 1e9, cap, slab.mask,

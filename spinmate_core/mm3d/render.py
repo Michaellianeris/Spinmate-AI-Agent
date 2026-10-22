@@ -147,3 +147,35 @@ def save_views(m, x, y, z, caption, mask=None, prefix="texture", points=()):
     _wheel(fig, [0.955, 0.2, 0.04, 0.1], (0.975, 0.18))
     fig.text(0.02, 0.03, caption, fontsize=13, color=INK)
     fig.savefig(f"{prefix}_3d_2d.png", dpi=120, bbox_inches="tight", pad_inches=0.25); plt.close(fig)
+
+
+def save_mesh(m, x, y, z, mask=None, points=(), name="surface.json", max_faces=60000):
+    """The m_z = 0 surface as a triangle mesh for the interactive 3D view on the run card: vertices in nm,
+    one colour per vertex (in-plane direction), the Bloch points and the outline of the film."""
+    import json
+    from skimage.measure import marching_cubes
+    mz = m[2].copy()
+    if mask is not None:
+        mz[~mask] = 1.0
+    out = {"box": [[float(x[0]), float(x[-1])], [float(y[0]), float(y[-1])], [float(z[0]), float(z[-1])]],
+           "disk": None, "points": [[round(float(a), 2), round(float(b), 2), round(float(c), 2), int(q)]
+                                    for a, b, c, q in points], "verts": [], "faces": [], "colors": []}
+    if mask is not None:
+        out["disk"] = round(float(np.sqrt(mask[0].sum() / np.pi) * (x[1] - x[0])), 3)
+    if mz.min() < 0 < mz.max():
+        step = 1
+        while True:
+            verts, faces, _, _ = marching_cubes(np.transpose(mz, (2, 1, 0)), 0.0, step_size=step)
+            if len(faces) <= max_faces or step >= 4:
+                break
+            step += 1
+        d = x[1] - x[0]
+        idx = np.clip(np.round(verts).astype(int), 0, [len(x) - 1, len(y) - 1, len(z) - 1])
+        vm = m[:, idx[:, 2], idx[:, 1], idx[:, 0]]
+        pts = np.stack([x[0] + verts[:, 0] * d, y[0] + verts[:, 1] * d, z[0] + verts[:, 2] * d], 1)
+        out["verts"] = np.round(pts, 2).ravel().tolist()
+        out["faces"] = faces.astype(int).ravel().tolist()
+        out["colors"] = np.round(np.clip(colour(*vm), 0, 1) * 255).astype(int).ravel().tolist()
+    with open(name, "w") as f:
+        json.dump(out, f, separators=(",", ":"))
+    return name

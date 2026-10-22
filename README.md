@@ -720,6 +720,12 @@ field (with an FFT for its vector potential), the skyrmion number of every layer
   a skyrmion tube from the top surface that ends about half a period down at a Bloch point. `texture=toron`
   (pinned surfaces): a tube closed at both ends by Bloch points of opposite charge. `texture=hopfion2`: two
   hopfions stacked in a disk about 2p thick, H = 2 (a single torus with a double twist unwinds to H = 1 here).
+- **Interactive 3D view.** The run card of every mm3d run opens with the m_z = 0 surface in WebGL: drag to turn
+  it, scroll or pinch to zoom, double-click to reset; Bloch points are red and blue dots. The mesh comes from
+  `surface.json` (vertices in nm and their colours), drawn by a few lines of WebGL in the page, no library.
+
+<img src="docs/screenshots/mm3d-viewer.png" alt="The interactive 3D view of a hopfion on the run card: the torus coloured by the in-plane direction inside the outline of the nanodisk" width="70%">
+
 - **Bloch points** are found from the solid angle of m over every cube of eight cells (±4π around one) and drawn
   as red (+1) and blue (−1) dots in the 3D view and the cuts; the summary lists their positions.
 
