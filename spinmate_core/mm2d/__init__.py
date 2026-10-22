@@ -31,6 +31,8 @@ PARAMS = {
     "R0": (12e-9, "float", "m", "radius of the seed skyrmion (skyrmionium: inner ring)"),
     "m0": ((0.0, 0.0, 1.0), "vector", "", "direction for texture=uniform"),
     "seed": (0, "int", "", "random seed (texture=random)"),
+    "start_from": ("", "run", "", "start from the final texture of an earlier mm2d run (its id, e.g. r0003) instead of "
+                   "a seed; the grid and the lattice must match"),
     "tol": (10.0, "float", "A/m", "relaxation stops when max |m x H| is below this"),
     "max_iter": (100000, "int", "", "most relaxation iterations"),
     "relax_first": (1, "int", "", "dynamics: relax the initial state first (1) or not (0)"),
@@ -83,6 +85,10 @@ def parse(text):
                 if len(v) != 3:
                     raise ValueError
                 vals[name] = v
+            elif kind == "run":
+                if not re.fullmatch(r"r\d{4,}", value):
+                    raise ValueError
+                vals[name] = value
             elif kind == "choice":
                 if value not in PARAMS[name][4]:
                     raise ValueError
@@ -124,10 +130,15 @@ def check(vals):
     if vals["mode"] == "dynamics" and vals["pulse"] != "step" and vals["table_dt"] > 1 / (2.5 * vals["f_rf"]):
         warnings.append(f"table_dt is too coarse for f_rf = {vals['f_rf'] / 1e9:.3g} GHz: use at most "
                         f"{1 / (2.5 * vals['f_rf']):.2g} s")
+    if vals["start_from"]:
+        err = start_problem(vals)
+        if err:
+            errors.append(err)
     if vals["Temp"] < 0:
         errors.append("Temp must be zero or positive")
     if vals["Temp"] > 0 and vals["mode"] != "dynamics":
-        warnings.append("temperature acts only in mode=dynamics (relaxation is at 0 K)")
+        warnings.append("relaxation finds the 0 K state, so Temp has no effect in mode=relax: for a run at this "
+                        "temperature use mode=dynamics (it relaxes at 0 K first, then evolves with the thermal field)")
     if vals["Temp"] > 0 and vals["mode"] == "dynamics":
         warnings.append("with temperature the solver takes fixed Heun steps: slower than at 0 K")
     if any(vals["j"]) and vals["mode"] != "dynamics":
@@ -160,6 +171,25 @@ def check(vals):
     if cells > 512 * 512:
         warnings.append(f"{cells:,} cells on the CPU: this run will be slow")
     return errors, warnings
+
+
+def start_file(run_id):
+    from ..simulations import RUNS
+    return RUNS / run_id / "m_final.npz"
+
+
+def start_problem(vals):
+    """Why the run in start_from cannot be used, or ''."""
+    f = start_file(vals["start_from"])
+    if not f.exists():
+        return f"start_from={vals['start_from']}: no finished mm2d run with that id"
+    import numpy as np
+    shape = np.load(f)["m"].shape
+    want = (3, 2, vals["Ny"], vals["Nx"]) if vals["lattice"] != "ferro" else (3, vals["Ny"], vals["Nx"])
+    if shape != want:
+        return (f"start_from={vals['start_from']}: its texture has shape {shape}, this run needs {want} "
+                "(use the same Nx, Ny and lattice)")
+    return ""
 
 
 def estimate_s(vals):

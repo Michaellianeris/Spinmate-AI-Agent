@@ -1748,6 +1748,7 @@ function mm2dView(box, id, r) {
   const in3d = s.engine === "mm3d";
   const lat = {afm: "antiferromagnet (two sublattices)", saf: "synthetic antiferromagnet (two layers)"}[s.lattice];
   const rows = [["Texture", esc((s.texture || "").replace(/_/g, " "))], lat ? ["Lattice", t(lat)] : null,
+    s.started_from ? ["Started from", `<a href="#" data-open-run="${esc(s.started_from)}">${esc(s.started_from)}</a>`] : null,
     s.sublattice_charges ? ["Sublattice charges Q1, Q2", s.sublattice_charges.map(q => fmt(q, 2)).join(", ")] : null,
     s.max_canting != null ? ["Largest canting |m1 + m2|/2", num(s.max_canting, 4)] : null,
     wave ? null : in3d ? ["Hopf index H", num(s.hopf_index, 3)] : ["Topological charge Q", num(s.topological_charge, 3)],
@@ -1776,6 +1777,7 @@ function mm2dView(box, id, r) {
     <figcaption>${t(wave ? "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size." : "Colour: in-plane direction; light = up, dark = down. Click a picture to open it full size.")}</figcaption></figure>
     <div class="rc-mm2d"><table>${rows.map(([k, v]) => `<tr><td>${esc(t(k))}</td><td class="mono">${v}</td></tr>`).join("")}</table>
     <a href="${f(side)}" target="_blank" rel="noopener"><img src="${f(side)}" alt="${esc(t(side === "skyrmion_track.png" ? "Path of the skyrmion" : side === "dispersion.png" ? "Spin-wave dispersion" : side === "spinwave_profile.png" ? "Change of mx" : s.mode === "dynamics" ? "<m> in time" : "<m> during the relaxation"))}" loading="lazy"></a></div>`;
+  box.querySelectorAll("[data-open-run]").forEach(a => a.onclick = e => { e.preventDefault(); openRunCard(a.dataset.openRun); });
 }
 
 // ---------------------------------------------------------------- setup dialog, fast / deep

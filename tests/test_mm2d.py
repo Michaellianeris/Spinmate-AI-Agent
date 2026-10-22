@@ -270,3 +270,25 @@ def test_temperature_run(tmp_path, monkeypatch):
     assert s["diffusion_thiele_m2ps"] > 0 and s["texture"] == "skyrmion"
     assert (tmp_path / "skyrmion_track.png").exists()
     assert any("Heun" in w for w in M.MM2DEngine().validate("--mode=dynamics\n--Temp=300\n").warnings)
+
+
+def test_start_from_an_earlier_run(mm2d):
+    first = json.loads(tools.call("start_simulation", {"parameters_text": "--Nx=40\n--Ny=40\n--R0=6e-9\n", "engine": "mm2d",
+                                                      "label": "seed"})[0])
+    assert S.wait_for_run(first["run_id"], 120)["status"] == "done"
+    rid = first["run_id"]
+    assert not mm2d.validate(f"--start_from={rid}\n--Nx=48\n").ok                     # another grid
+    assert not mm2d.validate("--start_from=r9999\n--Nx=40\n--Ny=40\n").ok             # no such run
+    assert not mm2d.validate("--start_from=../etc\n").ok
+    out = json.loads(tools.call("start_simulation", {
+        "parameters_text": f"--Nx=40\n--Ny=40\n--start_from={rid}\n--mode=dynamics\n--t=10e-12\n--table_dt=1e-12\n",
+        "engine": "mm2d", "label": "continued"})[0])
+    run = S.wait_for_run(out["run_id"], 120)
+    assert run["status"] == "done", run.get("error_tail")
+    s = run["summary"]
+    assert s["started_from"] == rid and s["texture"] == "skyrmion" and s["relax_iterations"] < 200   # already relaxed
+
+
+def test_temperature_in_relax_mode_explains_0_K():
+    w = M.MM2DEngine().validate("--Temp=25\n").warnings
+    assert any("0 K" in x and "mode=dynamics" in x for x in w)

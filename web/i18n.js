@@ -112,6 +112,7 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Started from": "Ξεκίνησε από",
   "Diffusion constant": "Σταθερά διάχυσης",
   "RMS displacement": "Μέση τετραγωνική μετατόπιση",
   "Path of the skyrmion": "Διαδρομή του skyrmion",
@@ -769,6 +770,7 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Started from": "Empezó desde",
   "Diffusion constant": "Constante de difusión",
   "RMS displacement": "Desplazamiento cuadrático medio",
   "Path of the skyrmion": "Trayectoria del skyrmion",
@@ -1426,6 +1428,7 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Started from": "Gestartet von",
   "Diffusion constant": "Diffusionskonstante",
   "RMS displacement": "Mittlere Verschiebung",
   "Path of the skyrmion": "Bahn des Skyrmions",
@@ -2083,6 +2086,7 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Started from": "Partito da",
   "Diffusion constant": "Costante di diffusione",
   "RMS displacement": "Spostamento quadratico medio",
   "Path of the skyrmion": "Traiettoria dello skyrmion",
