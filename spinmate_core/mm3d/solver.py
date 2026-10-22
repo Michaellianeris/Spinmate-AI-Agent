@@ -112,6 +112,32 @@ def initial(slab, kind="hopfion", R=None, width=None, seed=0):
         rho = np.hypot(rp - R, Z)
         th = np.pi * (1 - np.tanh(rho / w) ** 2) ** 0.8
         ph = np.arctan2(Y, X) + np.arctan2(Z, rp - R) + (np.pi / 2 if slab.dmi == "bulk" else 0)
+    elif kind == "hopfion2":
+        # H = 2: two hopfions stacked along z, one in each half of a film about 2p thick (a single torus with a
+        # double twist unwinds to H = 1 in this model)
+        R = R or 0.32 * p
+        w = width or 0.2 * p
+        rp = np.hypot(X, Y)
+        zc = np.where(Z < 0, slab.z[0] / 2, slab.z[-1] / 2)
+        rho = np.hypot(rp - R, Z - zc)
+        th = np.pi * (1 - np.tanh(rho / w) ** 2) ** 0.8
+        ph = np.arctan2(Y, X) + np.arctan2(Z - zc, rp - R) + (np.pi / 2 if slab.dmi == "bulk" else 0)
+    elif kind in ("chiral_bobber", "toron"):
+        # a skyrmion tube that ends inside the film at a Bloch point: from the top surface down to the middle
+        # (bobber), or a closed tube between two Bloch points away from both surfaces (toron)
+        R = R or 0.25 * p
+        w = width or 0.2 * p
+        top, bot = slab.z[-1], slab.z[0]
+        if kind == "chiral_bobber":
+            s_ = np.clip((Z - 0.5 * (top + bot)) / (top - 0.5 * (top + bot)), 0, None) ** 0.5
+        else:
+            half = 0.4 * (top - bot)
+            s_ = np.clip(1 - (Z / half) ** 2, 0, None) ** 0.5
+        r = np.hypot(X, Y)
+        Rz = R * s_
+        th = np.where(Rz > 0, np.pi * (1 - np.tanh((r - Rz) / w)) / 2 * (Rz > 0), 0.0)
+        th = np.where(Rz > 0, th * np.clip(Rz / (0.3 * R), 0, 1), 0.0)
+        ph = np.arctan2(Y, X) + (np.pi / 2 if slab.dmi == "bulk" else 0)
     elif kind == "skyrmion_tube":
         R = R or 0.25 * p
         w = width or 0.2 * p
@@ -135,6 +161,51 @@ def hopf_index(m):
     Ak = [1j * (KY * Bk[2] - KZ * Bk[1]) / K2, 1j * (KZ * Bk[0] - KX * Bk[2]) / K2, 1j * (KX * Bk[1] - KY * Bk[0]) / K2]
     A = np.stack([np.real(np.fft.ifftn(a)) for a in Ak])
     return float(-np.sum(A * B))
+
+
+def _solid(a, b, c):
+    """Solid angle of the spherical triangle a, b, c (unit vectors along axis 0)."""
+    return 2 * np.arctan2(np.sum(a * np.cross(b, c, axis=0), 0),
+                          1 + np.sum(a * b, 0) + np.sum(b * c, 0) + np.sum(c * a, 0))
+
+
+def bloch_points(slab, m):
+    """Bloch points: the solid angle of m over each cube of 8 neighbouring cells, /4pi, is +-1 around one.
+    Returns a list of (x, y, z, charge) in m. Pinned surfaces add a layer of +z above and below; the cubes that
+    touch it are left out."""
+    mm = m
+    if slab.mask is not None:
+        mm = np.where(slab.mask, m, UP[:, None, None, None])
+    if slab.surfaces == "pinned":
+        up = np.broadcast_to(UP[:, None, None, None], (3, 1) + mm.shape[2:])
+        mm = np.concatenate([up, mm, up], 1)
+    z = slab.z if slab.surfaces != "pinned" else np.concatenate([[slab.z[0] - slab.dx], slab.z, [slab.z[-1] + slab.dx]])
+    wrap = slab.boundary == "periodic" and slab.mask is None
+    if wrap:                                   # close the periodic directions
+        mm = np.concatenate([mm, mm[:, :, :1]], 2)
+        mm = np.concatenate([mm, mm[:, :, :, :1]], 3)
+    c = lambda k, j, i: mm[:, k:mm.shape[1] - 1 + k, j:mm.shape[2] - 1 + j, i:mm.shape[3] - 1 + i]
+    # corner (dz, dy, dx); each face as two triangles, counter-clockwise seen from outside
+    faces = [((0, 0, 1), (0, 1, 1), (1, 1, 1), (1, 0, 1)),      # +x
+             ((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)),      # -x
+             ((0, 1, 0), (1, 1, 0), (1, 1, 1), (0, 1, 1)),      # +y
+             ((0, 0, 0), (0, 0, 1), (1, 0, 1), (1, 0, 0)),      # -y
+             ((1, 0, 0), (1, 0, 1), (1, 1, 1), (1, 1, 0)),      # +z
+             ((0, 0, 0), (0, 1, 0), (0, 1, 1), (0, 0, 1))]      # -z
+    total = 0
+    for a, b, cc, d in faces:
+        A, B, C, D = c(*a), c(*b), c(*cc), c(*d)
+        total = total + _solid(A, B, C) + _solid(A, C, D)
+    q = np.rint(total / (4 * np.pi)).astype(int)
+    if slab.surfaces == "pinned":            # a tube ending on a pinned surface is not a Bloch point in the film
+        q[0] = q[-1] = 0
+    out = []
+    xs = np.append(slab.x, slab.x[-1] + slab.dx) if wrap else slab.x
+    ys = np.append(slab.y, slab.y[-1] + slab.dx) if wrap else slab.y
+    for k, j, i in zip(*np.nonzero(q)):
+        out.append((float((xs[i] + xs[i + 1]) / 2), float((ys[j] + ys[j + 1]) / 2), float((z[k] + z[k + 1]) / 2),
+                    int(q[k, j, i])))
+    return out
 
 
 def metrics(slab, m):

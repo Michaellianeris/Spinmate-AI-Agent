@@ -65,6 +65,13 @@ time-dependent drives, integrated with Heun steps.
   the grid gives about 0.85-0.9), core_ring_radius_nm and rings_nm in the middle layer. Hopfions are stable in a
   nanodisk (geometry=disk) about 2p across and about p thick, p = 4πA/D, at small fields (0-0.3 T); in a periodic
   slab they unwind or grow into helices. texture_3d_2d.png shows the m_z = 0 torus and the cuts y = 0 and z = 0.
+  More 3D textures: texture=chiral_bobber (surfaces=free, geometry=slab, B_z between about 0.35 and 0.5 B_D,
+  B_D = D^2/(A Ms), 5.5 T for the defaults): a tube from the top surface ending about p/2 down at a Bloch point.
+  texture=toron (surfaces=pinned): a tube closed by Bloch points +1 and -1; it shrinks with field (1-2 T for the
+  defaults). texture=hopfion2: two hopfions stacked in a disk about 2p thick (Nz=48), H = 2 (-1.72 on the grid);
+  a single torus with a double twist unwinds to H = 1 in this model. The summary gives bloch_points (x, y, z in
+  nm and charge, from the solid angle of m over each cube of 8 cells), bloch_point_count and Q_layers, the
+  skyrmion number of every layer; texture names: hopfion, hopfion2, skyrmion_tube, chiral_bobber, toron.
 
 ## Rules
 - Report only numbers that come from a tool result or from this guide. If something was not computed, say so

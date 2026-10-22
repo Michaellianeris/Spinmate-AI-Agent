@@ -72,8 +72,26 @@ def _cut(ax, mm, u, v, a, b, inside, la, lb, step):
         sp.set_color("#B9B0CC")
 
 
-def save_views(m, x, y, z, caption, mask=None, prefix="texture"):
-    """m (3, Nz, Ny, Nx); x, y, z in nm. Writes <prefix>_3d.png, <prefix>_2d.png and <prefix>_3d_2d.png."""
+BP_COL = {1: "#E0303A", -1: "#2F5BE0"}
+
+
+def _points3d(ax, points):
+    for px, py, pz, q in points:
+        ax.scatter([px], [py], [pz], s=140, c=BP_COL.get(q, "#000000"), edgecolors="#14111F", linewidths=1.2,
+                   depthshade=False, zorder=10)
+
+
+def _points2d(ax, points, plane, y0, tol):
+    """Bloch points near the cut: plane 'xz' (cut y = y0) or 'xy' (cut z = y0)."""
+    for px, py, pz, q in points:
+        u, v, w = (px, pz, py) if plane == "xz" else (px, py, pz)
+        if abs(w - y0) <= tol:
+            ax.plot([u], [v], "o", ms=11, mfc=BP_COL.get(q, "#000000"), mec="white", mew=1.5, zorder=10)
+
+
+def save_views(m, x, y, z, caption, mask=None, prefix="texture", points=()):
+    """m (3, Nz, Ny, Nx); x, y, z in nm. Writes <prefix>_3d.png, <prefix>_2d.png and <prefix>_3d_2d.png.
+    points: Bloch points (x, y, z, charge) in nm, drawn as dots."""
     Nz, Ny, Nx = m.shape[1:]
     step = max(2, int(round(max(Nx, Ny) / 15)))
     xz, xy = m[:, :, Ny // 2, :], m[:, Nz // 2]
@@ -83,6 +101,7 @@ def save_views(m, x, y, z, caption, mask=None, prefix="texture"):
     def draw3d(ax):
         _surface(ax, m, x, y, z, mask)
         _outline(ax, x, y, z, mask)
+        _points3d(ax, points)
         ax.set_xlim(x[0], x[-1]); ax.set_ylim(y[0], y[-1]); ax.set_zlim(z[0], z[-1])
         ax.set_box_aspect((x[-1] - x[0], y[-1] - y[0], z[-1] - z[0]), zoom=1.25)
         ax.view_init(elev=26, azim=-58); ax.set_axis_off()
@@ -94,15 +113,17 @@ def save_views(m, x, y, z, caption, mask=None, prefix="texture"):
     fig.savefig(f"{prefix}_3d.png", dpi=130, bbox_inches="tight", pad_inches=0.2); plt.close(fig)
 
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 5.4))
-    _cut(a1, xz, x, z, 0, 2, in_xz, "x", "z", step); a1.set_title("cut y = 0", fontsize=13, color=INK)
-    _cut(a2, xy, x, y, 0, 1, in_xy, "x", "y", step); a2.set_title("cut z = 0", fontsize=13, color=INK)
+    _cut(a1, xz, x, z, 0, 2, in_xz, "x", "z", step); _points2d(a1, points, "xz", y[Ny // 2], x[1] - x[0]); a1.set_title("cut y = 0", fontsize=13, color=INK)
+    _cut(a2, xy, x, y, 0, 1, in_xy, "x", "y", step); _points2d(a2, points, "xy", z[Nz // 2], x[1] - x[0]); a2.set_title("cut z = 0", fontsize=13, color=INK)
     fig.tight_layout(); fig.savefig(f"{prefix}_2d.png", dpi=130, bbox_inches="tight", pad_inches=0.2); plt.close(fig)
 
     fig = plt.figure(figsize=(18, 7.4))
     draw3d(fig.add_axes([-0.02, 0.06, 0.46, 0.92], projection="3d"))
     a1 = fig.add_axes([0.47, 0.17, 0.22, 0.72]); _cut(a1, xz, x, z, 0, 2, in_xz, "x", "z", step)
+    _points2d(a1, points, "xz", y[Ny // 2], x[1] - x[0])
     a1.set_title("cut y = 0", fontsize=13, color=INK)
     a2 = fig.add_axes([0.73, 0.17, 0.22, 0.72]); _cut(a2, xy, x, y, 0, 1, in_xy, "x", "y", step)
+    _points2d(a2, points, "xy", z[Nz // 2], x[1] - x[0])
     a2.set_title("cut z = 0", fontsize=13, color=INK)
     _wheel(fig, [0.955, 0.2, 0.04, 0.1], (0.975, 0.18))
     fig.text(0.02, 0.03, caption, fontsize=13, color=INK)

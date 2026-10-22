@@ -1,5 +1,5 @@
-"""SpinMate's own 3D micromagnetic engine, built in (CPU, NumPy): hopfions and skyrmion tubes in a chiral magnet
-slab or nanodisk whose top and bottom surfaces are pinned along +z.
+"""SpinMate's own 3D micromagnetic engine, built in (CPU, NumPy): hopfions (H = 1, 2), skyrmion tubes, chiral bobbers
+and torons in a chiral magnet slab or nanodisk, with Bloch points found and marked.
 
 Input: SpinMate lines (--texture=hopfion --D=5.24e-3 ...). The solver relaxes the seed to the nearest stable
 texture and reports the Hopf index H."""
@@ -13,7 +13,11 @@ PI = 3.141592653589793
 
 # name: (default, kind, unit, description[, choices])
 PARAMS = {
-    "texture": ("hopfion", "choice", "", "initial state", ("hopfion", "skyrmion_tube", "uniform", "random")),
+    "texture": ("hopfion", "choice", "", "initial state: hopfion (H = 1), hopfion2 (H = 2: two hopfions stacked in a disk "
+                "about 2p thick), skyrmion_tube, "
+                "chiral_bobber (a tube from the top surface ending at a Bloch point; surfaces=free), toron (a tube "
+                "closed by two Bloch points; surfaces=pinned), uniform, random",
+                ("hopfion", "hopfion2", "skyrmion_tube", "chiral_bobber", "toron", "uniform", "random")),
     "Nx": (58, "int", "", "cells along x"), "Ny": (58, "int", "", "cells along y"),
     "Nz": (24, "int", "", "cells along z (the thickness)"),
     "dx": (1e-9, "float", "m", "cell size (cubic cells)"),
@@ -94,13 +98,29 @@ def check(vals):
             warnings.append(f"cell {dx * 1e9:.2g} nm is coarse for the helical period {p * 1e9:.3g} nm "
                             "(use at least 12 cells per period)")
         d = vals["Nz"] * dx
+        BD = D ** 2 / (A * vals["Msat"])             # field unit of a chiral magnet; the cone saturates at BD/2
+        Bz = vals["B_ext"][2]
+        if vals["texture"] == "chiral_bobber":
+            if vals["surfaces"] != "free":
+                warnings.append("a chiral bobber lives at a free surface: set surfaces=free")
+            if not 0.35 * BD <= Bz <= 0.5 * BD:
+                warnings.append(f"chiral bobbers are metastable for B_z between about 0.35 and 0.5 B_D, here "
+                                f"{0.35 * BD:.2g}-{0.5 * BD:.2g} T (B_D = D²/(A Ms) = {BD:.3g} T); below, the Bloch point "
+                                "leaves and a tube or nothing remains")
+            if d < 1.0 * p:
+                warnings.append(f"the film is {d / p:.2f} p thick: a bobber needs at least about one period")
+        if vals["texture"] == "toron" and vals["surfaces"] != "pinned":
+            warnings.append("a toron needs the top and bottom surfaces pinned along +z")
         if vals["texture"] == "hopfion" and not 0.7 <= d / p <= 1.4:
             warnings.append(f"thickness {d * 1e9:.3g} nm is {d / p:.2f} p: hopfions are stable for a thickness "
                             "close to the helical period")
-        if vals["texture"] == "hopfion" and vals["geometry"] == "slab":
+        if vals["texture"] == "hopfion2" and not 1.9 <= d / p <= 2.4:
+            warnings.append(f"thickness {d * 1e9:.3g} nm is {d / p:.2f} p: hopfion2 stacks two hopfions, one per "
+                            "period; use a thickness of about 2p")
+        if vals["texture"] in ("hopfion", "hopfion2") and vals["geometry"] == "slab":
             warnings.append("in a periodic slab a hopfion tends to unwind or to grow into helices; a nanodisk "
                             "about 2p across binds it")
-        if vals["texture"] == "hopfion" and vals["surfaces"] != "pinned":
+        if vals["texture"] in ("hopfion", "hopfion2") and vals["surfaces"] != "pinned":
             warnings.append("hopfions need the top and bottom surfaces pinned along +z")
     elif vals["texture"] == "hopfion":
         warnings.append("D = 0: nothing stabilises a hopfion, it will collapse")
@@ -121,7 +141,8 @@ class MM3DEngine:
     title = "3D micromagnetics: hopfions (built in)"
     description = ("SpinMate's own 3D finite-difference solver for a chiral magnet slab or nanodisk: exchange, "
                    "bulk or interfacial DMI, anisotropy and Zeeman, with the top and bottom surfaces pinned along +z. "
-                   "Relaxes hopfions and skyrmion tubes and reports the Hopf index. CPU, no GPU needed.")
+                   "Relaxes hopfions (H = 1, 2), skyrmion tubes, chiral bobbers and torons, reports the Hopf "
+                   "index, the skyrmion number of each layer and the Bloch points (found from the solid angle of m). CPU, no GPU needed.")
     example = "--texture=hopfion\n--D=5.236e-3\n--Nz=24\n--disk_diameter=54e-9"
 
     def ready(self):

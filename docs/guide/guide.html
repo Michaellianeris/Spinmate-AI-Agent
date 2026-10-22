@@ -254,13 +254,13 @@ python -m spinmate_mcp --http   # port 8422</pre></div>
 <div class="ask">Use spinmate to find the smallest DC SOT current that makes the Néel vector rotate.</div>
 
 <h2><span class="n">9</span>Engines: macrospin, mm2d, mm3d and mumax3</h2>
-<p><b>Three engines are built in:</b> macrospin (two sublattices), mm2d (2D micromagnetics: skyrmions, domain walls, spin waves) and mm3d (3D micromagnetics: hopfions). mumax3 or any other engine is an optional plug-in, added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
+<p><b>Three engines are built in:</b> macrospin (two sublattices), mm2d (2D micromagnetics: skyrmions, domain walls, spin waves) and mm3d (3D micromagnetics: hopfions, bobbers, torons). mumax3 or any other engine is an optional plug-in, added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
 in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine="mm2d"</code> or <code>engine="mumax3"</code>. <b>Run setup</b> (Deep mode) has an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 without a GPU) is marked “not installed”.</p>
 <table>
 <tr><th style="width:24mm">Engine</th><th>What it computes</th><th style="width:56mm">Notes</th></tr>
 <tr><td><b>macrospin</b><br>(default)</td><td>Two coupled LLG equations for the sublattices m₁ and m₂: exchange A0, anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise, time-dependent drives.</td><td>Built in; sweeps, continuation and combination of runs.</td></tr>
 <tr><td><b>mm2d</b><br>(built in)</td><td>SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick: exchange, perpendicular anisotropy, interfacial or bulk DMI, Zeeman and the demagnetising field, local or long-range by FFT (<code>demag=full</code>). Finds skyrmions, bubbles, skyrmionium, walls and maze domains, or runs LLG dynamics.</td><td>Part of SpinMate: CPU only, nothing to install; a 128 × 128 film relaxes in seconds.</td></tr>
-<tr><td><b>mm3d</b><br>(built in)</td><td>SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk with the top and bottom surfaces pinned along +z: exchange, bulk or interfacial DMI, anisotropy, field. Relaxes hopfions and skyrmion tubes and gives the Hopf index.</td><td>CPU only; the default hopfion takes about a minute. No demagnetising field.</td></tr>
+<tr><td><b>mm3d</b><br>(built in)</td><td>SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk with the top and bottom surfaces pinned along +z: exchange, bulk or interfacial DMI, anisotropy, field. Relaxes hopfions (H = 1, 2), skyrmion tubes, chiral bobbers and torons; gives the Hopf index and finds Bloch points.</td><td>CPU only; the default hopfion takes about a minute. No demagnetising field.</td></tr>
 <tr><td><b>mumax3</b><br>(optional plug-in)</td><td>Finite-difference micromagnetics of one ferromagnet on a grid, on the GPU. Input as SpinMate lines (turned into an <code>.mx3</code> script) or a complete <code>.mx3</code> script; the card shows ⟨m⟩(t).</td><td>Needs an NVIDIA GPU and the mumax3 binary in <code>MUMAX3_BIN</code>; without it validation warns. Single runs only.</td></tr>
 </table>
 <pre>--Nx=128
@@ -451,6 +451,33 @@ or grows into helices, and Check warns about it.</p>
 <tr><td>Helix with q = D/2A (bulk DMI)</td><td>−D²/4A</td><td>within 2 % (exact on the lattice)</td></tr>
 <tr><td>One layer against mm2d</td><td>same fields</td><td>identical</td></tr>
 <tr><td>Hopfion through relaxation</td><td>|H| stays ≈ 1</td><td>|H| = 0.89 (grid)</td></tr>
+</table>
+<h3>Chiral bobbers, torons, H = 2 and Bloch points</h3>
+<p>A Bloch point is where m vanishes in the continuum: the solid angle of m over a small closed surface around it is
+±4π. mm3d computes that solid angle over every cube of eight cells, so each Bloch point is found with its charge, listed in
+the summary and drawn as a dot (red +1, blue −1). <code>texture=chiral_bobber</code> needs free surfaces and a field between
+about 0.35 and 0.5 B<sub>D</sub> (B<sub>D</sub> = D²/(A·M<sub>s</sub>), 5.5 T for the defaults): the tube enters from the top
+surface and ends about half a period down at a Bloch point. <code>texture=toron</code> with pinned surfaces is a tube closed
+at both ends by Bloch points of opposite charge; it shrinks as the field grows. <code>texture=hopfion2</code> stacks two hopfions
+in a disk about 2p thick, H = 2; a single torus with a double twist unwinds to H = 1 in this model.</p>
+<pre>--texture=chiral_bobber
+--geometry=slab
+--surfaces=free
+--Nx=48
+--Ny=48
+--Nz=32
+--B_ext=0,0,2.2</pre>
+<figure><img src="../mm3d-bobber.png"><figcaption>A chiral bobber at 2.2 T: the tube ends 14 nm below the free top surface at a Bloch point (Q = −1 in the upper layers, 0 below).</figcaption></figure>
+<figure><img src="../mm3d-toron.png"><figcaption>A toron between pinned surfaces at 1.5 T: Bloch points +1 and −1 at z = ±12 nm, radius 9 nm in the middle.</figcaption></figure>
+<figure><img src="../mm3d-hopfion2.png"><figcaption>Two hopfions stacked in a 54 nm × 48 nm disk: H = −1.72 on the grid (2 × 0.86).</figcaption></figure>
+<table>
+<tr><th>3D texture check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Hedgehog, anti-hedgehog</td><td>Bloch point charge ±1</td><td>±1, at the centre</td></tr>
+<tr><td>Hopfion, skyrmion tube</td><td>no Bloch points</td><td>none</td></tr>
+<tr><td>Chiral bobber</td><td>one Bloch point, about p/2 deep</td><td>one, 0.5–0.6 p</td></tr>
+<tr><td>Toron</td><td>Bloch points +1 and −1</td><td>+1 above, −1 below</td></tr>
+<tr><td>Toron radius, 1 / 1.5 / 2 T</td><td>shrinks with field</td><td>11.8 / 9.0 / 6.5 nm</td></tr>
+<tr><td>hopfion2</td><td>H = 2 × H of one hopfion</td><td>−1.72 = 2 × −0.86</td></tr>
 </table>
 
 <h2><span class="n">10</span>Physics validation</h2>
