@@ -12,6 +12,12 @@ time-dependent drives, integrated with Heun steps.
 - mm2d (built in): SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick (CPU). Exchange
   Aex, perpendicular anisotropy Ku, DMI D (dmi=interfacial gives Neel, dmi=bulk Bloch textures), Zeeman B_ext and
   the local thin-film demagnetising field -Ms mz, so the effective anisotropy is Keff = Ku - mu0 Ms^2/2.
+  demag=full (lattice=ferro) replaces it by the long-range field: the Newell tensor of a cell `thickness` thick,
+  convolved by FFT (free edges zero-padded; periodic films sum images and use the exact infinite-film k = 0 term).
+  Use it for films thicker than about two exchange lengths, for bubbles (D = 0, the walls turn Bloch; the summary
+  calls them bubble) and for stripe or maze domains from texture=random, which the local field cannot give. It makes
+  skyrmions larger (1 nm Co-like film: 14.5 -> about 17 nm). Checked against the Aharoni prism factor and the extra
+  stray-field energy of a Neel wall, mu0 Ms^2 d ln2 / pi. Still one cell through the thickness: m does not vary along z.
   mode=relax lowers the energy from a seed (texture=skyrmion, skyrmionium, domain_wall, uniform, random) to the
   nearest stable state; mode=dynamics then solves LLG in time, with an optional uniform pulse B_pulse for t_pulse.
   The summary gives texture, topological_charge Q (skyrmion: |Q| = 1, skyrmionium: 0), radius_nm, rings_nm
@@ -51,8 +57,7 @@ time-dependent drives, integrated with Heun steps.
   (surfaces=pinned). It relaxes texture=hopfion or skyrmion_tube and reports hopf_index H (|H| near 1 for a hopfion;
   the grid gives about 0.85-0.9), core_ring_radius_nm and rings_nm in the middle layer. Hopfions are stable in a
   nanodisk (geometry=disk) about 2p across and about p thick, p = 4πA/D, at small fields (0-0.3 T); in a periodic
-  slab they unwind or grow into helices. texture_3d_2d.png shows the m_z = 0 torus and the cuts y = 0 and z = 0. One cell thick and a local
-  demagnetising field: no stray-field coupling between distant parts of the film.
+  slab they unwind or grow into helices. texture_3d_2d.png shows the m_z = 0 torus and the cuts y = 0 and z = 0.
 
 ## Rules
 - Report only numbers that come from a tool result or from this guide. If something was not computed, say so

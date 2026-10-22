@@ -220,7 +220,8 @@ def main():
                          demag="local" if saf else "none")
     else:
         film = S.Film(vals["Nx"], vals["Ny"], vals["dx"], vals["Msat"], vals["Aex"], vals["Ku"], vals["D"],
-                      dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"])
+                      dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"], demag=vals["demag"],
+                      thickness=vals["thickness"])
     d = vals["thickness"]
     m = S.initial(film, vals["texture"], R0=vals["R0"], m0=vals["m0"], seed=vals["seed"])
     if afm:
@@ -237,7 +238,7 @@ def main():
     rows2 = []
     summary = {"engine": "mm2d", "mode": vals["mode"], "texture_seed": vals["texture"],
                "grid": [vals["Nx"], vals["Ny"]], "cell_nm": vals["dx"] * 1e9,
-               "energy_initial_J": film.energy(m, d)}
+               "thickness_nm": d * 1e9, "demag": vals["demag"], "energy_initial_J": film.energy(m, d)}
     if vals["start_from"]:
         summary["started_from"] = vals["start_from"]
         summary["texture_seed"] = f"final texture of {vals['start_from']}"
@@ -373,6 +374,8 @@ def main():
     summary["m2_final"] = [round(float(v), 6) for v in avg2(m)]
     summary["lattice"] = vals["lattice"]
     summary["texture"] = name_texture(Q, metrics)
+    if summary["texture"] == "skyrmion" and not vals["D"]:
+        summary["texture"] = "bubble"                 # no DMI: a dipolar bubble, of either chirality
     if vals["mode"] == "dynamics" and vals["excite"] != "uniform":
         summary["texture"] = "spin_waves"
 
@@ -390,7 +393,7 @@ def main():
 
     x_nm, y_nm = film.x * 1e9, film.y * 1e9
     half = None
-    if summary["texture"] in ("skyrmion", "skyrmionium", "antiskyrmion") and metrics.get("rings_nm"):
+    if summary["texture"] in ("skyrmion", "skyrmionium", "antiskyrmion", "bubble") and metrics.get("rings_nm"):
         half = 1.6 * max(metrics["rings_nm"]) + 6
     mc, xc, yc = render.crop(m_view, x_nm, y_nm, metrics.get("centre_nm"), half)
     pair = None
@@ -403,6 +406,8 @@ def main():
 
     caption = (f"{kind} · Q = {Q:+.2f} · A = {vals['Aex'] * 1e12:.3g} pJ/m, {dmi}, "
                f"Ku = {vals['Ku'] / 1e6:.3g} MJ/m³, Ms = {vals['Msat'] / 1e3:.4g} kA/m · {vals['dx'] * 1e9:.3g} nm cells")
+    if vals["demag"] == "full":
+        caption += f" · {d * 1e9:.3g} nm thick, full demag (FFT)"
     if vals["Temp"] > 0 and vals["mode"] == "dynamics":
         caption += f" · T = {vals['Temp']:.0f} K"
     if afm:

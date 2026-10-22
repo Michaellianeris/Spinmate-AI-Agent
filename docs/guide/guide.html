@@ -259,7 +259,7 @@ in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine=
 <table>
 <tr><th style="width:24mm">Engine</th><th>What it computes</th><th style="width:56mm">Notes</th></tr>
 <tr><td><b>macrospin</b><br>(default)</td><td>Two coupled LLG equations for the sublattices m₁ and m₂: exchange A0, anisotropy Ku, Zeeman field, spin-orbit torque, thermal noise, time-dependent drives.</td><td>Built in; sweeps, continuation and combination of runs.</td></tr>
-<tr><td><b>mm2d</b><br>(built in)</td><td>SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick: exchange, perpendicular anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. Finds skyrmions, skyrmionium and domain walls, or runs LLG dynamics.</td><td>Part of SpinMate: CPU only, nothing to install; a 128 × 128 film relaxes in seconds.</td></tr>
+<tr><td><b>mm2d</b><br>(built in)</td><td>SpinMate's own 2D micromagnetics of a ferromagnetic film one cell thick: exchange, perpendicular anisotropy, interfacial or bulk DMI, Zeeman and the demagnetising field, local or long-range by FFT (<code>demag=full</code>). Finds skyrmions, bubbles, skyrmionium, walls and maze domains, or runs LLG dynamics.</td><td>Part of SpinMate: CPU only, nothing to install; a 128 × 128 film relaxes in seconds.</td></tr>
 <tr><td><b>mm3d</b><br>(built in)</td><td>SpinMate's own 3D micromagnetics of a chiral magnet slab or nanodisk with the top and bottom surfaces pinned along +z: exchange, bulk or interfacial DMI, anisotropy, field. Relaxes hopfions and skyrmion tubes and gives the Hopf index.</td><td>CPU only; the default hopfion takes about a minute. No demagnetising field.</td></tr>
 <tr><td><b>mumax3</b><br>(optional plug-in)</td><td>Finite-difference micromagnetics of one ferromagnet on a grid, on the GPU. Input as SpinMate lines (turned into an <code>.mx3</code> script) or a complete <code>.mx3</code> script; the card shows ⟨m⟩(t).</td><td>Needs an NVIDIA GPU and the mumax3 binary in <code>MUMAX3_BIN</code>; without it validation warns. Single runs only.</td></tr>
 </table>
@@ -374,6 +374,31 @@ about 25 %.</p>
 <tr><td>Skyrmion diffusion, 300 K, α = 0.3</td><td>Thiele 40.8 nm²/ns</td><td>49.7 nm²/ns (one trajectory, ±25 %)</td></tr>
 </table>
 <figure><img src="../screenshots/mm2d-thermal-chat.png" style="width:72%"><figcaption>In the chat: how far does a skyrmion wander at 300 K?</figcaption></figure>
+<h3>Long-range demag: bubbles and domains</h3>
+<p>By default the demagnetising field is local, −M<sub>s</sub>m<sub>z</sub>: exact for a uniform film and good for films a few nm thick.
+<code>demag=full</code> computes the stray field of the whole film by FFT with the Newell tensor of a cell <code>thickness</code> thick
+(zero-padded for free edges; for a periodic film with images and the exact infinite-film term). It gives quantitative sizes
+in thicker films, dipolar bubbles without DMI and stripe or maze domains from <code>texture=random</code>, which the local
+field cannot produce; it costs about 2× (periodic) to 4× (free edges) per step. Check warns when a film is thicker than
+twice the exchange length and still uses the local field.</p>
+<pre>--texture=skyrmion
+--D=0
+--demag=full
+--thickness=10e-9
+--dx=2e-9
+--Msat=1e6
+--Ku=0.8e6
+--B_ext=0,0,0.05
+--R0=50e-9</pre>
+<figure><img src="../mm2d-bubble.png"><figcaption>A dipolar bubble in a 10 nm film, no DMI, 50 mT: R = 47 nm; without DMI the wall turns Bloch.</figcaption></figure>
+<figure><img src="../mm2d-maze.png"><figcaption>Maze domains in a 20 nm film from a random start (<code>texture=random</code>, <code>demag=full</code>).</figcaption></figure>
+<table>
+<tr><th>Demag check</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Platelet, uniform M</td><td>Aharoni prism factor</td><td>within 10<sup>−6</sup></td></tr>
+<tr><td>Néel − Bloch wall, 0.5 nm film</td><td>μ₀M<sub>s</sub>²d·ln2/π = 0.0466 mJ/m²</td><td>0.0464 mJ/m²</td></tr>
+<tr><td>Skyrmion radius, 1 nm / 2 nm film</td><td>larger than with local demag (14.5 nm)</td><td>17.2 nm / 24 nm</td></tr>
+<tr><td>Bubble, 10 nm film, 0 / 20 / 50 mT</td><td>shrinks with field</td><td>93 / 79 / 47 nm</td></tr>
+</table>
 <h3>Spin waves</h3>
 <p>With <code>excite=stripe</code> or <code>excite=dot</code> the field pulse acts on an antenna instead of the whole film.
 <code>pulse=sine</code> at <code>f_rf</code> sends a monochromatic wave: the card gives its wavelength next to the theory.
@@ -400,8 +425,8 @@ wavelengths so the waves do not come back from the edges. Below the gap (here 56
 <figure><img src="../screenshots/mm2d-spinwave-card.png"><figcaption>The run card of a spin-wave run: wavelength, gap and the profile along y = 0.</figcaption></figure>
 <figure><img src="../mm2d-dispersion.png"><figcaption>Dispersion from a sinc pulse up to 150 GHz; the dashed line is the analytic f(k).</figcaption></figure>
 </div>
-<div class="tip">Limits: the film is one cell thick and the demagnetising field is local (−Ms·m<sub>z</sub>), so there is no long-range
-stray field; no temperature yet. Two sublattices and a GPU version are planned.</div>
+<div class="tip">Limits: the film is one cell through the thickness, so m does not vary along z (mm3d does that). The default
+demagnetising field is local (−Ms·m<sub>z</sub>); <code>demag=full</code> adds the long-range stray field. A GPU version is planned.</div>
 
 <h3>3D micromagnetics: hopfions with mm3d</h3>
 <p>Choose <b>mm3d</b> in the Engine menu, or ask for a hopfion in the chat (it is also a card under <i>Find a skill</i>).

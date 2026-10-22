@@ -26,6 +26,9 @@ PARAMS = {
     "Ku": (0.8e6, "float", "J/m^3", "perpendicular anisotropy (axis z)"),
     "D": (3.5e-3, "float", "J/m^2", "DMI constant"),
     "dmi": ("interfacial", "choice", "", "interfacial (Neel textures) or bulk (Bloch textures)", ("interfacial", "bulk")),
+    "demag": ("local", "choice", "", "local = thin-film field -Ms mz, exact for a film a few nm thick; full = the "
+              "long-range demagnetising field by FFT (Newell tensor), for thicker films, bubbles and stripe domains",
+              ("local", "full")),
     "boundary": ("periodic", "choice", "", "periodic film or free edges", ("periodic", "free")),
     "B_ext": ((0.0, 0.0, 0.0), "vector", "T", "applied field"),
     "R0": (12e-9, "float", "m", "radius of the seed skyrmion (skyrmionium: inner ring)"),
@@ -121,6 +124,8 @@ def check(vals):
         errors.append(f"pulse={vals['pulse']} needs f_rf > 0")
     if vals["lattice"] != "ferro" and vals["excite"] != "uniform":
         errors.append("spin waves from an antenna are for lattice=ferro only (for now)")
+    if vals["demag"] == "full" and vals["lattice"] != "ferro":
+        errors.append("demag=full is for lattice=ferro (an AFM has no stray field; an SAF uses the local field)")
     if vals["lattice"] == "afm" and vals["J_afm"] <= 0:
         errors.append("J_afm must be positive for an antiferromagnet")
     if vals["lattice"] == "saf" and vals["J_rkky"] >= 0:
@@ -147,6 +152,12 @@ def check(vals):
         warnings.append("j is set but stt_P and theta_SH are 0: the current exerts no torque")
     if (vals["stt_P"] or vals["theta_SH"]) and not any(vals["j"]):
         warnings.append("stt_P or theta_SH is set but j = 0: no current flows")
+    l_ex0 = (2 * vals["Aex"] / (MU0 * vals["Msat"] ** 2)) ** 0.5
+    if vals["demag"] == "local" and vals["lattice"] == "ferro" and vals["thickness"] > 2 * l_ex0:
+        warnings.append(f"the film is {vals['thickness'] * 1e9:.3g} nm thick, above twice the exchange length: the "
+                        "local demag misses the stray field of the domains; use demag=full for quantitative sizes")
+    if vals["demag"] == "full" and vals["excite"] != "uniform":
+        warnings.append("with demag=full the spin-wave theory line (local demag) is only a guide")
     if vals["excite"] != "uniform" and vals["absorb"] == 0 and vals["boundary"] == "periodic":
         warnings.append("spin waves will wrap around the periodic film: set absorb, for example to a fifth of the film")
     Ms, A, Ku, D, dx = vals["Msat"], vals["Aex"], vals["Ku"], vals["D"], vals["dx"]
@@ -199,6 +210,10 @@ def estimate_s(vals):
     dyn = 50e-6 * (1e-9 / vals["dx"]) ** 2 * cells * vals["t"] / 1e-12 if vals["mode"] == "dynamics" else 0
     if vals["Temp"] > 0:                              # fixed Heun steps
         dyn *= 1.5
+    if vals["demag"] == "full":                       # FFTs per field, and slower relaxation of long-range textures
+        f = 2.0 if vals["boundary"] == "periodic" else 4.0
+        relax, dyn = 1.5 * f * relax, f * dyn
+        relax += 2e-8 * cells * (17 ** 2 if vals["boundary"] == "periodic" else 1)     # the tensor, once
     if vals["lattice"] != "ferro":                    # two sublattices and the faster exchange precession
         J = vals["J_afm"] if vals["lattice"] == "afm" else -vals["J_rkky"] / vals["thickness"]
         relax, dyn = 2 * relax, 2.5 * dyn * max(1.0, J / 2e7) ** 0.5
@@ -209,7 +224,8 @@ class MM2DEngine:
     name = "mm2d"
     title = "2D micromagnetics: skyrmions (built in)"
     description = ("SpinMate's own finite-difference solver for a thin film one cell thick: exchange, perpendicular "
-                   "anisotropy, interfacial or bulk DMI, Zeeman and the local thin-film demagnetising field. "
+                   "anisotropy, interfacial or bulk DMI, Zeeman and the demagnetising field: local thin-film, or long-range by FFT (demag=full) "
+                   "for thicker films, bubbles and stripe domains. "
                    "Finds skyrmions, skyrmionium and domain walls, in a ferromagnet or a two-sublattice antiferromagnet (lattice=afm) (mode=relax) or runs LLG dynamics with a field "
                    "pulse, uniform or from an antenna for spin waves, or with a current that moves skyrmions by spin-transfer or spin-orbit torque (mode=dynamics). Runs on any computer, no GPU needed.")
 
