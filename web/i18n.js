@@ -112,6 +112,8 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Επισυνάψτε αρχείο παραμέτρων .txt ή μάσκα PNG (το σχήμα ενός φιλμ mm2d)",
+  "Attach a parameter .txt file or a PNG mask": "Επισυνάψτε αρχείο παραμέτρων .txt ή μάσκα PNG",
   "Interactive 3D view of the texture": "Διαδραστική τρισδιάστατη όψη της υφής",
   "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Σύρετε για περιστροφή, κύλιση ή τσίμπημα για zoom, διπλό κλικ για επαναφορά. Επιφάνεια m_z = 0, χρωματισμένη κατά την κατεύθυνση στο επίπεδο· κουκκίδες: σημεία Bloch.",
   "phase diagram {p}": "διάγραμμα φάσεων {p}",
@@ -784,6 +786,8 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Adjunta un archivo de parámetros .txt o una máscara PNG (la forma de una película mm2d)",
+  "Attach a parameter .txt file or a PNG mask": "Adjunta un archivo de parámetros .txt o una máscara PNG",
   "Interactive 3D view of the texture": "Vista 3D interactiva de la textura",
   "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Arrastra para girar, rueda o pellizca para hacer zoom, doble clic para restablecer. Superficie m_z = 0, coloreada por la dirección en el plano; puntos: puntos de Bloch.",
   "phase diagram {p}": "diagrama de fases {p}",
@@ -1456,6 +1460,8 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Parameterdatei .txt oder PNG-Maske (Form eines mm2d-Films) anhängen",
+  "Attach a parameter .txt file or a PNG mask": "Parameterdatei .txt oder PNG-Maske anhängen",
   "Interactive 3D view of the texture": "Interaktive 3D-Ansicht der Textur",
   "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Ziehen zum Drehen, Scrollen oder Zwei-Finger-Geste zum Zoomen, Doppelklick zum Zurücksetzen. Fläche m_z = 0, gefärbt nach der Richtung in der Ebene; Punkte: Bloch-Punkte.",
   "phase diagram {p}": "Phasendiagramm {p}",
@@ -2128,6 +2134,8 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Allega un file di parametri .txt o una maschera PNG (la forma di un film mm2d)",
+  "Attach a parameter .txt file or a PNG mask": "Allega un file di parametri .txt o una maschera PNG",
   "Interactive 3D view of the texture": "Vista 3D interattiva della tessitura",
   "Drag to turn, scroll or pinch to zoom, double-click to reset. Surface m_z = 0, coloured by the in-plane direction; dots: Bloch points.": "Trascina per ruotare, scorri o pizzica per lo zoom, doppio clic per ripristinare. Superficie m_z = 0, colorata secondo la direzione nel piano; punti: punti di Bloch.",
   "phase diagram {p}": "diagramma di fase {p}",
