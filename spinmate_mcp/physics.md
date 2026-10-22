@@ -99,6 +99,11 @@ time-dependent drives, integrated with Heun steps.
   skyrmion Hall effect and a skyrmion runs along a racetrack, faster than the open-film Thiele speed (example:
   68 m/s against 14.5 m/s at 1.5e11 A/m^2); thiele_velocity_mps is the open-film value. The summary adds mask and
   film_area_nm2; mask.png is kept with the run.
+- Cross-check with mumax3: compare_with_mumax3 with mm2d parameters (relax, or dynamics with a uniform step
+  pulse; not currents, Temp, antennas, afm/saf) runs both engines from the same start, then get_comparison
+  gives each check (Q, radius, energy, rms angle, <m>(t)) with its tolerance and agree. It needs mumax3
+  installed (list_engines: ready); if not, say so. Report the table and say which check differs and why
+  it might (demag=full: mumax3 uses 8 periodic images, mm2d the exact infinite film).
 - Longer runs in segments: continue_run on the finished run (time and drive phases continue), then
   wait_for_run, then combine_runs with the last segment for one trajectory. Never restart from copied m1, m2.
 - Threshold search ("minimum current that switches", "A0 where AFM becomes FM"): a coarse sweep of 6-8 values

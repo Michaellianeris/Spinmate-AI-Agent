@@ -799,6 +799,17 @@ Without it, `validate_parameters` warns and the run fails with "mumax3 not found
 pip install -e plugins/spinmate-mumax3
 ```
 
+**Cross-check mm2d with mumax3.** `compare_with_mumax3` (or in the chat: *"cross-check this skyrmion with
+mumax3"*) runs the same mm2d input on both engines from the very same starting state, written as an OVF file
+that mumax3 loads. The translation keeps the grid, cells, material, field, DMI and mask (`ImageShape`); mm2d's
+local thin-film demag becomes no demag with Ku1 = Ku − μ0Ms²/2 in mumax3, which is the same energy exactly, and
+`demag=full` keeps mumax3's own demag. mumax3 saves its final texture, and `get_comparison` compares the
+topological charge, the radius, the energy, the rms angle between the two final textures and, for dynamics,
+⟨m⟩(t), each against a tolerance (Q within 0.1, radius 5 %, energy 2 %, angle 5°, ⟨m⟩ 0.02). The page shows
+both textures side by side with the angle between them and the table of checks. Not for currents,
+temperature, antennas or two-sublattice films. The chain (script, OVF in and out, comparison) is tested with
+a stand-in for mumax3; a run on a GPU with the real mumax3 is still to be done.
+
 mumax3 is free software under the GNU GPL v3 (with a CUDA exception); SpinMate only starts it as a separate
 program and stays under the MIT License. If you publish results obtained with mumax3, cite Vansteenkiste et
 al., *The design and verification of MuMax3*, AIP Advances 4, 107133 (2014). The mumax3 name and logo belong

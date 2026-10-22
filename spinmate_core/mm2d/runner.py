@@ -208,9 +208,8 @@ def save_wave_arrows(render, film, vals, summary, m, m0, x_nm, y_nm, cap):
                       prefix="spinwave", step=step)
 
 
-def main():
-    t0 = time.time()
-    vals = parse(Path("parameters.txt").read_text())
+def build(vals, keep_mask_png=True):
+    """The film and the starting state of a run: the seed (or the texture of start_from), cut to the mask."""
     afm = vals["lattice"] in ("afm", "saf")
     if afm:
         saf = vals["lattice"] == "saf"
@@ -222,13 +221,13 @@ def main():
         film = S.Film(vals["Nx"], vals["Ny"], vals["dx"], vals["Msat"], vals["Aex"], vals["Ku"], vals["D"],
                       dmi=vals["dmi"], boundary=vals["boundary"], B=vals["B_ext"], demag=vals["demag"],
                       thickness=vals["thickness"])
-    d = vals["thickness"]
     if vals["mask"]:                                  # the shape of the film: built in or an uploaded PNG
         from spinmate_core.mm2d import geometry, mask_folder
         shape = geometry.load(vals["mask"], film.Nx, film.Ny, mask_folder())
         film.set_mask(shape)
         from PIL import Image
-        Image.fromarray(np.where(shape[::-1], 0, 255).astype(np.uint8)).save("mask.png")   # kept with the run
+        if keep_mask_png:
+            Image.fromarray(np.where(shape[::-1], 0, 255).astype(np.uint8)).save("mask.png")   # kept with the run
     m = S.initial(film, vals["texture"], R0=vals["R0"], m0=vals["m0"], seed=vals["seed"])
     if vals["noise"] > 0:                             # break the symmetry of the seed
         m = S._norm(m + vals["noise"] * np.random.default_rng(vals["seed"] + 7).normal(size=m.shape))
@@ -240,9 +239,19 @@ def main():
         if err:
             raise SystemExit(err)
         m = S._norm(np.load(start_file(vals["start_from"]))["m"].astype(float))
-    inside = film.mask if film.mask is not None else np.ones((film.Ny, film.Nx), bool)
     if film.mask is not None:                         # empty cells: up, and they never turn
-        m = np.where(inside, m, np.array([0.0, 0.0, 1.0]).reshape((3,) + (1,) * (m.ndim - 1)))
+        m = np.where(film.mask, m, np.array([0.0, 0.0, 1.0]).reshape((3,) + (1,) * (m.ndim - 1)))
+    return film, m
+
+
+def main():
+    t0 = time.time()
+    vals = parse(Path("parameters.txt").read_text())
+    film, m = build(vals)
+    afm = vals["lattice"] in ("afm", "saf")
+    saf = vals["lattice"] == "saf"
+    d = vals["thickness"]
+    inside = film.mask if film.mask is not None else np.ones((film.Ny, film.Nx), bool)
     view = film.neel if afm else (lambda mm: mm)          # what the pictures and the texture metrics look at
     avg = (lambda mm: mm[:, 0][:, inside].mean(1)) if afm else (lambda mm: mm[:, inside].mean(1))
     avg2 = (lambda mm: mm[:, 1][:, inside].mean(1)) if afm else avg

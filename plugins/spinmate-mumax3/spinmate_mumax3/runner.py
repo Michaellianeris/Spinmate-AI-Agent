@@ -39,6 +39,15 @@ def main():
     summary = {"engine": "mumax3", "points": int(len(t)), "t_start_s": float(t[0]), "t_end_s": float(t[-1]),
                "runtime_s": round(time.time() - t0, 2), "m_initial": m[0].round(6).tolist(),
                "m_final": m[-1].round(6).tolist(), "m1_final": m[-1].round(6).tolist(), "m2_final": m[-1].round(6).tolist()}
+    if "E_total" in cols:
+        summary["energy_final_J"] = float(data[-1, cols.index("E_total")])
+    final = Path("input.out") / "m_final.ovf"
+    if final.exists():                       # SaveAs(m, "m_final"): the final texture, as SpinMate keeps it
+        from spinmate_core import ovf
+        mf, cell = ovf.read(final)
+        np.savez_compressed("m_final.npz", m=(mf[:, 0] if mf.shape[1] == 1 else mf).astype(np.float32),
+                            cell=np.array(cell))
+        summary["texture_saved"] = True
     Path("summary.json").write_text(json.dumps(summary))
 
 

@@ -270,6 +270,13 @@ in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine=
 --alpha=0.02
 --B_ext=0,0,0.1
 --t=2e-9</pre>
+<p><b>Cross-check with mumax3.</b> Ask <i>"cross-check this skyrmion with mumax3"</i> (tool <code>compare_with_mumax3</code>): the same
+mm2d input runs on both engines from the very same starting state, written as an OVF file that mumax3 loads. Grid, cells,
+material, field, DMI and mask (<code>ImageShape</code>) carry over; mm2d's local thin-film demag becomes no demag with
+K<sub>u1</sub> = K<sub>u</sub> − μ₀M<sub>s</sub>²/2 in mumax3 (the same energy, exactly), and <code>demag=full</code> keeps mumax3's demag.
+When both are done, a card shows the two final textures, the angle between them and a table of checks with tolerances:
+Q within 0.1, radius 5 %, energy 2 %, rms angle 5°, and for dynamics ⟨m⟩(t) within 0.02. Not for currents, temperature,
+antennas or two-sublattice films. The chain is tested with a stand-in for mumax3; it needs a GPU with mumax3 for real.</p>
 <div class="tip">mumax3 is free software under the GNU GPL v3; SpinMate starts it as a separate program and stays MIT. If you
 publish results obtained with it, cite Vansteenkiste et al., <i>The design and verification of MuMax3</i>, AIP Advances 4,
 107133 (2014). Outside Docker: <code>pip install -e plugins/spinmate-mumax3</code>.</div>

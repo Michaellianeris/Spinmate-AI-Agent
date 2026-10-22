@@ -112,6 +112,14 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "mm2d and mumax3: the final textures and the angle between them": "mm2d και mumax3: οι τελικές υφές και η γωνία μεταξύ τους",
+  "agree": "συμφωνούν",
+  "differ": "διαφέρουν",
+  "not finished": "δεν ολοκληρώθηκε",
+  "quantity": "μέγεθος",
+  "difference": "διαφορά",
+  "tolerance": "ανοχή",
+  "This cross-check is no longer on the server.": "Αυτή η διασταύρωση δεν υπάρχει πια στον server.",
   "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Επισυνάψτε αρχείο παραμέτρων .txt ή μάσκα PNG (το σχήμα ενός φιλμ mm2d)",
   "Attach a parameter .txt file or a PNG mask": "Επισυνάψτε αρχείο παραμέτρων .txt ή μάσκα PNG",
   "Interactive 3D view of the texture": "Διαδραστική τρισδιάστατη όψη της υφής",
@@ -786,6 +794,14 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "mm2d and mumax3: the final textures and the angle between them": "mm2d y mumax3: las texturas finales y el ángulo entre ellas",
+  "agree": "coinciden",
+  "differ": "difieren",
+  "not finished": "sin terminar",
+  "quantity": "magnitud",
+  "difference": "diferencia",
+  "tolerance": "tolerancia",
+  "This cross-check is no longer on the server.": "Esta comprobación cruzada ya no está en el servidor.",
   "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Adjunta un archivo de parámetros .txt o una máscara PNG (la forma de una película mm2d)",
   "Attach a parameter .txt file or a PNG mask": "Adjunta un archivo de parámetros .txt o una máscara PNG",
   "Interactive 3D view of the texture": "Vista 3D interactiva de la textura",
@@ -1460,6 +1476,14 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "mm2d and mumax3: the final textures and the angle between them": "mm2d und mumax3: die Endtexturen und der Winkel zwischen ihnen",
+  "agree": "stimmen überein",
+  "differ": "weichen ab",
+  "not finished": "nicht fertig",
+  "quantity": "Größe",
+  "difference": "Differenz",
+  "tolerance": "Toleranz",
+  "This cross-check is no longer on the server.": "Dieser Kreuzvergleich ist nicht mehr auf dem Server.",
   "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Parameterdatei .txt oder PNG-Maske (Form eines mm2d-Films) anhängen",
   "Attach a parameter .txt file or a PNG mask": "Parameterdatei .txt oder PNG-Maske anhängen",
   "Interactive 3D view of the texture": "Interaktive 3D-Ansicht der Textur",
@@ -2134,6 +2158,14 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "mm2d and mumax3: the final textures and the angle between them": "mm2d e mumax3: le tessiture finali e l'angolo tra di esse",
+  "agree": "concordano",
+  "differ": "differiscono",
+  "not finished": "non terminato",
+  "quantity": "grandezza",
+  "difference": "differenza",
+  "tolerance": "tolleranza",
+  "This cross-check is no longer on the server.": "Questo confronto incrociato non è più sul server.",
   "Attach a parameter .txt file or a PNG mask (the shape of an mm2d film)": "Allega un file di parametri .txt o una maschera PNG (la forma di un film mm2d)",
   "Attach a parameter .txt file or a PNG mask": "Allega un file di parametri .txt o una maschera PNG",
   "Interactive 3D view of the texture": "Vista 3D interattiva della tessitura",

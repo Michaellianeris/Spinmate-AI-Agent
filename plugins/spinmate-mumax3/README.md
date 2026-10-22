@@ -9,6 +9,9 @@ pip install -e plugins/spinmate-mumax3     # registers the engine "mumax3"
 export MUMAX3_BIN=/path/to/mumax3          # when mumax3 is not on the PATH
 ```
 
+When the script saves `m_final` (`SaveAs(m, "m_final")`), the run keeps it as `m_final.npz`, and an `E_total`
+column of the table becomes `energy_final_J`: this is what the cross-check with mm2d (`compare_with_mumax3`) reads.
+
 mumax3 itself is not included: install it from the mumax3 releases. It needs an NVIDIA GPU and driver.
 
 ## License and credit
