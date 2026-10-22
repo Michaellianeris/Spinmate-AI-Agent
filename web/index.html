@@ -1676,9 +1676,12 @@ async function paintSweepCard(id, c, s) {
   st.textContent = `${done}/${total} runs done` + (failed ? `, ${failed} failed` : "");
   st.className = "status " + (done + failed === total ? (failed ? "failed" : "done") : "running");
   el.querySelector("[data-r=bar]").style.width = (100 * (done + failed) / total).toFixed(1) + "%";
-  el.querySelector(".rc-label").textContent = `sweep of ${s.parameter}`;
-  el.querySelector("[data-r=sum]").innerHTML = `sweep of <b>${esc(s.parameter)}</b> · ${done}/${total} runs done` + (failed ? `, ${failed} failed` : "");
+  const what = s.parameter2 ? `${s.parameter} × ${s.parameter2}` : s.parameter;
+  const kind = s.parameter2 ? "phase diagram" : "sweep of";
+  el.querySelector(".rc-label").textContent = `${kind} ${what}`;
+  el.querySelector("[data-r=sum]").innerHTML = `${kind} <b>${esc(what)}</b> · ${done}/${total} runs done` + (failed ? `, ${failed} failed` : "");
   if (done + failed < total) return;
+  if (["mm2d", "mm3d"].includes(s.engine)) { microSweepCard(id, c, s); return; }
   c.final = true; if (state.cards[state.cards.length - 1] !== id) setFold(c, true);
   const a = el.querySelector("[data-r=analyse]"); a.hidden = false; a.onclick = () => { $("#input").value = t("Analyse sweep {id}.", {id}); send(); };
   const rows = s.rows.filter(r => r.neel_z_abs_mean !== undefined).sort((p, q) => p.value - q.value);
@@ -1692,6 +1695,24 @@ async function paintSweepCard(id, c, s) {
   plot.querySelector(".rc-meta").append(lines);
   lines.textContent = (
     rows.map(r => `${eng(r.value / scale)}: ${r.order_final || "?"}${(r.neel_z_switches ?? r.neel_z_sign_changes) ? ", " + (r.neel_z_switches ?? r.neel_z_sign_changes) + " switches" : ""}`).join("\n"));
+}
+function microSweepCard(id, c, s) {
+  // micromagnetic sweep: the plot drawn on the server (radius or phase diagram) and one row per run
+  const el = c.el; c.final = true; if (state.cards[state.cards.length - 1] !== id) setFold(c, true);
+  const a = el.querySelector("[data-r=analyse]"); a.hidden = false; a.onclick = () => { $("#input").value = t("Analyse sweep {id}.", {id}); send(); };
+  const plot = el.querySelector(".rc-plot"); plot.hidden = false;
+  if (plot.querySelector(".rc-sweepimg")) return;
+  plot.querySelector(".canvaswrap").hidden = true;
+  const img = document.createElement("a"); img.className = "rc-sweepimg"; img.href = `/api/sweeps/${id}/plot`; img.target = "_blank"; img.rel = "noopener";
+  img.innerHTML = `<img src="/api/sweeps/${id}/plot?t=${Date.now()}" alt="${esc(t(s.parameter2 ? "Phase diagram" : "Radius against the swept parameter"))}" style="width:100%">`;
+  plot.prepend(img);
+  const rows = s.rows.slice().sort((p, q) => (p.value2 ?? 0) - (q.value2 ?? 0) || p.value - q.value);
+  const head = `<tr><th>${esc(s.parameter)}</th>${s.parameter2 ? `<th>${esc(s.parameter2)}</th>` : ""}<th>${t("phase")}</th><th>${s.engine === "mm3d" ? "H" : "Q"}</th><th>${t("radius")}</th><th></th></tr>`;
+  const body = rows.map(r => `<tr><td>${eng(r.value)}</td>${s.parameter2 ? `<td>${eng(r.value2)}</td>` : ""}<td>${esc((r.phase || r.status).replace(/_/g, " "))}</td>` +
+    `<td>${r.hopf_index ?? r.topological_charge ?? "–"}</td><td>${r.radius_nm ? fmt(r.radius_nm, 3) + " nm" : "–"}</td>` +
+    `<td><a href="#" data-open-run="${esc(r.run_id)}">${esc(r.run_id)}</a></td></tr>`).join("");
+  plot.querySelector(".rc-meta").innerHTML = `<table class="sweep-table">${head}${body}</table>`;
+  plot.querySelectorAll("[data-open-run]").forEach(x => x.onclick = e => { e.preventDefault(); openRunCard(x.dataset.openRun); });
 }
 async function paintCard(id, c, r) {
   const el = c.el, st = el.querySelector("[data-r=st]"), bar = el.querySelector("[data-r=bar]");
@@ -1773,8 +1794,14 @@ function mm2dView(box, id, r) {
     ["Grid", `${(s.grid || []).join(" × ")} · ${num(s.cell_nm, 3)} nm`]].filter(Boolean);
   const pic = wave ? "spinwave_3d_2d.png" : r.files.includes("texture_3d_2d.png") ? "texture_3d_2d.png" : "texture_3d.png";
   const side = r.files.includes("skyrmion_track.png") ? "skyrmion_track.png" : r.files.includes("dispersion.png") ? "dispersion.png" : r.files.includes("spinwave_profile.png") ? "spinwave_profile.png" : "Two_Spin_Dynamics.png";
+  const gif = ["animation.gif", "rotate.gif"].find(n => r.files.includes(n));
+  const mp4 = gif && r.files.includes(gif.replace(".gif", ".mp4")) ? gif.replace(".gif", ".mp4") : null;
+  const movie = gif ? `<figure class="rc-texture"><img src="${f(gif)}" alt="${esc(t(gif === "rotate.gif" ? "The 3D texture turning around z" : wave ? "Spin waves in time" : "The texture moving in time"))}" loading="lazy">
+    <figcaption>${t(gif === "rotate.gif" ? "Animation: the 3D view turning once around z." : wave ? "Animation: the change of mx in time." : "Animation: the texture and the path of its centre in time.")}
+    <a href="${f(gif)}" download>GIF</a>${mp4 ? ` · <a href="${f(mp4)}" download>MP4</a>` : ""}</figcaption></figure>` : "";
   box.innerHTML = `<figure class="rc-texture"><a href="${f(pic)}" target="_blank" rel="noopener"><img src="${f(pic)}" alt="${t("Tilted view and top view of the final texture")}" loading="lazy"></a>
     <figcaption>${t(wave ? "Colour: phase of the precession (in-plane direction); the precession is enlarged. Click a picture to open it full size." : "Colour: in-plane direction; light = up, dark = down. Click a picture to open it full size.")}</figcaption></figure>
+    ${movie}
     <div class="rc-mm2d"><table>${rows.map(([k, v]) => `<tr><td>${esc(t(k))}</td><td class="mono">${v}</td></tr>`).join("")}</table>
     <a href="${f(side)}" target="_blank" rel="noopener"><img src="${f(side)}" alt="${esc(t(side === "skyrmion_track.png" ? "Path of the skyrmion" : side === "dispersion.png" ? "Spin-wave dispersion" : side === "spinwave_profile.png" ? "Change of mx" : s.mode === "dynamics" ? "<m> in time" : "<m> during the relaxation"))}" loading="lazy"></a></div>`;
   box.querySelectorAll("[data-open-run]").forEach(a => a.onclick = e => { e.preventDefault(); openRunCard(a.dataset.openRun); });

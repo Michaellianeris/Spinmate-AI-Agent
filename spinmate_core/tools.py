@@ -56,11 +56,18 @@ TOOLS = [
     {
         "name": "start_sweep",
         "description": "Start one run per value of a scalar parameter (e.g. Fr for a frequency sweep). "
-                       "Other parameters come from parameters_text.",
+                       "Other parameters come from parameters_text. engine=mm2d or mm3d sweeps a micromagnetic "
+                       "parameter (D, Ku, Msat, thickness, ... or one component of a vector, e.g. B_ext.z): the "
+                       "result rows give the texture, its phase, Q or H and the radius, and the plot is the radius "
+                       "against the parameter. Add parameter2 and values2 for a phase diagram (one run per pair, "
+                       "e.g. D against B_ext.z: uniform, skyrmion, stripes).",
         "input_schema": {"type": "object",
                          "properties": {"parameters_text": TEXT, "parameter": TEXT,
                                         "values": {"type": "array", "items": {"type": "number"}},
-                                        "label": TEXT},
+                                        "label": TEXT,
+                                        "engine": {"type": "string", "description": "macrospin (default), mm2d or mm3d"},
+                                        "parameter2": {"type": "string", "description": "mm2d/mm3d: second parameter, for a phase diagram"},
+                                        "values2": {"type": "array", "items": {"type": "number"}}},
                          "required": ["parameters_text", "parameter", "values"]},
     },
     {
@@ -199,8 +206,9 @@ def _needs_confirmation(name, args, approved):
     """Large requests wait for the user's Run button; the next message then carries the approval."""
     if approved or name not in ("start_simulation", "start_sweep"):
         return None
-    runs = len(args.get("values") or []) if name == "start_sweep" else 1
-    wall = S.estimate(args.get("parameters_text") or "", runs)
+    runs = len(args.get("values") or []) * (len(args.get("values2") or []) if args.get("parameter2") else 1) \
+        if name == "start_sweep" else 1
+    wall = S.estimate(args.get("parameters_text") or "", runs, args.get("engine"))
     if wall is None:
         return None
     if wall <= CONFIRM_MINUTES * 60 and runs <= CONFIRM_RUNS:
@@ -271,7 +279,8 @@ def call(name, args, approved=False):
     elif name == "start_simulation":
         out = S.start_run(args["parameters_text"], args.get("label", ""), engine=args.get("engine"))
     elif name == "start_sweep":
-        out = S.start_sweep(args["parameters_text"], args["parameter"], args["values"], args.get("label", ""))
+        out = S.start_sweep(args["parameters_text"], args["parameter"], args["values"], args.get("label", ""),
+                            engine=args.get("engine"), parameter2=args.get("parameter2"), values2=args.get("values2"))
     elif name == "wait_for_run":
         run = S.wait_for_run(args["run_id"], float(args.get("timeout_s") or 60))
         out = _brief(run) if run else {"error": f"no run {args['run_id']}"}

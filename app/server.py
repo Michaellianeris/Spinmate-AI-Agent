@@ -638,7 +638,7 @@ def sweep(sweep_id: str, discard_fraction: float = 0.0):
 
 @app.get("/api/sweeps/{sweep_id}/plot")
 def sweep_plot(sweep_id: str):
-    path = S.sweep_file(sweep_id, "sweep_neel_z.png")
+    path = S.sweep_file(sweep_id, "sweep_plot.png") or S.sweep_file(sweep_id, "sweep_neel_z.png")
     if not path:
         raise HTTPException(404, "plot not ready")
     return FileResponse(path)

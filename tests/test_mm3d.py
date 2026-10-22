@@ -76,7 +76,7 @@ def test_run_and_report(monkeypatch):
     assert run["status"] == "done", run.get("error_tail")
     s = run["summary"]
     assert s["engine"] == "mm3d" and s["texture"] == "hopfion" and abs(s["hopf_index"]) > 0.7
-    assert "texture_3d_2d.png" in run["files"]
+    assert "texture_3d_2d.png" in run["files"] and "rotate.gif" in run["files"]       # and the turning 3D view
     sk = json.loads(tools.call("start_simulation", {"parameters_text": "--Nx=48\n--Ny=48\n--R0=6e-9\n", "engine": "mm2d",
                                                     "label": "skyrmion"})[0])
     assert S.wait_for_run(sk["run_id"], 120)["status"] == "done"

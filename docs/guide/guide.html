@@ -399,6 +399,25 @@ twice the exchange length and still uses the local field.</p>
 <tr><td>Skyrmion radius, 1 nm / 2 nm film</td><td>larger than with local demag (14.5 nm)</td><td>17.2 nm / 24 nm</td></tr>
 <tr><td>Bubble, 10 nm film, 0 / 20 / 50 mT</td><td>shrinks with field</td><td>93 / 79 / 47 nm</td></tr>
 </table>
+<h3>Sweeps and phase diagrams</h3>
+<p>The sweep machinery of the macrospin runs mm2d and mm3d too. <code>start_sweep</code> with <code>engine=mm2d</code> (or the chat:
+<i>"sweep B from 0 to 0.6 T for a skyrmion"</i>) runs one relaxation per value of any number (<code>D</code>, <code>Ku</code>,
+<code>Msat</code>, <code>thickness</code>, …) or of one component of a vector (<code>B_ext.z</code>). The sweep card plots the radius
+against the parameter, each point coloured by its phase, with a table of the runs. With <code>parameter2</code> and <code>values2</code>
+it is a phase diagram, one run per pair: uniform, skyrmion, several skyrmions, stripes, skyrmionium (mm3d: hopfion, tube,
+bobber, toron). For uniform / skyrmion / stripes start from <code>texture=skyrmion</code> with <code>noise=0.05</code>, which breaks the
+symmetry of the seed so an unstable skyrmion can strip out, in a film of at least 128 × 128 cells.</p>
+<div class="side" style="grid-template-columns:1.2fr 1fr">
+<figure><img src="../mm2d-phase-diagram.png"><figcaption>Phase diagram, D × B<sub>z</sub>, 35 runs of 128 × 128 cells; the numbers are the skyrmion radius in nm. At B = 0 the stripes start at the dashed line, D<sub>c</sub> = 4√(A·K<sub>eff</sub>)/π = 3.78 mJ/m².</figcaption></figure>
+<figure><img src="../mm2d-radius-sweep.png"><figcaption>Radius against B<sub>z</sub>: 14.4 nm at 0 T, 3.7 nm at 0.6 T.</figcaption></figure>
+</div>
+<h3>Animations</h3>
+<p>A dynamics run with spin waves (<code>excite=stripe</code> or <code>dot</code>) or with a moving texture (a current, or <code>Temp</code>) also
+writes <code>animation.gif</code>, and <code>animation.mp4</code> when ffmpeg is installed (it is in the Docker image). Every mm3d run writes
+<code>rotate.gif</code>, the 3D view turning once around z. They play on the run card, with GIF and MP4 downloads; <code>animation=0</code>
+turns them off. Drawing takes about half a minute.</p>
+<figure><img src="../mm2d-motion-frames.png"><figcaption>Four frames of the animation of a skyrmion under SOT, 1e12 A/m²: the trail is the path of its centre.</figcaption></figure>
+<figure><img src="../mm3d-hopfion-turn.png" style="width:80%"><figcaption>Four frames of rotate.gif of the hopfion.</figcaption></figure>
 <h3>Spin waves</h3>
 <p>With <code>excite=stripe</code> or <code>excite=dot</code> the field pulse acts on an antenna instead of the whole film.
 <code>pulse=sine</code> at <code>f_rf</code> sends a monochromatic wave: the card gives its wavelength next to the theory.

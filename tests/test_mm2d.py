@@ -202,6 +202,7 @@ def test_current_run_reports_velocity(tmp_path, monkeypatch):
     assert np.hypot(*(np.array(s["velocity_mps"]) - s["thiele_velocity_mps"])) < 0.15 * s["speed_mps"]
     assert -180 <= s["hall_angle_deg"] <= 180 and (tmp_path / "skyrmion_track.png").exists()
     assert (tmp_path / "track.dat").exists()
+    assert "animation.gif" in s["animation_files"] and (tmp_path / "animation.gif").exists()     # the moving skyrmion
 
 
 def test_afm_skyrmion_profile_matches_ferromagnet_without_demag():

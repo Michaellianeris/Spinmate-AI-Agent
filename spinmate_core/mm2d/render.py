@@ -287,3 +287,102 @@ def save_track(m, x_nm, y_nm, track, summary, vals, name="skyrmion_track.png"):
     for sp in ax.spines.values():
         sp.set_color("#B9B0CC")
     fig.tight_layout(); fig.savefig(name, dpi=130); plt.close(fig)
+
+
+# ---- animations: GIF always, MP4 too when ffmpeg is installed
+def write_movie(fig, update, n, name, fps=12, dpi=90):
+    """Draws update(i) for i < n once, writes <name>.gif and, when ffmpeg is installed, <name>.mp4.
+    Returns the files written."""
+    import shutil
+    import subprocess
+    from PIL import Image
+    fig.set_dpi(dpi)
+    shots = []
+    for i in range(n):
+        update(i)
+        fig.canvas.draw()
+        shots.append(np.asarray(fig.canvas.buffer_rgba())[..., :3].copy())
+    plt.close(fig)
+    h, w = shots[0].shape[:2]
+    h2, w2 = h - h % 2, w - w % 2                     # H.264 wants even sizes
+    # one palette for all frames (no flicker), no dithering (smaller files)
+    pal = Image.fromarray(np.concatenate(shots[::max(1, n // 8)])).quantize(colors=160, method=Image.Quantize.MEDIANCUT)
+    pics = [Image.fromarray(s_).quantize(palette=pal, dither=Image.Dither.NONE) for s_ in shots]
+    pics[0].save(f"{name}.gif", save_all=True, append_images=pics[1:], duration=int(1000 / fps), loop=0,
+                 optimize=True)
+    out = [f"{name}.gif"]
+    ff = shutil.which("ffmpeg")
+    if ff:
+        try:
+            p = subprocess.run([ff, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
+                                "-s", f"{w2}x{h2}", "-r", str(fps), "-i", "-", "-pix_fmt", "yuv420p",
+                                "-vcodec", "libx264", "-crf", "20", f"{name}.mp4"],
+                               input=b"".join(s_[:h2, :w2].tobytes() for s_ in shots), capture_output=True,
+                               timeout=300)
+            if p.returncode == 0:
+                out.append(f"{name}.mp4")
+        except Exception:                              # an MP4 is a bonus: the GIF is enough
+            pass
+    return out
+
+
+def save_animation(frames, times, x_nm, y_nm, kind, caption, track=None, antenna=None, absorb_nm=0.0,
+                   name="animation"):
+    """frames: (n, Ny, Nx) changes of mx for kind='wave', or (n, 3, Ny, Nx) textures for kind='texture'.
+    track: (t, x, y) of the texture centre in s and m, drawn as a growing trail."""
+    frames = np.asarray(frames, float)
+    dx = x_nm[1] - x_nm[0]
+    ext = [x_nm[0] - dx / 2, x_nm[-1] + dx / 2, y_nm[0] - dx / 2, y_nm[-1] + dx / 2]
+    asp = (ext[3] - ext[2]) / (ext[1] - ext[0])
+    fig = plt.figure(figsize=(7.2, max(3.0, min(7.2, 6.2 * asp + 1.2))))
+    ax = fig.add_axes([0.12, 0.16, 0.8, 0.72])
+    if kind == "wave":
+        lim = float(np.percentile(np.abs(frames[-max(1, len(frames) // 4):]), 99.5)) or 1e-12
+        im = ax.imshow(frames[0], extent=ext, origin="lower", cmap=WAVE, vmin=-lim, vmax=lim,
+                       interpolation="bicubic", aspect="equal")
+        if antenna is not None and antenna.any():
+            if min(antenna.shape) >= 2 and not antenna.any(1).all():     # a dot
+                ax.contourf(x_nm, y_nm, antenna.astype(float), levels=[0.5, 1.5], colors=["#7A35A8"], alpha=0.45)
+            else:                                                          # a stripe across y
+                cols = np.where(antenna.any(0))[0]
+                ax.axvspan(x_nm[cols[0]] - dx / 2, x_nm[cols[-1]] + dx / 2, color="#7A35A8", alpha=0.45, lw=0)
+        if absorb_nm > 0:
+            for a0, a1 in ((ext[0], ext[0] + absorb_nm), (ext[1] - absorb_nm, ext[1])):
+                ax.axvspan(a0, a1, color="#120D26", alpha=0.18, lw=0)
+        quiv = None
+    else:
+        im = ax.imshow(colour(*frames[0]), extent=ext, origin="lower", interpolation="bicubic", aspect="equal")
+        st = max(1, int(round(max(len(x_nm), len(y_nm)) / 18)))
+        X, Y = np.meshgrid(x_nm[::st], y_nm[::st])
+        def inplane(g):                                # nearly out of plane: no arrow, the colour says it
+            hide = np.hypot(g[0], g[1]) < 0.35
+            return np.ma.masked_array(g[0], hide), np.ma.masked_array(g[1], hide)
+        f0 = frames[0][:, ::st, ::st]
+        quiv = ax.quiver(X, Y, *inplane(f0), color="#14111F", scale=1.6 / (st * dx), scale_units="xy",
+                         width=0.004, headwidth=4, pivot="mid")
+    trail, = ax.plot([], [], ".", color="#FFFFFF", ms=3.5, mec="#7A35A8", mew=0.6)
+    Lx, Ly = ext[1] - ext[0], ext[3] - ext[2]
+    if track is not None and len(track):
+        tr = np.asarray(track, float)
+        px = (tr[:, 1] * 1e9 - ext[0]) % Lx + ext[0]
+        py = (tr[:, 2] * 1e9 - ext[2]) % Ly + ext[2]
+    ax.set_xlabel("x (nm)", fontsize=12); ax.set_ylabel("y (nm)", fontsize=12); ax.tick_params(labelsize=10)
+    for sp in ax.spines.values():
+        sp.set_color("#B9B0CC")
+    title = ax.set_title("", fontsize=12, color=INK)
+    fig.text(0.02, 0.03, caption, fontsize=8.5, color=INK, wrap=True)
+
+    def update(i):
+        f = frames[i]
+        if kind == "wave":
+            im.set_data(f)
+        else:
+            im.set_data(colour(*f))
+            g = f[:, ::st, ::st]
+            quiv.set_UVC(*inplane(g))
+        if track is not None and len(track):
+            sel = tr[:, 0] <= times[i] + 1e-18
+            trail.set_data(px[sel], py[sel])
+        title.set_text(f"t = {times[i] * 1e12:.0f} ps")
+        return []
+    return write_movie(fig, update, len(frames), name)
