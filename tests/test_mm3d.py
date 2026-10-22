@@ -93,3 +93,60 @@ def test_run_and_report(monkeypatch):
 def test_page_has_hopfion():
     html = (ROOT / "web" / "index.html").read_text()
     assert '"Hopfion", "Relax a hopfion with mm3d' in html and '["mm2d", "mm3d"].includes(r.summary.engine)' in html
+
+
+# ---- Bloch points, chiral bobbers, torons, H = 2 ----
+@pytest.mark.parametrize("sign", [1, -1])
+def test_bloch_point_detector_finds_a_hedgehog(sign):
+    s = F.Slab(10, 10, 10, 1e-9, MS, A, boundary="free", surfaces="free")
+    Z, Y, X = np.meshgrid(s.z, s.y, s.x, indexing="ij")
+    m = np.stack([sign * X, Y, Z]) / np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
+    assert F.bloch_points(s, m) == [(0.0, 0.0, 0.0, sign)]
+
+
+def test_smooth_textures_have_no_bloch_points():
+    s = F.Slab(40, 40, 24, 1e-9, MS, A, 0.0, 5.236e-3, boundary="free", surfaces="pinned", disk=36e-9)
+    for kind in ("hopfion", "skyrmion_tube"):
+        assert F.bloch_points(s, F.initial(s, kind)) == []
+
+
+def relaxed(kind, surfaces, B):
+    s = F.Slab(32, 32, 28, 1e-9, MS, A, 0.0, 5.236e-3, B=(0, 0, B), boundary="periodic", surfaces=surfaces)
+    m, _, tq = F.minimise(s, F.initial(s, kind), tol=5, max_iter=20000)
+    assert tq < 5
+    return s, m
+
+
+def test_chiral_bobber_ends_at_one_bloch_point():
+    """A tube from the free top surface that ends about half a period down, at one Bloch point (Rybakov 2015)."""
+    s, m = relaxed("chiral_bobber", "free", 2.2)
+    bps = F.bloch_points(s, m)
+    assert len(bps) == 1 and abs(bps[0][3]) == 1
+    depth = s.z[-1] + s.dx / 2 - bps[0][2]
+    assert 0.3 < depth / 24e-9 < 0.7
+    Q = [F.skyrmion_number_z(m, k) for k in range(s.Nz)]
+    assert abs(Q[-1]) == pytest.approx(1, abs=0.05) and abs(Q[0]) < 0.05
+
+
+def test_toron_is_closed_by_two_bloch_points_of_opposite_charge():
+    s, m = relaxed("toron", "pinned", 1.5)
+    bps = F.bloch_points(s, m)
+    assert sorted(b[3] for b in bps) == [-1, 1]
+    assert bps[0][2] * bps[1][2] < 0                              # one below and one above the middle
+    assert abs(F.skyrmion_number_z(m, s.Nz // 2)) == pytest.approx(1, abs=0.05)
+
+
+def test_hopfion2_seed_has_twice_the_hopf_index():
+    s = F.Slab(58, 58, 48, 1e-9, MS, A, 0.0, 5.236e-3, boundary="free", surfaces="pinned", disk=54e-9)
+    one = F.Slab(58, 58, 24, 1e-9, MS, A, 0.0, 5.236e-3, boundary="free", surfaces="pinned", disk=54e-9)
+    up = np.array([0.0, 0.0, 1.0])[:, None, None, None]
+    h2 = F.hopf_index(np.where(s.mask, F.initial(s, "hopfion2"), up))
+    h1 = F.hopf_index(np.where(one.mask, F.initial(one, "hopfion"), up))
+    assert h2 == pytest.approx(2 * h1, rel=0.05)
+
+
+def test_texture_checks():
+    w = M.check(M.parse("--texture=chiral_bobber\n--surfaces=pinned"))[1]
+    assert any("free" in x for x in w) and any("B_D" in x for x in w)
+    assert any("pinned" in x for x in M.check(M.parse("--texture=toron\n--surfaces=free"))[1])
+    assert any("2p" in x for x in M.check(M.parse("--texture=hopfion2"))[1])

@@ -662,11 +662,12 @@ the result from the run card.
 <tr><td align="center"><i>A skyrmion from a question</i></td><td align="center"><i>Spin waves from a question</i></td></tr>
 </table>
 
-### mm3d engine: 3D micromagnetics and hopfions (built in)
+### mm3d engine: 3D micromagnetics, hopfions, bobbers and torons (built in)
 
 `spinmate_core/mm3d` extends the solver to three dimensions: a chiral magnet slab or nanodisk with exchange,
-bulk or interfacial DMI, anisotropy and field, the top and bottom surfaces pinned along +z. It relaxes hopfions
-and skyrmion tubes and computes the Hopf index H from the emergent field (with an FFT for its vector potential).
+bulk or interfacial DMI, anisotropy and field, the top and bottom surfaces pinned along +z or free. It relaxes
+hopfions (H = 1 and 2), skyrmion tubes, chiral bobbers and torons, computes the Hopf index H from the emergent
+field (with an FFT for its vector potential), the skyrmion number of every layer and the Bloch points.
 
 ```text
 --texture=hopfion
@@ -686,8 +687,31 @@ and skyrmion tubes and computes the Hopf index H from the emergent field (with a
 - **Results.** The card shows the m_z = 0 torus in 3D (colour = in-plane direction; it turns once around the
   ring) and the cuts y = 0 and z = 0, with H, the core ring radius and the rings where m_z = 0. The default
   hopfion relaxes in about a minute with H = −0.89 on the grid (|H| = 1).
+- **More 3D textures.** `texture=chiral_bobber` (free surfaces, B between 0.35 and 0.5 B_D, B_D = D²/(A·Ms)):
+  a skyrmion tube from the top surface that ends about half a period down at a Bloch point. `texture=toron`
+  (pinned surfaces): a tube closed at both ends by Bloch points of opposite charge. `texture=hopfion2`: two
+  hopfions stacked in a disk about 2p thick, H = 2 (a single torus with a double twist unwinds to H = 1 here).
+- **Bloch points** are found from the solid angle of m over every cube of eight cells (±4π around one) and drawn
+  as red (+1) and blue (−1) dots in the 3D view and the cuts; the summary lists their positions.
+
+```text
+--texture=chiral_bobber
+--geometry=slab
+--surfaces=free
+--Nx=48
+--Ny=48
+--Nz=32
+--B_ext=0,0,2.2
+```
+
+<img src="docs/mm3d-bobber.png" alt="A chiral bobber from mm3d: a skyrmion tube from the free top surface that ends 14 nm down at a Bloch point, shown as a blue dot in the 3D view and the cut y = 0" width="100%">
+<img src="docs/mm3d-toron.png" alt="A toron from mm3d between pinned surfaces: a closed tube with a Bloch point of charge +1 above and -1 below" width="100%">
+<img src="docs/mm3d-hopfion2.png" alt="Two hopfions stacked in a 48 nm thick nanodisk, Hopf index H = 2 (-1.72 on the grid)" width="100%">
+
 - **Validated** in `tests/test_mm3d.py`: the energy of a helix with q = D/2A against −D²/4A, the same fields as
-  mm2d in one layer, the Hopf index of the seed, and a hopfion that keeps |H| > 0.7 through the relaxation.
+  mm2d in one layer, the Hopf index of the seed, a hopfion that keeps |H| > 0.7 through the relaxation, the
+  Bloch-point charge ±1 of a hedgehog and none in smooth textures, a bobber with one Bloch point half a period
+  below the surface, a toron with +1 and −1, and twice the Hopf index for `hopfion2`.
 - **Limits.** No demagnetising field; CPU only, so a few hundred thousand cells at most.
 
 <table>
