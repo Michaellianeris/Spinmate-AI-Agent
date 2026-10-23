@@ -1,0 +1,17 @@
+<section id="backends" data-transition="fade" style="background:radial-gradient(ellipse at 88% 92%, #1E2A6A 0%, #120D26 60%);color:#F4EEFF;font-family:'Inter', Arial, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-size:64px;font-weight:700;line-height:1.1;color:#FFFFFF">CPU cores or GPU <span style="color:#9FB0FF;font-weight:600">· one physics, two compilers</span></h2>
+<div style="display:flex;gap:56px;align-items:center">
+<div style="display:flex;gap:40px;align-items:center;background:#FFFFFF;border-radius:20px;padding:36px 48px"><img src="../icons/cpu.png" alt="CPU" style="width:180px"><img src="../icons/gpu.png" alt="GPU" style="width:236px"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<p style="font-size:26px;line-height:1.45;color:#CFC4EA">The physics of a cell is written once and compiled twice: numba on all CPU cores, CUDA kernels on an NVIDIA GPU. <code style="color:#FFFFFF">backend=auto</code> picks the GPU when there is one.</p>
+<p style="font-size:26px;line-height:1.45;color:#CFC4EA">The time step is adaptive (Dormand–Prince); the exchange of the cells sets it: 35 fs for 1 nm cells, 123 fs for 2 nm.</p>
+</div>
+</div>
+<div style="display:flex;gap:56px;align-items:center">
+<div><p style="font-size:56px;font-weight:800;color:#9FB0FF">8×</p><p style="font-size:21px;color:#BDB2DA">per step on 2 cores, 128 × 128</p></div>
+<div><p style="font-size:56px;font-weight:800;color:#9FB0FF">10<sup style="font-size:30px">−12</sup></p><p style="font-size:21px;color:#BDB2DA">same fields as the NumPy code</p></div>
+<div><p style="font-size:56px;font-weight:800;color:#9FB0FF">1.4 min</p><p style="font-size:21px;color:#BDB2DA">per ns of a 128 × 128 film, 2 cores</p></div>
+</div>
+<div style="position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between"><p style="font-size:24px;color:#9A8CC2">--backend=auto | gpu | cpu | numpy · docker-compose.gpu.yml</p><p style="font-size:24px;color:#9A8CC2">25</p></div>
+<aside>The micromagnetic engines now run on all the cores of the CPU or on an NVIDIA GPU. The physics of one cell is written once and compiled twice, by numba for the CPU and as CUDA kernels for the GPU, so the results are the same: the CPU code reproduces the reference fields to one part in a trillion. On two cores one time step of a 128 by 128 film is eight times faster, about a minute and a half per nanosecond. The time step stays adaptive; the exchange of the smallest cells sets it, so larger cells make long runs much cheaper.</aside>
+</section>

@@ -488,16 +488,48 @@ wavelengths so the waves do not come back from the edges. Below the gap (here 56
 </div>
 <div class="tip">Limits: the film is one cell through the thickness, so m does not vary along z (mm3d does that). The default
 demagnetising field is local (−Ms·m<sub>z</sub>); <code>demag=full</code> adds the long-range stray field.</div>
-<h3>Speed: CPU cores, GPU and the time step</h3>
-<p><code>backend=auto</code> runs mm2d and mm3d on an NVIDIA GPU when there is one, otherwise on all CPU cores (numba);
-<code>gpu</code>, <code>cpu</code> and <code>numpy</code> (the reference code, one core) choose one. The physics of a cell is written once and
-compiled for both; the CPU kernels reproduce the NumPy fields to 10<sup>−12</sup>. On a 2-core machine a 128 × 128 film takes
-3 ms per time step instead of 25 ms, about 1.4 min per ns. The time step is adaptive (Dormand–Prince, error per step
-<code>rk_tol</code>); the exchange of the smallest cells sets it, about 35 fs for 1 nm cells and four times longer for 2 nm cells.
-Check gives the number of steps and the time, and for long runs suggests larger cells or the GPU. For 10–100 ns use
-<code>table_dt</code> of 10 ps or more and <code>animation=0</code>. The GPU in Docker:
-<code>docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build</code> (needs <code>nvidia-smi</code> in WSL).</p>
-
+<h3>Speed: CPU cores or GPU, and the time step</h3>
+<div class="side" style="grid-template-columns:auto 1fr;align-items:center">
+<div style="display:flex;gap:18px;align-items:center"><img src="../icons/cpu.png" style="width:72px" alt="CPU"><img src="../icons/gpu.png" style="width:96px" alt="GPU"></div>
+<p>mm2d and mm3d run on all the cores of your CPU or on an NVIDIA GPU. The physics of a cell (exchange, anisotropy, DMI with its
+edge condition, demag, field, spin torques, the LLG equation) is written once and compiled for both, so the results are the
+same: the CPU code reproduces the reference NumPy fields to 10<sup>−12</sup>.</p>
+</div>
+<table>
+<tr><th><code>backend</code></th><th>Runs on</th><th>When to use it</th></tr>
+<tr><td><code>auto</code> (default)</td><td>the GPU if there is one, else all CPU cores</td><td>always, unless you want to force one</td></tr>
+<tr><td><code>gpu</code></td><td>an NVIDIA GPU (CUDA 12), CuPy + numba-cuda</td><td>large films, long runs; falls back to the CPU with a note if no GPU is visible</td></tr>
+<tr><td><code>cpu</code></td><td>all CPU cores (numba)</td><td>any computer; about 8× the NumPy code on 2 cores, more with more cores</td></tr>
+<tr><td><code>numpy</code></td><td>one core, the reference code</td><td>to compare, or where numba is missing</td></tr>
+</table>
+<p><b>Where did my run go?</b> The engine menu of Run setup says what <code>auto</code> means on this computer
+(<i>backend auto = GPU (…)</i> or <i>CPU, numba on N cores</i>). The run card shows <i>Ran on</i> and the number of time steps with
+their mean length; when <code>gpu</code> was asked for but not available, Check warns and the card says why.
+<code>demag=full</code> runs on the CPU for now (its FFT is not on the GPU yet).</p>
+<p><b>Using the GPU.</b> You need an NVIDIA GPU and a current NVIDIA driver on Windows; in WSL <code>nvidia-smi</code> must list
+the card, and Docker Desktop must use the WSL 2 backend. Then start SpinMate with the GPU compose file:</p>
+<pre>nvidia-smi
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build</pre>
+<p>This builds the image with CuPy and numba-cuda (<code>requirements-gpu.txt</code>) and gives the container the GPU. If
+<code>nvidia-smi</code> fails there is no usable GPU: start as usual (<code>docker compose up -d --build</code>) and the runs use all CPU cores.
+Outside Docker: <code>pip install -r requirements-gpu.txt</code>. The first CPU run after an install compiles the kernels (about
+30 s); the Docker image does that at build time.</p>
+<p><b>The time step.</b> Dynamics use the adaptive Dormand–Prince 5(4) method with the error per step <code>rk_tol</code>. In practice
+the exchange of the smallest cells sets the step: the fastest precession on the grid, ω<sub>max</sub> ∝ A/(M<sub>s</sub> dx²), limits it to
+about 1.5/ω<sub>max</sub>. Temperature uses fixed Heun steps of 0.15/ω<sub>max</sub>. Check gives the number of steps and the time before
+the run starts, and for runs over half an hour suggests what to change.</p>
+<table>
+<tr><th>Cell size</th><th>Time step</th><th>Steps per ns</th></tr>
+<tr><td>0.5 nm</td><td>9 fs</td><td>106,000</td></tr>
+<tr><td>1 nm</td><td>35 fs</td><td>28,000</td></tr>
+<tr><td>2 nm</td><td>123 fs</td><td>8,100</td></tr>
+<tr><td>4 nm</td><td>370 fs</td><td>2,700</td></tr>
+</table>
+<p>For a Pt/Co-like film (A = 15 pJ/m, M<sub>s</sub> = 580 kA/m). On a 2-core machine a 128 × 128 film with 1 nm cells takes 3 ms per
+step on the CPU backend (25 ms with NumPy), about 1.4 min per ns.</p>
+<div class="tip">Long runs (10–100 ns): use cells as large as the textures allow (the wall width √(A/K<sub>eff</sub>) should span 2–3 cells:
+2 nm cells give four times fewer cells and four times longer steps), set <code>table_dt</code> to 10 ps or more and
+<code>animation=0</code>, and prefer the GPU.</div>
 <h3>3D micromagnetics: hopfions with mm3d</h3>
 <p>Choose <b>mm3d</b> in the Engine menu, or ask for a hopfion in the chat (it is also a card under <i>Find a skill</i>).
 A hopfion is a 3D soliton: the surface where m<sub>z</sub> = 0 is a torus, and the in-plane direction turns once around it,
