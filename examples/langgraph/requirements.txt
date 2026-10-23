@@ -1,0 +1,4 @@
+# a separate environment: langchain-mcp-adapters needs mcp < 2, the SpinMate server uses mcp 2
+langgraph==1.2.16
+langgraph-checkpoint-sqlite==3.1.2
+langchain-mcp-adapters==0.3.2

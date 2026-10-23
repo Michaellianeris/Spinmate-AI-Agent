@@ -247,12 +247,22 @@ python -m spinmate_mcp --http   # port 8422</pre></div>
 </div>
 <table>
 <tr><th style="width:30mm">The server offers</th><th>Contents</th></tr>
-<tr><td>Tools</td><td>The 19 tools of chapter 6; <code>get_run</code> and <code>make_figure</code> return the plot as an image.</td></tr>
+<tr><td>Tools</td><td>The 20 tools of chapter 6; <code>get_run</code> and <code>make_figure</code> return the plot as an image.</td></tr>
 <tr><td>Resources</td><td><code>spinmate://parameters</code>, <code>physics/guide</code>, <code>physics/scales</code>, <code>validation</code>, <code>runs</code>, <code>runs/{id}</code>, <code>runs/{id}/parameters.txt</code>, <code>examples/{name}</code></td></tr>
 <tr><td>Prompts</td><td><code>design_experiment</code> (a question → runs → interpretation), <code>find_threshold</code> (coarse and fine sweeps), <code>interpret_run</code></td></tr>
 </table>
 <div class="ask">Use spinmate to find the smallest DC SOT current that makes the Néel vector rotate.</div>
 
+<h3>LangGraph workflows (example)</h3>
+<p><code>examples/langgraph</code> drives SpinMate from a LangGraph graph through the MCP server: a threshold search
+(plan → sweep → wait → analyse → narrow, up to 4 rounds) with its state checkpointed in SQLite, so a search over long runs
+goes on after a restart, and with large sweeps waiting for your yes (<code>interrupt()</code>). It runs in its own environment:</p>
+<pre>python -m venv .venv-langgraph &amp;&amp; . .venv-langgraph/bin/activate
+pip install -r examples/langgraph/requirements.txt
+cd examples/langgraph
+python threshold.py --parameter A0 --lo 0 --hi 1e-14 --criterion order_final=FM --lines="--t=2e-9" --thread a0</pre>
+<p>It finds the AFM/FM boundary A0 = 1.735e-15 J/m (theory |Ku| l²/2 = 1.7395e-15) in three rounds of six runs. Run the same
+command again with the same <code>--thread</code> to resume an interrupted search.</p>
 <h2><span class="n">9</span>Engines: macrospin, mm2d, mm3d and mumax3</h2>
 <p><b>Three engines are built in:</b> macrospin (two sublattices), mm2d (2D micromagnetics: skyrmions, domain walls, spin waves) and mm3d (3D micromagnetics: hopfions, bobbers, torons). mumax3 or any other engine is an optional plug-in, added only if you install it. Every run records the engine that produced it. <code>list_engines</code> shows what is installed and the parameters of each;
 in the chat simply ask for a skyrmion or for mumax3, over MCP pass <code>engine="mm2d"</code> or <code>engine="mumax3"</code>. <b>Run setup</b> (Deep mode) has an <b>Engine</b> menu; an engine that cannot run here (for example mumax3 without a GPU) is marked “not installed”.</p>
@@ -490,7 +500,7 @@ wavelengths so the waves do not come back from the edges. Below the gap (here 56
 demagnetising field is local (−Ms·m<sub>z</sub>); <code>demag=full</code> adds the long-range stray field.</div>
 <h3>Speed: CPU cores or GPU, and the time step</h3>
 <div class="side" style="grid-template-columns:auto 1fr;align-items:center">
-<div style="display:flex;gap:18px;align-items:center"><img src="../icons/cpu.png" style="width:72px" alt="CPU"><img src="../icons/gpu.png" style="width:96px" alt="GPU"></div>
+<div style="display:flex;gap:18px;align-items:center"><img src="../icons/cpu.png" style="width:110px" alt="CPU"><img src="../icons/gpu.png" style="width:146px" alt="GPU"></div>
 <p>mm2d and mm3d run on all the cores of your CPU or on an NVIDIA GPU. The physics of a cell (exchange, anisotropy, DMI with its
 edge condition, demag, field, spin torques, the LLG equation) is written once and compiled for both, so the results are the
 same: the CPU code reproduces the reference NumPy fields to 10<sup>−12</sup>.</p>
