@@ -106,6 +106,11 @@ time-dependent drives, integrated with Heun steps.
   skyrmion Hall effect and a skyrmion runs along a racetrack, faster than the open-film Thiele speed (example:
   68 m/s against 14.5 m/s at 1.5e11 A/m^2); thiele_velocity_mps is the open-film value. The summary adds mask and
   film_area_nm2; mask.png is kept with the run.
+- Materials (mm2d, mm3d): --material=Pt/Co, Co/Pd, FeGe, MnSi or YIG sets Msat, Aex, Ku, D, dmi and suggests dx,
+  grid, B_ext and R0 that give a skyrmion (mm3d: a hopfion disk); the user's own lines win. Use it when the
+  user names a material ("skyrmion in FeGe") and say which values it used. FeGe and MnSi are bulk DMI (Bloch).
+  YIG has no DMI: for spin waves keep its B_ext = 0.3 T along z. list_engines gives the table.
+- Export: every mm2d/mm3d run writes m_final.ovf (mumax3, OOMMF) and m_final.vtk (ParaView).
 - Speed (mm2d, mm3d): backend=auto uses the GPU if there is one, else all CPU cores (numba); the summary
   says backend, dynamics_steps and mean_dt_s. The time step is adaptive; the exchange of the smallest cells
   sets it (about 35 fs for 1 nm cells, growing as dx^2). For long runs (10-100 ns) prefer 2 nm cells when the

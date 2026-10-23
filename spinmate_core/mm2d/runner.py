@@ -208,6 +208,14 @@ def save_wave_arrows(render, film, vals, summary, m, m0, x_nm, y_nm, cap):
                       prefix="spinwave", step=step)
 
 
+def save_ovf(m, vals, inside, name):
+    """<name>.ovf (OVF 2.0, binary 4, for mumax3 and OOMMF) and <name>.vtk (ParaView); no film = zero vectors."""
+    from spinmate_core import ovf
+    mm = np.where(inside, m, 0.0)
+    ovf.write(f"{name}.ovf", mm, vals["dx"], vals["dx"], vals["thickness"], title=name, binary=True)
+    ovf.write_vtk(f"{name}.vtk", mm, vals["dx"], vals["dx"], vals["thickness"], title=f"SpinMate mm2d {name}")
+
+
 def build(vals, keep_mask_png=True):
     """The film and the starting state of a run: the seed (or the texture of start_from), cut to the mask."""
     afm = vals["lattice"] in ("afm", "saf")
@@ -408,6 +416,9 @@ def main():
     if erows:
         np.savetxt("energy.dat", np.array(erows), fmt="%.10E")
     np.savez_compressed("m_final.npz", m=m.astype(np.float32), x=film.x, y=film.y)
+    save_ovf(m if not afm else m[:, 0], vals, inside, "m_final")         # mumax3, OOMMF, ParaView
+    if afm:
+        save_ovf(m[:, 1], vals, inside, "m2_final")
 
     Q = round(S.topological_charge(view(m)), 4) + 0.0      # no -0.00
     if afm:

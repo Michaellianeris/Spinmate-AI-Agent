@@ -11,7 +11,7 @@ http = TestClient(app)
 
 def test_validation_status_and_page():
     v = http.get("/api/validation").json()
-    assert v["available"] and v["passed"] == v["total"] == 9 and v["date"]
+    assert v["available"] and v["passed"] == v["total"] == 19 and v["date"]      # macrospin, mm2d, mm3d
     page = http.get("/validation")
     assert page.status_code == 200 and "phase-diagram.png" in page.text and "unchanged" not in page.text
     assert "/api/logo.png" in page.text and http.get("/api/logo.png").headers["content-type"] == "image/png"

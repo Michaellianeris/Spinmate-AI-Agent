@@ -18,6 +18,8 @@ PARAMS = {
                 "coupled through a spacer (RKKY)", ("ferro", "afm", "saf")),
     "J_afm": (2e7, "float", "J/m^3", "afm: homogeneous exchange J_afm m1.m2 between the sublattices"),
     "J_rkky": (-1e-3, "float", "J/m^2", "saf: interlayer coupling, energy -J_rkky m1.m2 per area (< 0 antiparallel)"),
+    "material": ("", "material", "", "ready parameters of a material: Pt/Co, Co/Pd, FeGe, MnSi or YIG (sets Msat, "
+                 "Aex, Ku, D, dmi and suggests cells, grid, field and seed radius; the other lines win)", None),
     "texture": ("skyrmion", "choice", "", "initial state",
                 ("skyrmion", "skyrmionium", "domain_wall", "uniform", "random")),
     "Nx": (128, "int", "", "cells along x"), "Ny": (128, "int", "", "cells along y"),
@@ -75,7 +77,22 @@ PARAMS = {
 EXTRA = {"Ms": "Msat", "A": "Aex", "Ku1": "Ku", "Dind": "D", "Dbulk": "D", "d": "thickness"}   # mumax-like names
 
 
+def _with_material(text):
+    """The lines of a material go first, so that the user's own lines win."""
+    import re as _re
+    from ..materials import find, lines
+    found = _re.search(r"^\s*--material=(\S+)", text or "", _re.M)
+    if not found:
+        return text
+    if not find(found.group(1)):
+        from ..materials import NAMES
+        raise ValueError(f"material={found.group(1)} is not known; known: {', '.join(NAMES)}")
+    given = set(_re.findall(r"^\s*--(\w+)=", text or "", _re.M))
+    return "\n".join(lines(found.group(1), given, PARAMS)) + "\n" + text
+
+
 def parse(text):
+    text = _with_material(text)
     """SpinMate lines -> values; raises ValueError on unknown names or bad values."""
     vals = {k: v[0] for k, v in PARAMS.items()}
     for raw in (text or "").splitlines():
@@ -98,6 +115,9 @@ def parse(text):
                 if len(v) != 3:
                     raise ValueError
                 vals[name] = v
+            elif kind == "material":
+                from ..materials import find
+                vals[name] = find(value)
             elif kind == "run":
                 if not re.fullmatch(r"r\d{4,}", value):
                     raise ValueError

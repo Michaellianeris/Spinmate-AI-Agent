@@ -86,6 +86,10 @@ def main():
     np.savetxt("output2.dat", rows, fmt="%.10E")
     if erows:
         np.savetxt("energy.dat", np.array(erows), fmt="%.10E")
+    from spinmate_core import ovf
+    mm = m if slab.mask is None else np.where(slab.mask, m, 0.0)        # mumax3, OOMMF, ParaView; no film = 0
+    ovf.write("m_final.ovf", mm, vals["dx"], vals["dx"], vals["dx"], title="m_final", binary=True)
+    ovf.write_vtk("m_final.vtk", mm, vals["dx"], vals["dx"], vals["dx"], title="SpinMate mm3d m_final")
     np.savez_compressed("m_final.npz", m=m.astype(np.float32), x=slab.x, y=slab.y, z=slab.z,
                         mask=slab.mask if slab.mask is not None else np.ones(m.shape[1:], bool))
 

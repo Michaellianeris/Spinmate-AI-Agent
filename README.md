@@ -448,9 +448,25 @@ mumax3 = "spinmate_mumax3:Mumax3Engine"
 
 ### Physics validation
 
-`python -m spinmate_core.validation` runs the real solver on cases with an analytic answer and writes a
-report to `WORKSPACE/validation/report.html` (agents read it as `spinmate://validation`). It runs on every
-pull request that changes `macrospin/` or `spinmate_core/`.
+`python -m spinmate_core.validation` runs the real solvers of all three engines on cases with an analytic answer
+and writes a report to `WORKSPACE/validation/report.html` (agents read it as `spinmate://validation`); the badge
+in the left bar counts all of them (19 of 19). It runs on every pull request that changes `macrospin/` or
+`spinmate_core/`.
+
+| mm2d and mm3d case | Expected | Measured | Result |
+|---|---|---|---|
+| Domain wall, interfacial DMI | 4√(A·K_eff) − π\|D\| = 5.603 mJ/m², Néel | 5.603 mJ/m², Néel | pass |
+| Kittel, perpendicular film | 70.78 GHz | 70.78 GHz | pass |
+| Spin-wave dispersion f(k), sinc antenna | γ₀/2π (H_K,eff + 2A k²/μ₀M_s) | within 2.2 % | pass |
+| Skyrmion under STT with β = α (Thiele) | v = u = (50, 0) m/s | (49.8, 0.0) m/s | pass |
+| Tilt at a free edge with DMI | sin θ = Dδ/2A = 0.5889 | 0.5887 | pass |
+| FFT demag: platelet factor, Néel-wall stray energy | Aharoni 0.8600; 0.0466 mJ/m² | 0.8600; 0.0464 mJ/m² | pass |
+| numba CPU backend vs NumPy | same dm/dt | 6e-16 apart | pass |
+| Helix of a chiral magnet (mm3d) | −D²/4A | within 2 % | pass |
+| Hopfion in a nanodisk (mm3d) | \|H\| ≈ 1 | −0.81 (grid) | pass |
+| Bloch points (mm3d) | ±1 | +1, −1 | pass |
+
+The macrospin cases:
 
 Each sublattice carries Ms/2, so the fields are μ0H_E = 4|A0|/(Ms l²) and μ0H_K = 4Ku/Ms.
 
@@ -623,6 +639,24 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 <img src="docs/mm2d-spinwaves-dot.png" alt="Circular spin waves from a dot antenna in mm2d, in the same two views." width="100%">
 <img src="docs/mm2d-dispersion.png" alt="Spin-wave dispersion from mm2d with a sinc pulse: the simulated f(k) lies on the analytic curve." width="60%">
 
+- **Materials.** `--material=FeGe` (or `Pt/Co`, `Co/Pd`, `MnSi`, `YIG`) sets Msat, Aex, Ku, D and the kind of
+  DMI, and suggests the cell, the grid, a field and a seed radius that give a skyrmion, so *"a skyrmion in
+  FeGe"* runs without numbers; any line you write wins over the material. In mm3d it suggests a hopfion disk.
+
+| Material | | Ms (kA/m) | A (pJ/m) | Ku (MJ/m³) | D (mJ/m²) | Source |
+|---|---|---|---|---|---|---|
+| `Pt/Co` | Pt/Co ultrathin film | 580 | 15 | 0.8 | 3 (interfacial) | Sampaio et al., Nature Nanotechnology 8, 839 (2013) |
+| `Co/Pd` | [Co/Pd] multilayer | 880 | 10 | 0.727 | 2 (interfacial) | Pollard et al., Nature Communications 8, 14761 (2017) |
+| `FeGe` | FeGe, B20 chiral magnet | 384 | 8.78 | 0 | 1.58 (bulk) | Beg et al., Scientific Reports 5, 17137 (2015) |
+| `MnSi` | MnSi, B20 chiral magnet at low temperature | 163 | 0.4 | 0 | 0.28 (bulk) | Mühlbauer et al., Science 323, 915 (2009) (period, phase diagram); values derived here |
+| `YIG` | YIG, yttrium iron garnet | 140 | 3.7 | 0 | 0  | Klingler et al., J. Phys. D 48, 015001 (2015) (A = 3.7 pJ/m) |
+
+  MnSi's A and D follow from its 18 nm helical period and 0.6 T critical field. Checked: FeGe gives a Bloch
+  skyrmion of R = 37 nm at 0.37 T and, in mm3d, a hopfion (H = −0.86) in 8 s; Co/Pd with `demag=full` gives
+  R = 28 nm at 0.1 T.
+- **Export.** Every mm2d and mm3d run writes `m_final.ovf` (OVF 2.0, binary 4: opens in mumax3 with
+  `m.LoadFile`, in OOMMF and in Ubermag) and `m_final.vtk` (ParaView, VisIt); a synthetic AFM also writes
+  `m2_final.*`. Empty cells of a mask are zero vectors. The run card links them.
 - **Shapes from a picture.** `mask=disk`, `strip` or `racetrack` cuts the film to that shape; `mask=<name>.png`
   uses a PNG you drop on the chat (or send to `POST /api/masks`): dark, opaque pixels are film, white or
   transparent ones are empty, and the picture is stretched to Nx × Ny cells. The outline is a free edge with the
