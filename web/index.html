@@ -1154,7 +1154,6 @@ function emptyState() {
     ["Bloch skyrmion (bulk DMI)", "Relax a Bloch skyrmion with mm2d using bulk DMI D = 3.5 mJ/m² in a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m. What are its radius and topological charge?"],
     ["Hopfion", "Relax a hopfion with mm3d in a chiral magnet nanodisk, 54 nm across and 24 nm thick, with bulk DMI D = 5.236 mJ/m², A = 10 pJ/m, Ms = 500 kA/m, the surfaces pinned up and B = 0.3 T. What is its Hopf index?"],
     ["Skyrmion motion", "Push a Néel skyrmion with mm2d by spin-orbit torque: current 1e12 A/m² along x, spin Hall angle 0.1, damping 0.1, 400 ps. How fast does it move and what is its skyrmion Hall angle?"],
-    ["Synthetic AFM skyrmion", "Push a skyrmion in a synthetic antiferromagnet with mm2d (two layers coupled by RKKY J = -1 mJ/m²) by spin-orbit torque, 2e11 A/m² along x, 200 ps. Does it show a skyrmion Hall effect?"],
     ["Skyrmion at 300 K", "Run a Néel skyrmion with mm2d on a 64 × 64 nm film at 300 K for 1 ns, damping 0.3, no current. How far does it wander, and does its diffusion match the Thiele equation?"],
     ["Spin waves", "Send 80 GHz spin waves from a stripe antenna with mm2d through a film with A = 15 pJ/m, Ku = 0.8 MJ/m³, Ms = 580 kA/m and no DMI. Does the wavelength match theory?"],
     ["FeRh heating", "Heat a FeRh layer through its transition: positive A0 = 0.248e-12, temperature 370 K ± 60 K at 0.25 GHz, 2 ns. When does it go from AFM to FM?"],
@@ -1797,6 +1796,8 @@ function mm2dView(box, id, r) {
     in3d && s.core_ring_radius_nm ? ["Core ring radius", num(s.core_ring_radius_nm, 2) + " nm"] : null,
     s.rings_nm && s.rings_nm.length ? ["Rings (mz = 0)", s.rings_nm.map(x => fmt(x, 2)).join(", ") + " nm"] : null,
     ["Energy", `${num(s.energy_final_J * 1e18, 4)} aJ`], ["<m> final", `(${(s.m_final || []).map(x => fmt(x, 3)).join(", ")})`],
+    s.dynamics_steps ? ["Time steps", `${s.dynamics_steps.toLocaleString()} · ${t("mean")} dt ${num(s.mean_dt_s * 1e15, 3)} fs`] : null,
+    s.backend ? ["Ran on", esc(s.backend) + (s.backend_note ? ` (${esc(s.backend_note)})` : "")] : null,
     s.relax_iterations != null ? ["Relaxation", `${s.relax_iterations.toLocaleString()} ${t("iterations")}, max |m×H| ${num(s.relax_torque_A_per_m, 2)} A/m`] : null,
     s.peak_frequency_mx_GHz != null ? ["Main frequency <mx>", num(s.peak_frequency_mx_GHz, 3) + " GHz"] : null,
     s.temperature_K ? ["Temperature", num(s.temperature_K, 4) + " K"] : null,
@@ -2005,7 +2006,7 @@ async function loadEngines() {
 }
 function engineChanged() {
   const e = state.engines.find(x => x.name === currentEngine()), other = currentEngine() !== "macrospin";
-  $("#enginenote").textContent = !e || !other ? "" : e.ready ? e.description : e.note;
+  $("#enginenote").textContent = !e || !other ? "" : e.ready ? e.description + (e.note ? " · " + e.note : "") : e.note;
   // the Fast form, presets and examples are for the macrospin solver
   $("#mode-fast").hidden = other; $("#examples").hidden = other;
   if (other) { $("#fast").hidden = true; $("#deep").hidden = false; $("#mode-deep").setAttribute("aria-pressed", "true"); $("#mode-fast").setAttribute("aria-pressed", "false"); }

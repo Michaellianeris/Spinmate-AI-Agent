@@ -4,6 +4,7 @@ scipy==1.17.1
 matplotlib==3.10.8
 SciencePlots==2.2.2
 scikit-image==0.26.0   # the m_z = 0 surface of 3D textures (mm3d)
+numba==0.68.0          # fast micromagnetics on all CPU cores (backend=cpu)
 # web app + Claude agent
 fastapi==0.142.2
 uvicorn[standard]==0.54.0

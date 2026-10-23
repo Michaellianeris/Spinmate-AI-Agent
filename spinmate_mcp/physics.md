@@ -99,6 +99,11 @@ time-dependent drives, integrated with Heun steps.
   skyrmion Hall effect and a skyrmion runs along a racetrack, faster than the open-film Thiele speed (example:
   68 m/s against 14.5 m/s at 1.5e11 A/m^2); thiele_velocity_mps is the open-film value. The summary adds mask and
   film_area_nm2; mask.png is kept with the run.
+- Speed (mm2d, mm3d): backend=auto uses the GPU if there is one, else all CPU cores (numba); the summary
+  says backend, dynamics_steps and mean_dt_s. The time step is adaptive; the exchange of the smallest cells
+  sets it (about 35 fs for 1 nm cells, growing as dx^2). For long runs (10-100 ns) prefer 2 nm cells when the
+  textures allow it (wall width sqrt(A/Keff) at least 2-3 cells), table_dt of 10 ps or more and animation=0,
+  and give the estimate from validate_parameters before starting.
 - Cross-check with mumax3: compare_with_mumax3 with mm2d parameters (relax, or dynamics with a uniform step
   pulse; not currents, Temp, antennas, afm/saf) runs both engines from the same start, then get_comparison
   gives each check (Q, radius, energy, rms angle, <m>(t)) with its tolerance and agree. It needs mumax3

@@ -1,0 +1,16 @@
+# GPU backend for mm2d/mm3d (backend=gpu or auto): an NVIDIA GPU, its driver, and the NVIDIA Container Toolkit
+# (on Windows: Docker Desktop with WSL 2 and a current NVIDIA driver; `nvidia-smi` must work in WSL).
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+services:
+  sublattice-agent:
+    build:
+      context: .
+      args:
+        GPU: "1"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

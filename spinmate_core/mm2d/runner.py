@@ -267,16 +267,26 @@ def main():
         summary["texture_seed"] = f"final texture of {vals['start_from']}"
     rows = []                                  # (x, mx, my, mz) for output1.dat
     erows = []                                 # energy log
+    from spinmate_core import fastmag
+    from spinmate_core.fastmag import stepper as FS
+    backend, note = fastmag.choose(vals["backend"], needs_fft=film._demag is not None)
+    summary["backend"] = backend
+    if note:
+        summary["backend_note"] = note
     relaxed = vals["mode"] == "relax" or vals["relax_first"]
     if relaxed:
         total = vals["max_iter"] if vals["mode"] == "relax" else vals["max_iter"] + int(vals["t"] / vals["table_dt"])
 
-        def cb(it, torque, mm):
+        st0 = FS.for_mm2d(film, backend)
+
+        def cb(it, torque, md):
+            mm = st0.get(md)
             rows.append((it, *avg(mm))); rows2.append((it, *avg2(mm)))
-            erows.append((it, film.energy(mm, d), torque))
+            erows.append((it, st0.energy(md), torque))
             if it % 200 == 0:
                 _progress(it, total, t0)
-        m, it, torque = S.minimise(film, m, tol=vals["tol"], max_iter=vals["max_iter"], callback=cb)
+        m_d, it, torque = st0.minimise(st0.put(m), vals["tol"], vals["max_iter"], callback=cb)
+        m = st0.get(m_d)
         summary.update(relax_iterations=it, relax_torque_A_per_m=round(torque, 4),
                        relaxed=bool(torque < vals["tol"]))
     wave = None
@@ -328,6 +338,8 @@ def main():
             if shape == "sinc":
                 return float(np.sinc(2 * f_rf * (t - t_p / 2)))
             return 1.0
+        st = FS.for_mm2d(film, backend, alpha, pulse=pulse)
+        m_d = st.put(m)
         t, dt, steps = 0.0, 0.1 / film.max_freq(), 0
         row_j = film.Ny // 2
         m0 = m.copy()
@@ -345,16 +357,18 @@ def main():
                     h = min(dt_th, t_target - t, h_max if t < t_p else np.inf)
                     if t < t_p < t + h:
                         h = t_p - t
-                    noise = S.thermal_sigma(film, alpha, T, h, d) * rng.normal(size=m.shape)
-                    film.H_ext = base + pulse * amp(t + h / 2) + noise
-                    m = S.heun(film, m, h, alpha)
+                    noise = st.thermal(S.thermal_sigma(film, alpha, T, h, d), rng, m.shape)
+                    st.drive(amp(t + h / 2))
+                    m_d = st.heun(m_d, h, noise)
                     used = h
                 else:
-                    film.H_ext = base + pulse * amp(t + h / 2)
-                    m, used, dt = S.rk45_step(film, m, h, alpha, tol=vals["rk_tol"])
+                    st.drive(amp(t + h / 2))
+                    m_d, used, dt = st.rk45(m_d, h, vals["rk_tol"])
                 t += used; steps += 1
+            st.done()
             film.H_ext = base
-            rows.append((t, *avg(m))); rows2.append((t, *avg2(m))); erows.append((t, film.energy(m, d)))
+            m = st.get(m_d)                        # a host copy for the output
+            rows.append((t, *avg(m))); rows2.append((t, *avg2(m))); erows.append((t, st.energy(m_d)))
             wave.append(view(m)[0, row_j].copy())
             if follow:
                 track.append((t, *(S.centre(film, view(m)) or (np.nan, np.nan))))
@@ -363,7 +377,7 @@ def main():
             if T > 0 and k > n_out // 5:
                 mz_sum += float(avg(m)[2]); mz_n += 1
             _progress(start + k, start + n_out, t0)
-        summary.update(dynamics_steps=steps, t_end_s=t, points=len(rows))
+        summary.update(dynamics_steps=steps, t_end_s=t, points=len(rows), mean_dt_s=t / max(steps, 1))
         if current and len(track) > 4:
             summary.update(motion_summary(film, vals, np.array(track)))
         elif follow and len(track) > 20:

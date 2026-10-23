@@ -105,7 +105,7 @@ dist\SpinMate\SpinMate.exe --selftest
 | 11 | Message box | **Voice input.** Dictate the request; the arrow next to it picks the microphone. |
 | 12 | Message box | **Persona**: the model level (Hermes, Dionysus, Zeus, Apollo), see [Models and the guide](#models-and-the-guide). |
 | 13 | Message box | **Fast or Deep**, and the tokens and cost in € of the conversation. Click the counter for **usage and cost** per day and per provider (Claude, OpenAI, Gemini). |
-| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a synthetic-AFM skyrmion, a skyrmion at 300 K, spin waves and FeRh heating; click one to ask it. |
+| 14 | Start here | **Find a skill.** Ready questions: FM → AFM, FM → FM, Néel and Bloch skyrmions, a hopfion, skyrmion motion, a skyrmion at 300 K, spin waves and FeRh heating; click one to ask it. |
 | 15 | Start here | **Athena**, the how-to guide. She also gives you the user guide and the presentation (PDF). |
 
 **Chat.** The centre of the page is the chat. Type what you want to run, or attach a `.txt` parameter file
@@ -544,19 +544,6 @@ the CPU, nothing to install, for a ferromagnetic film one cell thick. It finds s
 
 <img src="docs/screenshots/mm2d-motion-chat.png" alt="In the chat: a question asks how fast a skyrmion moves under SOT; the card shows the skyrmion, its path and the velocity, and the answer compares it with the Thiele equation" width="70%">
 
-- **Antiferromagnetic skyrmions.** `lattice=saf` is a synthetic antiferromagnet: two ferromagnetic layers coupled
-  antiparallel through a spacer (RKKY, `J_rkky` < 0), each with its own thin-film field, as in Pt/Co/Ru
-  multilayers where such skyrmions are observed. `lattice=afm` is an intrinsic, compensated antiferromagnet with two
-  sublattices coupled by `J_afm`. The two skyrmions have opposite charges, so their Magnus forces cancel: under the
-  same current a synthetic-AFM skyrmion moves straight along the current, about six times faster than in a single
-  layer. The pictures show the Néel vector with the arrows of the two layers (m1 red, m2 blue).
-
-<img src="docs/mm2d-saf-skyrmion.png" alt="A skyrmion in a synthetic antiferromagnet: red arrows of layer 1 and blue arrows of layer 2 alternate on a checkerboard over the film coloured by the Néel vector, next to the top view" width="100%">
-
-<img src="docs/mm2d-motion-fm-vs-saf.png" alt="Same spin-orbit current, 2e11 A/m²: left a ferromagnetic skyrmion moves at 22 m/s deflected 80 degrees; right a synthetic-antiferromagnet skyrmion moves at 131 m/s along the current, Hall angle 0" width="100%">
-
-<img src="docs/screenshots/mm2d-saf-chat.png" alt="In the chat: a question asks whether a synthetic-AFM skyrmion shows a skyrmion Hall effect; the answer gives 131 m/s, Hall angle 0, Thiele within 1 percent" width="70%">
-
 - **Temperature.** `Temp` (K) in `mode=dynamics` adds the stochastic thermal field (Brown) and switches to fixed
   Heun steps. Relaxation (`mode=relax`) is an energy minimisation and stays at 0 K; a thermal run relaxes at 0 K
   first and then evolves at T. `start_from=r0003` starts a run from the final texture of an earlier run, to heat,
@@ -685,13 +672,26 @@ skyrmion runs at 68 m/s along the track, against 14.5 m/s (Thiele) in an open fi
   √(A/Keff) for both DMI types, the Kittel frequency, energy conservation without damping, |m| = 1, and
   Q = −1 for a skyrmion and 0 for skyrmionium, and for spin waves the wavelength at 80 GHz (49.3 nm against
   49.6 nm) the dispersion f(k) (within 1 %), and for currents the Thiele equation: v = u for STT with β = α (within
-  1 %), the velocity under STT with β ≠ α and under SOT, and for antiferromagnets the static profile against a
-  ferromagnet without demag and the absence of a skyrmion Hall effect, and the Boltzmann average of m_z at 300 K
+  1 %), the velocity under STT with β ≠ α and under SOT, and the Boltzmann average of m_z at 300 K
   for two dampings, and with `demag=full` the Aharoni prism factor, the symmetry of the demag operator and the
   stray-field energy of a Néel wall.
 - **Limits.** One cell through the thickness: m does not vary along z (use mm3d for that). The default demag is
   local (−Ms·mz); `demag=full` adds the long-range stray field.
-  A 128 × 128 relaxation takes a few seconds. A GPU version is planned.
+  A 128 × 128 relaxation takes a few seconds.
+- **Speed: all CPU cores or the GPU.** `backend=auto` (the default) runs on an NVIDIA GPU when there is one and
+  otherwise on all CPU cores; `gpu`, `cpu` and `numpy` choose one. The physics of a cell (exchange, anisotropy,
+  DMI with its edge condition, local demag, the AFM coupling, field, STT and SOT, the LLG equation) is written
+  once and compiled twice: by numba into one parallel loop for the CPU, and by numba.cuda into CUDA kernels on
+  CuPy arrays for the GPU. The CPU kernels give the same fields as the NumPy code to 1e-12 and the same
+  trajectories to 1e-10; the CUDA kernels are checked against them in numba's CUDA simulator.
+  On a 2-core machine one time step of a 128 × 128 film takes 3 ms instead of 25 ms (8×), so 1 ns of dynamics
+  takes about 1.4 min; more cores and a GPU go further. `demag=full` runs on the CPU (its FFT is not on the GPU
+  yet). The run card says where the run went and how many time steps it took.
+- **Time step.** Dynamics use the adaptive Dormand–Prince 5(4) method with the error per step `rk_tol`; in
+  practice the exchange of the smallest cells sets the step, about 35 fs for 1 nm cells, growing as dx².
+  Temperature uses fixed Heun steps of 0.15/ω_max. Check estimates the number of steps and the time, and for
+  runs over half an hour suggests larger cells (2 nm cells: four times fewer cells and four times longer
+  steps), a smaller film or the GPU. For 10–100 ns runs set `table_dt` to 10 ps or more and `animation=0`.
 
 Choose **mm2d** in the Engine menu of Run setup, or ask for a skyrmion in the chat. Agents call
 `list_engines` and pass `engine="mm2d"`.
@@ -763,7 +763,7 @@ field (with an FFT for its vector potential), the skyrmion number of every layer
   mm2d in one layer, the Hopf index of the seed, a hopfion that keeps |H| > 0.7 through the relaxation, the
   Bloch-point charge ±1 of a hedgehog and none in smooth textures, a bobber with one Bloch point half a period
   below the surface, a toron with +1 and −1, and twice the Hopf index for `hopfion2`.
-- **Limits.** No demagnetising field; CPU only, so a few hundred thousand cells at most.
+- **Limits.** No demagnetising field. Runs on all CPU cores or the GPU (`backend`, as mm2d).
 
 <table>
 <tr>
@@ -772,6 +772,19 @@ field (with an FFT for its vector potential), the skyrmion number of every layer
 </tr>
 <tr><td align="center"><i>A hopfion from a question</i></td><td align="center"><i>Reports include the texture pictures</i></td></tr>
 </table>
+
+### GPU for mm2d and mm3d (optional)
+
+An NVIDIA GPU makes the micromagnetic runs much faster. In WSL `nvidia-smi` must show the GPU (a current NVIDIA
+driver on Windows is enough), and Docker Desktop must use the WSL 2 backend. Then:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
+This builds the image with CuPy and numba-cuda (`requirements-gpu.txt`) and gives the container the GPU; the
+engine menu then says `backend auto = GPU (...)`. Without a GPU nothing changes: runs use all CPU cores.
+Outside Docker: `pip install -r requirements-gpu.txt`.
 
 ### mumax3 engine (optional plug-in)
 

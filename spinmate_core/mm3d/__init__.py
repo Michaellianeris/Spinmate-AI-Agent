@@ -35,6 +35,9 @@ PARAMS = {
     "seed": (0, "int", "", "random seed (texture=random)"),
     "animation": (1, "int", "", "also write rotate.gif (and rotate.mp4 when ffmpeg is installed), the 3D view "
                   "turning once around z; 0 = no animation"),
+    "backend": ("auto", "choice", "", "where the solver runs: auto (the GPU if there is one, else all CPU cores), "
+                "gpu (NVIDIA, CUDA), cpu (numba, all cores) or numpy (the reference code, one core)",
+                ("auto", "gpu", "cpu", "numpy")),
     "tol": (5.0, "float", "A/m", "relaxation stops when max |m x H| is below this"),
     "max_iter": (40000, "int", "", "most relaxation iterations"),
 }
@@ -128,14 +131,22 @@ def check(vals):
         warnings.append("D = 0: nothing stabilises a hopfion, it will collapse")
     if vals["geometry"] == "disk" and vals["disk_diameter"] > min(vals["Nx"], vals["Ny"]) * dx:
         errors.append("the disk is wider than the grid: raise Nx and Ny or lower disk_diameter")
-    if cells > 300_000:
+    from .. import fastmag
+    backend, note = fastmag.choose(vals["backend"])
+    if note:
+        warnings.append(f"backend={vals['backend']}: runs on {backend} ({note})")
+    if cells > 300_000 and backend != "gpu":
         warnings.append(f"{cells:,} cells on the CPU: this relaxation can take many minutes")
     return errors, warnings
 
 
 def estimate_s(vals):
     """About 0.35 µs per cell and iteration, some 2,500 iterations."""
-    return round(0.35e-6 * vals["Nx"] * vals["Ny"] * vals["Nz"] * 2500 + (30 if vals["animation"] else 0), 1)
+    from .. import fastmag
+    cells = vals["Nx"] * vals["Ny"] * vals["Nz"]
+    backend, _ = fastmag.choose(vals["backend"])
+    relax = 0.35e-6 * cells * 2500 / fastmag.speedup(backend, cells) + (3.0 if backend != "numpy" else 0.0)
+    return round(relax + (30 if vals["animation"] else 0), 1)
 
 
 class MM3DEngine:
@@ -144,11 +155,12 @@ class MM3DEngine:
     description = ("SpinMate's own 3D finite-difference solver for a chiral magnet slab or nanodisk: exchange, "
                    "bulk or interfacial DMI, anisotropy and Zeeman, with the top and bottom surfaces pinned along +z. "
                    "Relaxes hopfions (H = 1, 2), skyrmion tubes, chiral bobbers and torons, reports the Hopf "
-                   "index, the skyrmion number of each layer and the Bloch points (found from the solid angle of m). CPU, no GPU needed.")
+                   "index, the skyrmion number of each layer and the Bloch points (found from the solid angle of m). Runs on all CPU cores or an NVIDIA GPU (backend).")
     example = "--texture=hopfion\n--D=5.236e-3\n--Nz=24\n--disk_diameter=54e-9"
 
     def ready(self):
-        return True, ""
+        from .. import fastmag
+        return True, fastmag.describe()
 
     def parameter_schema(self):
         out = {}

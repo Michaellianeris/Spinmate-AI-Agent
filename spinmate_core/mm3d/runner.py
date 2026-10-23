@@ -52,12 +52,21 @@ def main():
     def avg(mm):
         return mm.mean((1, 2, 3)) if slab.mask is None else mm[:, slab.mask].mean(1)
 
-    def cb(it, torque, mm):
-        rows.append((it, *avg(mm)))
-        erows.append((it, slab.energy(mm), torque))
+    from spinmate_core import fastmag
+    from spinmate_core.fastmag import stepper as FS
+    backend, note = fastmag.choose(vals["backend"])
+    summary["backend"] = backend
+    if note:
+        summary["backend_note"] = note
+    st = FS.for_mm3d(slab, backend)
+
+    def cb(it, torque, md):
+        rows.append((it, *avg(st.get(md))))
+        erows.append((it, st.energy(md), torque))
         if it % 100 == 0:
             _progress(it, vals["max_iter"], t0)
-    m, it, torque = S.minimise(slab, m, tol=vals["tol"], max_iter=vals["max_iter"], callback=cb)
+    m_d, it, torque = st.minimise(st.put(m), vals["tol"], vals["max_iter"], callback=cb)
+    m = st.get(m_d)
     _progress(1, 1, t0)
     met = S.metrics(slab, m)
     bps = S.bloch_points(slab, m)
