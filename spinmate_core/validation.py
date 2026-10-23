@@ -1,5 +1,5 @@
-"""Physics validation of the macrospin engine: each case runs the real solver and compares the result with
-an analytic expectation. No LLM. Run all cases with  python -m spinmate_core.validation  (report in
+"""Physics validation of SpinMate's engines (macrospin, mm2d, mm3d): each case runs the real solver and compares the
+result with an analytic expectation. No LLM. Run all cases with  python -m spinmate_core.validation  (report in
 WORKSPACE/validation/)."""
 import html
 import json
@@ -25,6 +25,7 @@ class Result:
     note: str = ""
     runs: list = field(default_factory=list)
     seconds: float = 0.0
+    engine: str = "macrospin"
 
 
 def _const():
@@ -214,6 +215,10 @@ def thermal():
 CASES = {"norm": norm, "determinism": determinism, "energy": energy, "kittel": kittel, "afmr": afmr,
          "convergence": convergence, "damping": damping, "phase": phase_boundary, "thermal": thermal}
 FAST = ("norm", "determinism", "energy", "thermal")
+from . import validation_micro as _micro  # noqa: E402  (the mm2d and mm3d cases)
+CASES.update(_micro.CASES)
+FAST = FAST + _micro.FAST
+ENGINES = ("macrospin", "mm2d", "mm3d")
 
 # issues the first validation found in macrospin/, fixed in version 2.0; deterministic runs are unchanged bit for bit
 FINDINGS = [
@@ -249,13 +254,28 @@ def _fmt(v):
     return f"{v:.4g}" if isinstance(v, float) else html.escape(str(v))
 
 
+TITLES = {"macrospin": "Macrospin (two sublattices)", "mm2d": "mm2d: 2D micromagnetics",
+          "mm3d": "mm3d: 3D micromagnetics"}
+
+
 def report_html(results):
-    rows = "".join(
-        f"<tr class='{r.status}'><td><b>{html.escape(r.title)}</b><br><small>{html.escape(r.note)}</small></td>"
-        f"<td>{'<br>'.join(f'{html.escape(k)}: {_fmt(v)}' for k, v in r.measured.items())}</td>"
-        f"<td>{'<br>'.join(f'{html.escape(k)}: {_fmt(v)}' for k, v in r.expected.items())}</td>"
-        f"<td>{html.escape(r.tolerance)}</td><td class='st'>{r.status.upper()}</td>"
-        f"<td>{', '.join(r.runs)}</td></tr>" for r in results)
+    def row(r):
+        return (f"<tr class='{r.status}'><td><b>{html.escape(r.title)}</b><br><small>{html.escape(r.note)}</small></td>"
+                f"<td>{'<br>'.join(f'{html.escape(k)}: {_fmt(v)}' for k, v in r.measured.items())}</td>"
+                f"<td>{'<br>'.join(f'{html.escape(k)}: {_fmt(v)}' for k, v in r.expected.items())}</td>"
+                f"<td>{html.escape(r.tolerance)}</td><td class='st'>{r.status.upper()}</td>"
+                f"<td>{', '.join(r.runs)}</td></tr>")
+    head = "<tr><th>Case</th><th>Measured</th><th>Expected</th><th>Tolerance</th><th>Result</th><th>Runs</th></tr>"
+    groups, per = [], []
+    for eng in ENGINES:
+        rs = [r for r in results if getattr(r, "engine", "macrospin") == eng]
+        if not rs:
+            continue
+        ok = sum(r.status == "pass" for r in rs)
+        per.append(f"{eng} {ok}/{len(rs)}")
+        groups.append(f"<h2 id='{eng}'>{TITLES[eng]} · {ok} of {len(rs)} pass</h2><table>{head}"
+                      + "".join(row(r) for r in rs) + "</table>")
+    rows = "".join(groups)
     finds = "".join(f"<li><b>{i} · {html.escape(t)}.</b> {html.escape(x)}</li>" for i, t, x in FINDINGS)
     n_ok = sum(r.status == "pass" for r in results)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>SpinMate physics validation</title>
@@ -263,8 +283,9 @@ def report_html(results):
 td,th{{border-bottom:1px solid #D6DCE8;padding:8px;text-align:left;vertical-align:top;font-size:14px}}
 tr.pass .st{{color:#1B7F3B;font-weight:700}}tr.fail .st{{color:#B42318;font-weight:700}}small{{color:#5B6478}}</style></head>
 <body><h1>SpinMate physics validation</h1>
-<p>Engine: macrospin (validated, fixes F1-F4 applied) · {time.strftime('%Y-%m-%d %H:%M')} · {n_ok} of {len(results)} cases pass</p>
-<table><tr><th>Case</th><th>Measured</th><th>Expected</th><th>Tolerance</th><th>Result</th><th>Runs</th></tr>{rows}</table>
+<p>Engines: macrospin (fixes F1-F4 applied), mm2d and mm3d · {time.strftime('%Y-%m-%d %H:%M')} · {n_ok} of {len(results)} cases pass
+· {" · ".join(per)}</p>
+{rows}
 <h2>Fixed in version 2.0</h2><ul>{finds}</ul></body></html>"""
 
 

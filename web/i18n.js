@@ -112,6 +112,11 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Skyrmion in FeGe": "Skyrmion σε FeGe",
+  "Relax a skyrmion in FeGe with mm2d, using the FeGe material values. What are its radius and its type (Bloch or Néel)?": "Χαλάρωσε ένα skyrmion σε FeGe με το mm2d, με τις τιμές του υλικού FeGe. Ποια είναι η ακτίνα του και ο τύπος του (Bloch ή Néel);",
+  "Shows that the engines pass their analytic checks: macrospin (resonance frequencies, energy, damping, the AFM/FM boundary), mm2d (domain wall, Kittel, spin-wave dispersion, Thiele, DMI edges, demag) and mm3d (helix, Hopf index, Bloch points). Green when all cases pass; click for the full report.": "Δείχνει ότι τα engines περνούν τους αναλυτικούς ελέγχους τους: macrospin (συχνότητες συντονισμού, ενέργεια, απόσβεση, όριο AFM/FM), mm2d (τοίχωμα, Kittel, διασπορά κυμάτων σπιν, Thiele, άκρες με DMI, demag) και mm3d (έλικα, δείκτης Hopf, σημεία Bloch). Πράσινο όταν περνούν όλες οι περιπτώσεις· πατήστε για την πλήρη αναφορά.",
+  "Final texture:": "Τελική υφή:",
+  "OVF for mumax3 and OOMMF, VTK for ParaView": "OVF για mumax3 και OOMMF, VTK για ParaView",
   "Time steps": "Χρονικά βήματα",
   "mean": "μέσο",
   "Ran on": "Έτρεξε σε",
@@ -797,6 +802,11 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Skyrmion in FeGe": "Skyrmion en FeGe",
+  "Relax a skyrmion in FeGe with mm2d, using the FeGe material values. What are its radius and its type (Bloch or Néel)?": "Relaja un skyrmion en FeGe con mm2d, con los valores del material FeGe. ¿Cuál es su radio y su tipo (Bloch o Néel)?",
+  "Shows that the engines pass their analytic checks: macrospin (resonance frequencies, energy, damping, the AFM/FM boundary), mm2d (domain wall, Kittel, spin-wave dispersion, Thiele, DMI edges, demag) and mm3d (helix, Hopf index, Bloch points). Green when all cases pass; click for the full report.": "Muestra que los motores superan sus comprobaciones analíticas: macrospin (frecuencias de resonancia, energía, amortiguamiento, el límite AFM/FM), mm2d (pared de dominio, Kittel, dispersión de ondas de espín, Thiele, bordes con DMI, demag) y mm3d (hélice, índice de Hopf, puntos de Bloch). Verde cuando pasan todos los casos; haz clic para el informe completo.",
+  "Final texture:": "Textura final:",
+  "OVF for mumax3 and OOMMF, VTK for ParaView": "OVF para mumax3 y OOMMF, VTK para ParaView",
   "Time steps": "Pasos de tiempo",
   "mean": "medio",
   "Ran on": "Se ejecutó en",
@@ -1482,6 +1492,11 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Skyrmion in FeGe": "Skyrmion in FeGe",
+  "Relax a skyrmion in FeGe with mm2d, using the FeGe material values. What are its radius and its type (Bloch or Néel)?": "Relaxiere ein Skyrmion in FeGe mit mm2d, mit den Materialwerten von FeGe. Wie groß ist sein Radius und welcher Typ ist es (Bloch oder Néel)?",
+  "Shows that the engines pass their analytic checks: macrospin (resonance frequencies, energy, damping, the AFM/FM boundary), mm2d (domain wall, Kittel, spin-wave dispersion, Thiele, DMI edges, demag) and mm3d (helix, Hopf index, Bloch points). Green when all cases pass; click for the full report.": "Zeigt, dass die Engines ihre analytischen Prüfungen bestehen: Macrospin (Resonanzfrequenzen, Energie, Dämpfung, AFM/FM-Grenze), mm2d (Domänenwand, Kittel, Spinwellendispersion, Thiele, DMI-Ränder, Demag) und mm3d (Helix, Hopf-Index, Bloch-Punkte). Grün, wenn alle Fälle bestehen; klicken für den vollständigen Bericht.",
+  "Final texture:": "Endtextur:",
+  "OVF for mumax3 and OOMMF, VTK for ParaView": "OVF für mumax3 und OOMMF, VTK für ParaView",
   "Time steps": "Zeitschritte",
   "mean": "mittleres",
   "Ran on": "Lief auf",
@@ -2167,6 +2182,11 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Skyrmion in FeGe": "Skyrmion in FeGe",
+  "Relax a skyrmion in FeGe with mm2d, using the FeGe material values. What are its radius and its type (Bloch or Néel)?": "Rilassa uno skyrmion in FeGe con mm2d, con i valori del materiale FeGe. Qual è il suo raggio e il suo tipo (Bloch o Néel)?",
+  "Shows that the engines pass their analytic checks: macrospin (resonance frequencies, energy, damping, the AFM/FM boundary), mm2d (domain wall, Kittel, spin-wave dispersion, Thiele, DMI edges, demag) and mm3d (helix, Hopf index, Bloch points). Green when all cases pass; click for the full report.": "Mostra che i motori superano le loro verifiche analitiche: macrospin (frequenze di risonanza, energia, smorzamento, il confine AFM/FM), mm2d (parete di dominio, Kittel, dispersione delle onde di spin, Thiele, bordi con DMI, demag) e mm3d (elica, indice di Hopf, punti di Bloch). Verde quando tutti i casi passano; clicca per il rapporto completo.",
+  "Final texture:": "Tessitura finale:",
+  "OVF for mumax3 and OOMMF, VTK for ParaView": "OVF per mumax3 e OOMMF, VTK per ParaView",
   "Time steps": "Passi temporali",
   "mean": "medio",
   "Ran on": "Eseguito su",

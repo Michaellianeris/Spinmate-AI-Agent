@@ -13,6 +13,8 @@ PI = 3.141592653589793
 
 # name: (default, kind, unit, description[, choices])
 PARAMS = {
+    "material": ("", "material", "", "ready parameters of a material: Pt/Co, Co/Pd, FeGe, MnSi or YIG (sets Msat, "
+                 "Aex, Ku, D, dmi and suggests cells, grid, field and seed radius; the other lines win)", None),
     "texture": ("hopfion", "choice", "", "initial state: hopfion (H = 1), hopfion2 (H = 2: two hopfions stacked in a disk "
                 "about 2p thick), skyrmion_tube, "
                 "chiral_bobber (a tube from the top surface ending at a Bloch point; surfaces=free), toron (a tube "
@@ -44,7 +46,22 @@ PARAMS = {
 EXTRA = {"Ms": "Msat", "A": "Aex", "Ku1": "Ku", "Dbulk": "D", "Dind": "D"}
 
 
+def _with_material(text):
+    """The lines of a material go first, so that the user's own lines win."""
+    import re as _re
+    from ..materials import find, lines
+    found = _re.search(r"^\s*--material=(\S+)", text or "", _re.M)
+    if not found:
+        return text
+    if not find(found.group(1)):
+        from ..materials import NAMES
+        raise ValueError(f"material={found.group(1)} is not known; known: {', '.join(NAMES)}")
+    given = set(_re.findall(r"^\s*--(\w+)=", text or "", _re.M))
+    return "\n".join(lines(found.group(1), given, PARAMS, "mm3d")) + "\n" + text
+
+
 def parse(text):
+    text = _with_material(text)
     vals = {k: v[0] for k, v in PARAMS.items()}
     for raw in (text or "").splitlines():
         line = raw.split("#", 1)[0].strip()
@@ -66,6 +83,9 @@ def parse(text):
                 if len(v) != 3:
                     raise ValueError
                 vals[name] = v
+            elif kind == "material":
+                from ..materials import find
+                vals[name] = find(value)
             elif kind == "choice":
                 if value not in PARAMS[name][4]:
                     raise ValueError

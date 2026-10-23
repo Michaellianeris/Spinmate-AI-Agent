@@ -406,6 +406,14 @@ twice the exchange length and still uses the local field.</p>
 <tr><td>Skyrmion radius, 1 nm / 2 nm film</td><td>larger than with local demag (14.5 nm)</td><td>17.2 nm / 24 nm</td></tr>
 <tr><td>Bubble, 10 nm film, 0 / 20 / 50 mT</td><td>shrinks with field</td><td>93 / 79 / 47 nm</td></tr>
 </table>
+<h3>Materials and export</h3>
+<p><code>--material=FeGe</code> (or <code>Pt/Co</code>, <code>Co/Pd</code>, <code>MnSi</code>, <code>YIG</code>) sets M<sub>s</sub>, A, K<sub>u</sub>, D and the kind of DMI and
+suggests the cell, grid, field and seed radius that give a skyrmion; in mm3d a hopfion disk. Your own lines win. So
+<i>"a skyrmion in FeGe"</i> runs without numbers: a Bloch skyrmion of R = 37 nm at 0.37 T. MnSi's A and D follow from its 18 nm
+period and 0.6 T critical field.</p>
+<table><tr><th>Material</th><th>M<sub>s</sub> (kA/m)</th><th>A (pJ/m)</th><th>K<sub>u</sub> (MJ/m³)</th><th>D (mJ/m²)</th><th>Source</th></tr><tr><td><code>Pt/Co</code></td><td>580</td><td>15</td><td>0.8</td><td>3 interfacial</td><td>Sampaio et al., Nature Nanotechnology 8, 839 (2013)</td></tr><tr><td><code>Co/Pd</code></td><td>880</td><td>10</td><td>0.727</td><td>2 interfacial</td><td>Pollard et al., Nature Communications 8, 14761 (2017)</td></tr><tr><td><code>FeGe</code></td><td>384</td><td>8.78</td><td>0</td><td>1.58 bulk</td><td>Beg et al., Scientific Reports 5, 17137 (2015)</td></tr><tr><td><code>MnSi</code></td><td>163</td><td>0.4</td><td>0</td><td>0.28 bulk</td><td>Mühlbauer et al., Science 323, 915 (2009) (period, phase diagram); values derived here</td></tr><tr><td><code>YIG</code></td><td>140</td><td>3.7</td><td>0</td><td>0</td><td>Klingler et al., J. Phys. D 48, 015001 (2015) (A = 3.7 pJ/m)</td></tr></table>
+<p>Every mm2d and mm3d run writes <code>m_final.ovf</code> (OVF 2.0, binary 4: mumax3 <code>m.LoadFile</code>, OOMMF, Ubermag) and
+<code>m_final.vtk</code> (ParaView, VisIt); the run card links them. Empty cells of a mask are zero vectors.</p>
 <h3>Shapes: disks, strips, racetracks and your own PNG</h3>
 <p><code>mask=disk</code>, <code>strip</code> or <code>racetrack</code> cuts the film to that shape. For any other shape draw it dark on a
 white (or transparent) background, save it as PNG and drop it on the chat with the paperclip: the message says
@@ -567,6 +575,20 @@ Each sublattice carries Ms/2, so μ₀H<sub>E</sub> = 4|A0|/(Ms l²) and μ₀H<
 </div>
 <figure><img src="../validation/phase-diagram.png"><figcaption>AFM/FM phase diagram: the boundary found by bisection with the solver lies on |Ku| = 2|A0|/l² within 2–6 %.</figcaption></figure>
 </div>
+<p><b>mm2d and mm3d.</b> The same suite checks the micromagnetic engines, and the shield counts all 19 cases:</p>
+<table>
+<tr><th>Case</th><th>Expected</th><th>Measured</th></tr>
+<tr><td>Domain wall, interfacial DMI</td><td>4√(A·K<sub>eff</sub>) − π|D| = 5.603 mJ/m², Néel</td><td>5.603 mJ/m², Néel</td></tr>
+<tr><td>Kittel, perpendicular film</td><td>70.78 GHz</td><td>70.78 GHz</td></tr>
+<tr><td>Spin-wave dispersion f(k)</td><td>γ₀/2π (H<sub>K,eff</sub> + 2Ak²/μ₀M<sub>s</sub>)</td><td>within 2.2 %</td></tr>
+<tr><td>STT with β = α (Thiele)</td><td>v = u = 50 m/s</td><td>49.8 m/s</td></tr>
+<tr><td>Tilt at a free edge with DMI</td><td>sin θ = Dδ/2A = 0.5889</td><td>0.5887</td></tr>
+<tr><td>FFT demag: platelet, Néel-wall stray energy</td><td>0.8600; 0.0466 mJ/m²</td><td>0.8600; 0.0464 mJ/m²</td></tr>
+<tr><td>CPU backend vs NumPy</td><td>same dm/dt</td><td>6e-16 apart</td></tr>
+<tr><td>Helix (mm3d)</td><td>−D²/4A</td><td>within 2 %</td></tr>
+<tr><td>Hopfion in a nanodisk (mm3d)</td><td>|H| ≈ 1</td><td>−0.81 on the grid</td></tr>
+<tr><td>Bloch points (mm3d)</td><td>±1</td><td>+1, −1</td></tr>
+</table>
 <p><b>Fixed in 2.0.</b> The first run found four issues in <code>macrospin/</code>: the static anisotropy was added twice (F1),
 the Ku(t) amplitude used g₀ instead of μ₀ (F4), the optional RK4 integrator had wrong weights (F2) and the thermal field was not
 Gaussian (F3). Runs at T = 0 without Ku(t) give bit-identical trajectories to version 1.0; runs with temperature change.</p>

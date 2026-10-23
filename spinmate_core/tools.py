@@ -301,6 +301,8 @@ def call(name, args, approved=False):
             out["engines"].append({"name": n, "title": e.title, "description": e.description, "ready": ready,
                                    **({"note": note} if note else {}),
                                    "parameters": schema if n != "macrospin" else "see spinmate://parameters"})
+        from .materials import table
+        out["materials"] = table()                     # --material=<name> for mm2d and mm3d
     elif name == "start_simulation":
         out = S.start_run(args["parameters_text"], args.get("label", ""), engine=args.get("engine"))
     elif name == "start_sweep":
