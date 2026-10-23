@@ -479,7 +479,16 @@ wavelengths so the waves do not come back from the edges. Below the gap (here 56
 <figure><img src="../mm2d-dispersion.png"><figcaption>Dispersion from a sinc pulse up to 150 GHz; the dashed line is the analytic f(k).</figcaption></figure>
 </div>
 <div class="tip">Limits: the film is one cell through the thickness, so m does not vary along z (mm3d does that). The default
-demagnetising field is local (−Ms·m<sub>z</sub>); <code>demag=full</code> adds the long-range stray field. A GPU version is planned.</div>
+demagnetising field is local (−Ms·m<sub>z</sub>); <code>demag=full</code> adds the long-range stray field.</div>
+<h3>Speed: CPU cores, GPU and the time step</h3>
+<p><code>backend=auto</code> runs mm2d and mm3d on an NVIDIA GPU when there is one, otherwise on all CPU cores (numba);
+<code>gpu</code>, <code>cpu</code> and <code>numpy</code> (the reference code, one core) choose one. The physics of a cell is written once and
+compiled for both; the CPU kernels reproduce the NumPy fields to 10<sup>−12</sup>. On a 2-core machine a 128 × 128 film takes
+3 ms per time step instead of 25 ms, about 1.4 min per ns. The time step is adaptive (Dormand–Prince, error per step
+<code>rk_tol</code>); the exchange of the smallest cells sets it, about 35 fs for 1 nm cells and four times longer for 2 nm cells.
+Check gives the number of steps and the time, and for long runs suggests larger cells or the GPU. For 10–100 ns use
+<code>table_dt</code> of 10 ps or more and <code>animation=0</code>. The GPU in Docker:
+<code>docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build</code> (needs <code>nvidia-smi</code> in WSL).</p>
 
 <h3>3D micromagnetics: hopfions with mm3d</h3>
 <p>Choose <b>mm3d</b> in the Engine menu, or ask for a hopfion in the chat (it is also a card under <i>Find a skill</i>).

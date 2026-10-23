@@ -11,8 +11,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY requirements.txt .
+COPY requirements.txt requirements-gpu.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+# GPU=1 (docker-compose.gpu.yml) adds CuPy and numba-cuda for backend=gpu
+ARG GPU=0
+RUN if [ "$GPU" = "1" ]; then pip install --no-cache-dir -r requirements-gpu.txt; fi
 
 COPY app ./app
 COPY spinmate_core ./spinmate_core
@@ -25,6 +28,9 @@ COPY web ./web
 COPY examples ./examples
 COPY docs/validation ./docs/validation
 COPY evals ./evals
+
+# compile the CPU kernels of mm2d/mm3d once, here, so runs start at once
+RUN python -c "from spinmate_core.fastmag import warmup; warmup()"
 
 RUN useradd --create-home --uid 1000 sim \
  && mkdir -p /data && chown -R sim:sim /data /app

@@ -61,6 +61,9 @@ PARAMS = {
                "(and y edges for a dot), so spin waves do not come back"),
     "animation": (1, "int", "", "dynamics: also write animation.gif (and animation.mp4 when ffmpeg is installed) of "
                   "the spin waves or of the moving texture; 0 = no animation"),
+    "backend": ("auto", "choice", "", "where the solver runs: auto (the GPU if there is one, else all CPU cores), "
+                "gpu (NVIDIA, CUDA), cpu (numba, all cores) or numpy (the reference code, one core)",
+                ("auto", "gpu", "cpu", "numpy")),
     "Temp": (0.0, "float", "K", "temperature (dynamics): stochastic thermal field, fixed Heun steps"),
     "thermal_dt": (0.0, "float", "s", "time step with temperature (0 = 0.15 / the fastest precession)"),
     "j": ((0.0, 0.0, 0.0), "vector", "A/m^2", "current density in the plane (dynamics): drives spin torques"),
@@ -192,9 +195,17 @@ def check(vals):
         R_out = vals["R0"] * (2.5 if vals["texture"] == "skyrmionium" else 1)
         if 2 * R_out > 0.8 * min(vals["Nx"], vals["Ny"]) * dx:
             warnings.append("the seed texture almost fills the film: make the film larger or R0 smaller")
-    cells = vals["Nx"] * vals["Ny"]
-    if cells > 512 * 512:
-        warnings.append(f"{cells:,} cells on the CPU: this run will be slow")
+    from .. import fastmag
+    backend, note = fastmag.choose(vals["backend"], needs_fft=vals["demag"] == "full" and vals["lattice"] == "ferro")
+    if note:
+        warnings.append(f"backend={vals['backend']}: runs on {backend} ({note})")
+    if vals["mode"] == "dynamics":
+        steps, _ = time_steps(vals)
+        est = estimate_s(vals)
+        if est > 1800:
+            warnings.append(f"about {steps:,.0f} time steps of {vals['t'] / steps * 1e15:.0f} fs (the exchange of "
+                            f"{vals['dx'] * 1e9:.3g} nm cells sets the step) on {backend}: about {est / 3600:.1f} h. "
+                            "Larger cells (the step grows as dx²), a smaller film or a GPU make it faster")
     return errors, warnings
 
 
@@ -248,20 +259,47 @@ def start_problem(vals):
     return ""
 
 
+def max_freq(vals):
+    """The fastest precession on the grid (rad/s), as Film.max_freq: it sets the time step."""
+    Ms, A, dx = vals["Msat"], vals["Aex"], vals["dx"]
+    B = max(abs(float(c)) for c in vals["B_ext"]) + max(abs(float(c)) for c in vals["B_pulse"])
+    h = 8 * A / (MU0 * Ms * dx ** 2) + 2 * abs(vals["Ku"]) / (MU0 * Ms) + Ms + 4 * abs(vals["D"]) / (MU0 * Ms * dx) + B / MU0
+    if vals["lattice"] != "ferro":
+        h += (vals["J_afm"] if vals["lattice"] == "afm" else -vals["J_rkky"] / vals["thickness"]) / (MU0 * Ms)
+    return 2.211e5 * h
+
+
+def time_steps(vals):
+    """About how many time steps a dynamics run takes: adaptive Dormand-Prince settles near dt = 1.46 / w_max
+    (the exchange of the smallest cells sets w_max); with temperature, fixed Heun steps of 0.15 / w_max."""
+    w = max_freq(vals)
+    if vals["Temp"] > 0:
+        dt = vals["thermal_dt"] or 0.15 / w
+        return vals["t"] / dt, 2
+    return vals["t"] * w / 1.46, 7
+
+
 def estimate_s(vals):
-    """Rough CPU time: about 0.2 µs per cell and relaxation iteration, 50 µs per cell and picosecond of dynamics."""
+    """Rough run time: the numpy code costs about 0.2 µs per cell and relaxation iteration and 130 ns per cell and
+    field evaluation; the cpu and gpu backends divide that by their speed-up."""
     cells = vals["Nx"] * vals["Ny"]
     relax = 0.2e-6 * cells * 3000 if (vals["mode"] == "relax" or vals["relax_first"]) else 0
-    dyn = 50e-6 * (1e-9 / vals["dx"]) ** 2 * cells * vals["t"] / 1e-12 if vals["mode"] == "dynamics" else 0
-    if vals["Temp"] > 0:                              # fixed Heun steps
-        dyn *= 1.5
+    dyn = 0.0
+    if vals["mode"] == "dynamics":
+        steps, evals = time_steps(vals)
+        dyn = steps * evals * 130e-9 * cells
     if vals["demag"] == "full":                       # FFTs per field, and slower relaxation of long-range textures
         f = 2.0 if vals["boundary"] == "periodic" else 4.0
         relax, dyn = 1.5 * f * relax, f * dyn
         relax += 2e-8 * cells * (17 ** 2 if vals["boundary"] == "periodic" else 1)     # the tensor, once
-    if vals["lattice"] != "ferro":                    # two sublattices and the faster exchange precession
-        J = vals["J_afm"] if vals["lattice"] == "afm" else -vals["J_rkky"] / vals["thickness"]
-        relax, dyn = 2 * relax, 2.5 * dyn * max(1.0, J / 2e7) ** 0.5
+    if vals["lattice"] != "ferro":                    # two sublattices (the faster precession is in max_freq)
+        relax, dyn = 2 * relax, 2 * dyn
+    from .. import fastmag
+    backend, _ = fastmag.choose(vals["backend"], needs_fft=vals["demag"] == "full" and vals["lattice"] == "ferro")
+    k = fastmag.speedup(backend, cells * (2 if vals["lattice"] != "ferro" else 1))
+    relax, dyn = relax / k, dyn / k
+    if backend != "numpy":
+        relax += 3.0                                  # loading the compiled kernels
     if vals["mode"] == "dynamics" and vals["animation"] and (vals["excite"] != "uniform" or any(vals["j"])
                                                              or vals["Temp"] > 0):
         dyn += 0.4 * 65                               # drawing about 65 frames
@@ -275,12 +313,13 @@ class MM2DEngine:
                    "anisotropy, interfacial or bulk DMI, Zeeman and the demagnetising field: local thin-film, or long-range by FFT (demag=full) "
                    "for thicker films, bubbles and stripe domains. "
                    "Finds skyrmions, skyrmionium and domain walls, in a ferromagnet or a two-sublattice antiferromagnet (lattice=afm) (mode=relax) or runs LLG dynamics with a field "
-                   "pulse, uniform or from an antenna for spin waves, or with a current that moves skyrmions by spin-transfer or spin-orbit torque (mode=dynamics). Runs on any computer, no GPU needed.")
+                   "pulse, uniform or from an antenna for spin waves, or with a current that moves skyrmions by spin-transfer or spin-orbit torque (mode=dynamics). Runs on all CPU cores or an NVIDIA GPU (backend).")
 
     example = "--mode=relax\n--texture=skyrmion\n--D=3.5e-3\n--Nx=128\n--Ny=128"
 
     def ready(self):
-        return True, ""
+        from .. import fastmag
+        return True, fastmag.describe()
 
     def parameter_schema(self):
         out = {}

@@ -112,6 +112,9 @@ const t = i18n.t;
 // translations: generated once, edit here
 const I18N = {
  "el": {
+  "Time steps": "Χρονικά βήματα",
+  "mean": "μέσο",
+  "Ran on": "Έτρεξε σε",
   "mm2d and mumax3: the final textures and the angle between them": "mm2d και mumax3: οι τελικές υφές και η γωνία μεταξύ τους",
   "agree": "συμφωνούν",
   "differ": "διαφέρουν",
@@ -794,6 +797,9 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Κάτω από τον δείκτη, γυρίστε σε <b>Σφαίρα 3D</b> για να δείτε τα m₁ και m₂ στη μοναδιαία σφαίρα με όλη τους την τροχιά. Σύρετε για περιστροφή· ακολουθεί τον δείκτη χρόνου και την Αναπαραγωγή."
  },
  "es": {
+  "Time steps": "Pasos de tiempo",
+  "mean": "medio",
+  "Ran on": "Se ejecutó en",
   "mm2d and mumax3: the final textures and the angle between them": "mm2d y mumax3: las texturas finales y el ángulo entre ellas",
   "agree": "coinciden",
   "differ": "difieren",
@@ -1476,6 +1482,9 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Bajo el dial, cambia a <b>Esfera 3D</b> para ver m₁ y m₂ en la esfera unidad con toda su trayectoria. Arrastra para girar; sigue al cabezal y a Reproducir."
  },
  "de": {
+  "Time steps": "Zeitschritte",
+  "mean": "mittleres",
+  "Ran on": "Lief auf",
   "mm2d and mumax3: the final textures and the angle between them": "mm2d und mumax3: die Endtexturen und der Winkel zwischen ihnen",
   "agree": "stimmen überein",
   "differ": "weichen ab",
@@ -2158,6 +2167,9 @@ const I18N = {
   "Under the dial, switch to <b>3D sphere</b> to see m₁ and m₂ on the unit sphere with their whole path. Drag to rotate; it follows the playhead and Play.": "Schalten Sie unter der Skala auf <b>3D-Kugel</b>, um m₁ und m₂ auf der Einheitskugel mit ihrer ganzen Bahn zu sehen. Ziehen zum Drehen; sie folgt der Abspielmarke und Abspielen."
  },
  "it": {
+  "Time steps": "Passi temporali",
+  "mean": "medio",
+  "Ran on": "Eseguito su",
   "mm2d and mumax3: the final textures and the angle between them": "mm2d e mumax3: le tessiture finali e l'angolo tra di esse",
   "agree": "concordano",
   "differ": "differiscono",

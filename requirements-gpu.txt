@@ -1,0 +1,4 @@
+# GPU backend of the micromagnetic engines (backend=gpu): an NVIDIA GPU with a CUDA 12 driver.
+# Docker: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+cupy-cuda12x==14.2.0
+numba-cuda[cu12]==0.30.4
