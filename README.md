@@ -712,7 +712,7 @@ skyrmion runs at 68 m/s along the track, against 14.5 m/s (Thiele) in an open fi
 - **Limits.** One cell through the thickness: m does not vary along z (use mm3d for that). The default demag is
   local (−Ms·mz); `demag=full` adds the long-range stray field.
   A 128 × 128 relaxation takes a few seconds.
-- <img src="docs/icons/cpu.png" alt="CPU" height="20"> <img src="docs/icons/gpu.png" alt="GPU" height="20"> **Speed: all CPU cores or the GPU.** `backend=auto` (the default) runs on an NVIDIA GPU when there is one and
+- <img src="docs/icons/cpu.png" alt="CPU" height="36"> <img src="docs/icons/gpu.png" alt="GPU" height="36"> **Speed: all CPU cores or the GPU.** `backend=auto` (the default) runs on an NVIDIA GPU when there is one and
   otherwise on all CPU cores; `gpu`, `cpu` and `numpy` choose one. The physics of a cell (exchange, anisotropy,
   DMI with its edge condition, local demag, the AFM coupling, field, STT and SOT, the LLG equation) is written
   once and compiled twice: by numba into one parallel loop for the CPU, and by numba.cuda into CUDA kernels on
@@ -807,9 +807,17 @@ field (with an FFT for its vector potential), the skyrmion number of every layer
 <tr><td align="center"><i>A hopfion from a question</i></td><td align="center"><i>Reports include the texture pictures</i></td></tr>
 </table>
 
+### LangGraph workflows over MCP (example)
+
+`examples/langgraph` drives SpinMate from a [LangGraph](https://langchain-ai.github.io/langgraph/) graph through
+the MCP server: a threshold search (plan → sweep → wait → analyse → narrow, up to 4 rounds) with checkpointing in
+SQLite, so a search over long runs survives a restart, and human-in-the-loop approval of large sweeps
+(`interrupt()`). It found the AFM/FM boundary A0 = 1.735e-15 J/m (theory 1.7395e-15) in three rounds of six
+runs. SpinMate's own agent is unchanged; see `examples/langgraph/README.md`.
+
 ### GPU for mm2d and mm3d (optional)
 
-<img src="docs/icons/cpu.png" alt="CPU" height="56"> &nbsp; <img src="docs/icons/gpu.png" alt="GPU" height="56">
+<img src="docs/icons/cpu.png" alt="CPU" height="110"> &nbsp;&nbsp; <img src="docs/icons/gpu.png" alt="GPU" height="110">
 
 An NVIDIA GPU makes the micromagnetic runs much faster. In WSL `nvidia-smi` must show the GPU (a current NVIDIA
 driver on Windows is enough), and Docker Desktop must use the WSL 2 backend. Then:
